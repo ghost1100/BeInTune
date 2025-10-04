@@ -38,7 +38,7 @@ export default function Index() {
           </div>
 
           <aside className="lg:col-span-5">
-            <div className="bg-white rounded-xl p-6 shadow-lg max-w-md mx-auto">
+            <div className="bg-card rounded-xl p-6 shadow-lg max-w-md mx-auto">
               <h3 className="text-lg font-semibold">Book a free trial</h3>
               <p className="text-sm text-foreground/70 mt-1">No commitment — try a 30 minute lesson.</p>
               <BookingForm />
@@ -49,7 +49,7 @@ export default function Index() {
 
       {/* Programs grid inspired by site */}
       <section className="container mx-auto py-16">
-        <div className="p-6 bg-gray-50 rounded-lg">
+        <div className="p-6 bg-muted rounded-lg">
           <h2 className="text-2xl font-bold text-foreground">Programs</h2>
           <p className="mt-2 text-foreground/70 max-w-2xl">{content.programsIntro}</p>
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -63,9 +63,9 @@ export default function Index() {
               { title: 'Bandjam', img: 'https://static.wixstatic.com/media/11062b_67da4c327ae14c4a8fed63e683be364ef000.jpg' },
               { title: 'Masterclass', img: 'https://static.wixstatic.com/media/11062b_67da4c327ae14c4a8fed63e683be364ef000.jpg' },
             ].map((p) => (
-              <div key={p.title} className="rounded-lg overflow-hidden border bg-white shadow-sm">
+              <div key={p.title} className="rounded-lg overflow-hidden border bg-card shadow-sm">
                 <img src={p.img} alt={p.title} className="h-36 w-full object-cover" />
-                <div className="p-3 bg-white">
+                <div className="p-3 bg-card">
                   <h3 className="font-semibold text-foreground">{p.title}</h3>
                 </div>
               </div>
