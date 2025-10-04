@@ -612,6 +612,37 @@ function ThemeManager(){
 }
 
 
+function ReportPanel(){
+  const today = new Date().toISOString().slice(0,10);
+  const [studentsCount, setStudentsCount] = useState(() => getStudents().length);
+  const [bookingsToday, setBookingsToday] = useState(() => getBookings(today).length);
+
+  useEffect(()=>{
+    const id = setInterval(()=>{
+      setStudentsCount(getStudents().length);
+      setBookingsToday(getBookings(new Date().toISOString().slice(0,10)).length);
+    }, 2000);
+    return ()=>clearInterval(id);
+  },[]);
+
+  return (
+    <div className="grid md:grid-cols-3 gap-4">
+      <div className="rounded-md border p-4">
+        <div className="text-sm text-foreground/70">Students</div>
+        <div className="text-2xl font-bold">{studentsCount}</div>
+      </div>
+      <div className="rounded-md border p-4">
+        <div className="text-sm text-foreground/70">Bookings today</div>
+        <div className="text-2xl font-bold">{bookingsToday}</div>
+      </div>
+      <div className="rounded-md border p-4">
+        <div className="text-sm text-foreground/70">Theme</div>
+        <div className="text-sm">Primary: hsl(var(--primary))</div>
+      </div>
+    </div>
+  );
+}
+
 function StudentsManager(){
   const instrumentsList = ['Guitar','Piano','Violin','Drums','Bass','Saxophone','Voice','Ukulele','Flute'];
   const [students, setStudents] = useState(getStudents());
