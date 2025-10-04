@@ -551,8 +551,10 @@ function ThemeManager(){
       root.style.setProperty('--brand-2', b.brand2);
       root.style.setProperty('--secondary', b.secondary);
     }
+    try{ const m = (window as any).__themeModeBackup; if(m === 'dark'){ root.classList.add('dark'); } else { root.classList.remove('dark'); } }catch{}
     setShowPreview(false);
     delete (window as any).__themeBackup;
+    delete (window as any).__themeModeBackup;
   };
 
   return (
