@@ -27,7 +27,7 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundImage: img ? `linear-gradient(rgba(2,6,23,0.5), rgba(2,6,23,0.5)), url(${img})` : undefined, backgroundSize: 'cover' }}>
-      <div className="bg-white/95 rounded-lg p-8 shadow-lg w-full max-w-md">
+      <div className="bg-card/95 rounded-lg p-8 shadow-lg w-full max-w-md">
         <h1 className="text-2xl font-bold">Admin login</h1>
         <p className="text-sm text-foreground/70 mt-2">Enter the admin password to manage teachers.</p>
         <form onSubmit={submit} className="mt-4">
