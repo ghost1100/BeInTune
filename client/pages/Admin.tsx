@@ -597,7 +597,7 @@ function ThemeManager(){
       </div>
 
       {showPreview && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40" onMouseDown={(e)=>{ if(e.target === e.currentTarget) { cancelPreview(); } }}>
           <div className="bg-card rounded-md p-4 w-[900px] max-w-full">
             <div className="flex justify-between items-center">
               <h4 className="font-semibold">Home preview</h4>
