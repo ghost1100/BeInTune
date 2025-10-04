@@ -32,6 +32,7 @@ export function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <Link to="/admin/login" className="hidden sm:block">
             <Button variant="ghost">Admin</Button>
           </Link>
