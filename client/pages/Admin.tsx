@@ -315,7 +315,7 @@ function ScheduleManager({visual}:{visual?:boolean}={}){
                 const available = avail.includes(s);
                 return (
                   <div key={s} className="flex items-center gap-2">
-                    <div onClick={()=>{ if(!booked) toggle(s); }} className={`w-full rounded-md py-2 px-3 text-sm cursor-pointer ${booked? 'bg-red-100 text-red-800 border' : available? 'bg-green-600 text-white' : 'bg-gray-100 text-foreground/80 border'}`}>
+                    <div onClick={()=>{ if(!booked) toggle(s); }} className={`w-full rounded-md py-2 px-3 text-sm cursor-pointer ${booked? 'bg-red-600 text-white' : available? 'bg-green-600 text-white' : 'bg-card text-foreground/80 border'}`}>
                       <div className="flex justify-between">
                         <div>{s}</div>
                         <div>{booked? `Booked: ${booked.name}` : (available? 'Available' : 'Unavailable')}</div>
