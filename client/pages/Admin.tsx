@@ -598,7 +598,7 @@ function ThemeManager(){
 
       {showPreview && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40">
-          <div className="bg-white rounded-md p-4 w-[900px] max-w-full">
+          <div className="bg-card rounded-md p-4 w-[900px] max-w-full">
             <div className="flex justify-between items-center">
               <h4 className="font-semibold">Home preview</h4>
               <button onClick={cancelPreview} className="px-2 py-1 border rounded-md">Close</button>
