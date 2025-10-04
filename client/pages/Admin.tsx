@@ -557,6 +557,13 @@ function ThemeManager(){
     delete (window as any).__themeModeBackup;
   };
 
+  useEffect(()=>{
+    if(!showPreview) return;
+    const onKey = (e: KeyboardEvent) => { if(e.key === 'Escape') cancelPreview(); };
+    window.addEventListener('keydown', onKey);
+    return ()=> window.removeEventListener('keydown', onKey);
+  },[showPreview]);
+
   return (
     <div>
       <div className="grid gap-2">
