@@ -134,7 +134,7 @@ export default function Admin() {
           <button onClick={()=>setActiveTab('students')} role="tab" aria-selected={activeTab==='students'} className={`px-4 py-2 rounded-md ${activeTab==='students' ? 'bg-card shadow' : 'bg-muted'} text-foreground`}>Students</button>
           <button onClick={()=>setActiveTab('schedule')} role="tab" aria-selected={activeTab==='schedule'} className={`px-4 py-2 rounded-md ${activeTab==='schedule' ? 'bg-card shadow' : 'bg-muted'} text-foreground`}>Schedule</button>
           <button onClick={()=>setActiveTab('theme')} role="tab" aria-selected={activeTab==='theme'} className={`px-4 py-2 rounded-md ${activeTab==='theme' ? 'bg-card shadow' : 'bg-muted'} text-foreground`}>Theme</button>
-          <button onClick={()=>setActiveTab('reports')} role="tab" aria-selected={activeTab==='reports'} className={`px-4 py-2 rounded-md ${activeTab==='reports' ? 'bg-card shadow' : 'bg-muted'}`}>Reports</button>
+          <button onClick={()=>setActiveTab('reports')} role="tab" aria-selected={activeTab==='reports'} className={`px-4 py-2 rounded-md ${activeTab==='reports' ? 'bg-card shadow' : 'bg-muted'} text-foreground`}>Reports</button>
         </div>
 
         <div className="mt-6">
