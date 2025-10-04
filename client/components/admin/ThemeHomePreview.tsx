@@ -34,7 +34,7 @@ export default function ThemeHomePreview({ mode, setMode }:{ mode: 'light'|'dark
         <div className="container mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-7 text-white max-w-2xl" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
             <div className="inline-flex items-center gap-3 rounded-full bg-white/10 px-3 py-1 text-sm">
-              West Lothian��s award-winning tuition
+              West Lothian’s award-winning tuition
             </div>
             <h1 className="mt-6 text-2xl md:text-3xl font-extrabold leading-tight">
               {content.heroHeading}
@@ -73,7 +73,7 @@ export default function ThemeHomePreview({ mode, setMode }:{ mode: 'light'|'dark
               { title: 'Piano', img: 'https://static.wixstatic.com/media/11062b_d1a6434bf6ad4d508d7c3e0d5a5c4e95~mv2.jpg' },
               { title: 'Drums', img: 'https://static.wixstatic.com/media/69c603f0e05a4d418583af8038a8d082.jpg' },
             ].map((p) => (
-              <div key={p.title} className="rounded-lg overflow-hidden border bg-white shadow-sm">
+              <div key={p.title} className="rounded-lg overflow-hidden border bg-card shadow-sm">
                 <img src={p.img} alt={p.title} className="h-20 w-full object-cover" />
                 <div className="p-2 bg-card">
                   <h3 className="font-semibold text-foreground">{p.title}</h3>
