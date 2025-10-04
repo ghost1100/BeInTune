@@ -130,7 +130,7 @@ export default function Admin() {
       <div className="mt-6">
         <div role="tablist" aria-label="Admin sections" className="flex gap-2 flex-wrap">
           <button onClick={()=>setActiveTab('teachers')} role="tab" aria-selected={activeTab==='teachers'} className={`px-4 py-2 rounded-md ${activeTab==='teachers' ? 'bg-card shadow' : 'bg-muted'} text-foreground`}>Teachers</button>
-          <button onClick={()=>setActiveTab('site')} role="tab" aria-selected={activeTab==='site'} className={`px-4 py-2 rounded-md ${activeTab==='site' ? 'bg-card shadow' : 'bg-muted'}`}>Site</button>
+          <button onClick={()=>setActiveTab('site')} role="tab" aria-selected={activeTab==='site'} className={`px-4 py-2 rounded-md ${activeTab==='site' ? 'bg-card shadow' : 'bg-muted'} text-foreground`}>Site</button>
           <button onClick={()=>setActiveTab('students')} role="tab" aria-selected={activeTab==='students'} className={`px-4 py-2 rounded-md ${activeTab==='students' ? 'bg-card shadow' : 'bg-muted'}`}>Students</button>
           <button onClick={()=>setActiveTab('schedule')} role="tab" aria-selected={activeTab==='schedule'} className={`px-4 py-2 rounded-md ${activeTab==='schedule' ? 'bg-card shadow' : 'bg-muted'}`}>Schedule</button>
           <button onClick={()=>setActiveTab('theme')} role="tab" aria-selected={activeTab==='theme'} className={`px-4 py-2 rounded-md ${activeTab==='theme' ? 'bg-card shadow' : 'bg-muted'}`}>Theme</button>
