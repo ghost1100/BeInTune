@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getRandomImage } from "@/lib/unsplash";
 import { getSlotsForDay, getAvailability, toggleAvailability, getBookings, addBooking, removeBooking, isSlotBooked } from "@/lib/schedule";
 import { getStudents, addStudent as addStudentToStore, updateStudent as updateStudentInStore, removeStudent as removeStudentFromStore } from "@/lib/students";
+import ThemeHomePreview from "@/components/admin/ThemeHomePreview";
 
 type Teacher = {
   id: string;
@@ -591,15 +592,14 @@ function ThemeManager(){
 
       {showPreview && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40">
-          <div className="bg-white rounded-md p-4 w-full max-w-2xl">
+          <div className="bg-white rounded-md p-4 w-full max-w-5xl">
             <div className="flex justify-between items-center">
-              <h4 className="font-semibold">Theme preview</h4>
-              <button onClick={cancelPreview} className="px-2 py-1 border rounded-md">Cancel</button>
+              <h4 className="font-semibold">Home preview</h4>
+              <button onClick={cancelPreview} className="px-2 py-1 border rounded-md">Close</button>
             </div>
-            <div className="mt-4 grid gap-2">
-              <div className="p-4 rounded-md gradient-brand text-white">Preview header (gradient)</div>
-              <div className="p-4 rounded-md border">Sample card with primary button <button className="ml-2 px-3 py-1 rounded-md bg-primary text-primary-foreground">Primary</button></div>
-              <div className="mt-2 flex gap-2 justify-end">
+            <div className="mt-4">
+              <ThemeHomePreview />
+              <div className="mt-4 flex gap-2 justify-end">
                 <button onClick={confirm} className="px-4 py-2 rounded-md bg-green-600 text-white">Confirm & Save</button>
                 <button onClick={cancelPreview} className="px-4 py-2 rounded-md border">Cancel</button>
               </div>
