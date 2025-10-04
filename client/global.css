@@ -88,6 +88,20 @@
   h1, h2, h3 {
     font-family: "Noticia Text", "Plus Jakarta Sans", serif;
   }
+
+  /* Make form controls adapt to theme tokens */
+  input, textarea, select {
+    @apply bg-input text-foreground border px-3 py-2 placeholder:text-foreground/50;
+  }
+
+  input::placeholder, textarea::placeholder {
+    @apply text-foreground/50;
+  }
+
+  /* Ensure buttons show foreground text by default; variants will still apply their own classes */
+  button {
+    @apply text-foreground;
+  }
 }
 
 @layer utilities {
