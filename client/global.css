@@ -72,6 +72,12 @@
 
     --brand-1: 200 100% 60%;
     --brand-2: 200 60% 50%;
+
+    /* Dark mode form/input colors */
+    --input: 240 10% 12%;
+    --border: 240 10% 20%;
+    --muted: 240 8% 12%;
+    --muted-foreground: 0 0% 78%;
   }
 }
 
