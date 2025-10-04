@@ -595,16 +595,16 @@ function ThemeManager(){
 
       {showPreview && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40">
-          <div className="bg-white rounded-md p-4 w-full max-w-5xl">
+          <div className="bg-white rounded-md p-4 w-[900px] max-w-full">
             <div className="flex justify-between items-center">
               <h4 className="font-semibold">Home preview</h4>
               <button onClick={cancelPreview} className="px-2 py-1 border rounded-md">Close</button>
             </div>
             <div className="mt-4">
-              <ThemeHomePreview />
+              <ThemeHomePreview mode={previewMode} setMode={setPreviewMode} />
               <div className="mt-4 flex gap-2 justify-end">
-                <button onClick={confirm} className="px-4 py-2 rounded-md bg-green-600 text-white">Confirm & Save</button>
-                <button onClick={cancelPreview} className="px-4 py-2 rounded-md border">Cancel</button>
+                <button onClick={()=>{ if(previewMode === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); try{ localStorage.setItem('inTuneThemeMode', previewMode); }catch{}; confirm(); }} className="px-4 py-2 rounded-md bg-green-600 text-white">Apply</button>
+                <button onClick={()=>{ cancelPreview(); }} className="px-4 py-2 rounded-md border">Cancel</button>
               </div>
             </div>
           </div>
