@@ -526,6 +526,7 @@ function ThemeManager(){
       brand2: getComputedStyle(root).getPropertyValue('--brand-2'),
       secondary: getComputedStyle(root).getPropertyValue('--secondary'),
     };
+    try{ (window as any).__themeModeBackup = root.classList.contains('dark') ? 'dark' : 'light'; }catch{}
     applyToRoot(primary, primary, brand1, brand2, secondary);
     setShowPreview(true);
     // on cancel we'll revert using backup
