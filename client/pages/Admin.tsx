@@ -121,14 +121,14 @@ export default function Admin() {
     <div className="container mx-auto py-12">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Admin — Teachers & Site</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button onClick={logout} className="px-3 py-2 rounded-md border">Logout</button>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="mt-6">
-        <div role="tablist" aria-label="Admin sections" className="flex gap-2">
+        <div role="tablist" aria-label="Admin sections" className="flex gap-2 flex-wrap">
           <button onClick={()=>setActiveTab('teachers')} role="tab" aria-selected={activeTab==='teachers'} className={`px-4 py-2 rounded-md ${activeTab==='teachers' ? 'bg-card shadow' : 'bg-muted'}`}>Teachers</button>
           <button onClick={()=>setActiveTab('site')} role="tab" aria-selected={activeTab==='site'} className={`px-4 py-2 rounded-md ${activeTab==='site' ? 'bg-card shadow' : 'bg-muted'}`}>Site</button>
           <button onClick={()=>setActiveTab('students')} role="tab" aria-selected={activeTab==='students'} className={`px-4 py-2 rounded-md ${activeTab==='students' ? 'bg-card shadow' : 'bg-muted'}`}>Students</button>
@@ -157,7 +157,7 @@ export default function Admin() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <button className="px-4 py-2 rounded-md bg-green-600 text-white">{editingId? 'Save' : 'Add'}</button>
                     <button type="button" onClick={()=>{setForm({}); setEditingId(null);}} className="px-4 py-2 rounded-md border">Clear</button>
                     <button type="button" onClick={pickRandom} className="px-4 py-2 rounded-md border">{loadingImg? 'Loading...':'Random'}</button>
@@ -362,7 +362,7 @@ function ScheduleManager({visual}:{visual?:boolean}={}){
               <div className="font-medium">{b.time} — {b.name}</div>
               <div className="text-sm text-foreground/70">{b.email} {b.phone ? `• ${b.phone}` : ''} • {b.lessonType || ''}</div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button onClick={()=>removeBk(b.id)} className="px-3 py-1 rounded-md border">Cancel</button>
             </div>
           </div>
@@ -566,30 +566,30 @@ function ThemeManager(){
         </select>
 
         <label className="text-sm">Primary color</label>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <input type="color" className="h-10 w-12 rounded-md border" value={primaryColor} onChange={e=>{ setPrimaryColor(e.target.value); setPrimary(hexToHsl(e.target.value)); setBrand1(hexToHsl(e.target.value)); setBrand1Color(e.target.value); }} />
           <input className="h-10 rounded-md border px-3 flex-1" value={primary} onChange={e=>setPrimary(e.target.value)} />
         </div>
 
         <label className="text-sm">Brand 1 color</label>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <input type="color" className="h-10 w-12 rounded-md border" value={brand1Color} onChange={e=>{ setBrand1Color(e.target.value); setBrand1(hexToHsl(e.target.value)); }} />
           <input className="h-10 rounded-md border px-3 flex-1" value={brand1} onChange={e=>setBrand1(e.target.value)} />
         </div>
 
         <label className="text-sm">Brand 2 color</label>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <input type="color" className="h-10 w-12 rounded-md border" value={brand2Color} onChange={e=>{ setBrand2Color(e.target.value); setBrand2(hexToHsl(e.target.value)); }} />
           <input className="h-10 rounded-md border px-3 flex-1" value={brand2} onChange={e=>setBrand2(e.target.value)} />
         </div>
 
         <label className="text-sm">Secondary color</label>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <input type="color" className="h-10 w-12 rounded-md border" value={secondaryColor} onChange={e=>{ setSecondaryColor(e.target.value); setSecondary(hexToHsl(e.target.value)); }} />
           <input className="h-10 rounded-md border px-3 flex-1" value={secondary} onChange={e=>setSecondary(e.target.value)} />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button onClick={preview} className="px-4 py-2 rounded-md bg-green-600 text-white">Preview</button>
           <button onClick={confirm} className="px-4 py-2 rounded-md border">Save</button>
         </div>
@@ -705,7 +705,7 @@ function StudentsManager(){
     <div>
       <form onSubmit={save} className="grid gap-2">
         <input className="h-10 rounded-md border px-3" placeholder="Name" value={form.name||''} onChange={e=>setForm(f=>({...f, name:e.target.value}))} />
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <input type="number" className="h-10 rounded-md border px-3 flex-1" placeholder="Age" value={form.age===undefined? '': String(form.age)} onChange={e=>setForm(f=>({...f, age: parseInt(e.target.value || '0') }))} />
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={!!form.isElderly} onChange={e=>setForm(f=>({...f, isElderly: e.target.checked}))} /> Elderly
@@ -724,7 +724,7 @@ function StudentsManager(){
         <textarea className="rounded-md border px-3 py-2" placeholder="Allergies, intolerances or other relevant details" value={form.allergies||''} onChange={e=>setForm(f=>({...f, allergies:e.target.value}))} />
 
         <label className="text-sm">Instrument(s) (max 3)</label>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <select className="h-10 rounded-md border px-3 flex-1" value={selectedInstrument} onChange={e=>setSelectedInstrument(e.target.value)}>
             {instrumentsList.map(i=> <option key={i} value={i}>{i}</option>)}
           </select>
@@ -761,7 +761,7 @@ function StudentsManager(){
           </>
         )}
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button className="px-4 py-2 rounded-md bg-green-600 text-white">{editing? 'Save' : 'Add'}</button>
           <button type="button" onClick={()=>{ setForm({name:'', age:16, isElderly:false, medications:'', marketingConsent:false, allergies:'', instruments:[], bandName:'', email:'', phone:'', address:'', emergencyContacts:'', parentGuardianName:'', parentGuardianEmail:'', parentGuardianPhone:''}); setEditing(null); }} className="px-4 py-2 rounded-md border">Clear</button>
         </div>
@@ -781,7 +781,7 @@ function StudentsManager(){
               {s.allergies && <div className="text-sm text-foreground/70">Allergies: {s.allergies}</div>}
               <div className="text-sm text-foreground/70">Marketing consent: {s.marketingConsent ? 'Yes' : 'No'}</div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button onClick={()=>edit(s)} className="px-2 py-1 rounded-md border">Edit</button>
               <button onClick={()=>remove(s.id)} className="px-2 py-1 rounded-md border">Remove</button>
             </div>
