@@ -458,6 +458,9 @@ function ThemeManager(){
   const [brand2Color, setBrand2Color] = useState('#C8E7F6');
   const [secondaryColor, setSecondaryColor] = useState('#C8E7F6');
   const [showPreview, setShowPreview] = useState(false);
+  const [previewMode, setPreviewMode] = useState<'light'|'dark'>(()=>{
+    try{ const v = localStorage.getItem('inTuneThemeMode'); return v === 'dark' ? 'dark' : 'light'; }catch{ return 'light'; }
+  });
 
   useEffect(()=>{
     const saved = localStorage.getItem('inTuneTheme');
