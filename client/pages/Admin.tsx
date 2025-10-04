@@ -129,12 +129,12 @@ export default function Admin() {
       {/* Tabs */}
       <div className="mt-6">
         <div role="tablist" aria-label="Admin sections" className="flex gap-2">
-          <button onClick={()=>setActiveTab('teachers')} role="tab" aria-selected={activeTab==='teachers'} className={`px-4 py-2 rounded-md ${activeTab==='teachers' ? 'bg-white shadow' : 'bg-gray-100'}`}>Teachers</button>
-          <button onClick={()=>setActiveTab('site')} role="tab" aria-selected={activeTab==='site'} className={`px-4 py-2 rounded-md ${activeTab==='site' ? 'bg-white shadow' : 'bg-gray-100'}`}>Site</button>
-          <button onClick={()=>setActiveTab('students')} role="tab" aria-selected={activeTab==='students'} className={`px-4 py-2 rounded-md ${activeTab==='students' ? 'bg-white shadow' : 'bg-gray-100'}`}>Students</button>
-          <button onClick={()=>setActiveTab('schedule')} role="tab" aria-selected={activeTab==='schedule'} className={`px-4 py-2 rounded-md ${activeTab==='schedule' ? 'bg-white shadow' : 'bg-gray-100'}`}>Schedule</button>
-          <button onClick={()=>setActiveTab('theme')} role="tab" aria-selected={activeTab==='theme'} className={`px-4 py-2 rounded-md ${activeTab==='theme' ? 'bg-white shadow' : 'bg-gray-100'}`}>Theme</button>
-          <button onClick={()=>setActiveTab('reports')} role="tab" aria-selected={activeTab==='reports'} className={`px-4 py-2 rounded-md ${activeTab==='reports' ? 'bg-white shadow' : 'bg-gray-100'}`}>Reports</button>
+          <button onClick={()=>setActiveTab('teachers')} role="tab" aria-selected={activeTab==='teachers'} className={`px-4 py-2 rounded-md ${activeTab==='teachers' ? 'bg-card shadow' : 'bg-muted'}`}>Teachers</button>
+          <button onClick={()=>setActiveTab('site')} role="tab" aria-selected={activeTab==='site'} className={`px-4 py-2 rounded-md ${activeTab==='site' ? 'bg-card shadow' : 'bg-muted'}`}>Site</button>
+          <button onClick={()=>setActiveTab('students')} role="tab" aria-selected={activeTab==='students'} className={`px-4 py-2 rounded-md ${activeTab==='students' ? 'bg-card shadow' : 'bg-muted'}`}>Students</button>
+          <button onClick={()=>setActiveTab('schedule')} role="tab" aria-selected={activeTab==='schedule'} className={`px-4 py-2 rounded-md ${activeTab==='schedule' ? 'bg-card shadow' : 'bg-muted'}`}>Schedule</button>
+          <button onClick={()=>setActiveTab('theme')} role="tab" aria-selected={activeTab==='theme'} className={`px-4 py-2 rounded-md ${activeTab==='theme' ? 'bg-card shadow' : 'bg-muted'}`}>Theme</button>
+          <button onClick={()=>setActiveTab('reports')} role="tab" aria-selected={activeTab==='reports'} className={`px-4 py-2 rounded-md ${activeTab==='reports' ? 'bg-card shadow' : 'bg-muted'}`}>Reports</button>
         </div>
 
         <div className="mt-6">
@@ -372,7 +372,7 @@ function ScheduleManager({visual}:{visual?:boolean}={}){
       {/* Student selection modal */}
       {showStudentModal && selectedSlot && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40">
-          <div className="bg-white rounded-md p-4 w-full max-w-lg">
+          <div className="bg-card rounded-md p-4 w-full max-w-lg">
             <div className="flex justify-between items-center">
               <h4 className="font-semibold">Select student for {selectedSlot} on {date}</h4>
               <button onClick={()=>{ setShowStudentModal(false); setSelectedSlot(null); setSelectedStudentId(null); }} className="px-2 py-1 border rounded-md">Close</button>
@@ -427,7 +427,7 @@ function TeacherCard({t, onEdit, onRemove}:{t:Teacher,onEdit:()=>void,onRemove:(
           <div className="mt-2">
             <button onClick={()=>setOpen(s=>!s)} className="text-sm text-primary underline">{open? 'Hide profile':'View full profile'}</button>
             {open && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-md">
+              <div className="mt-3 p-3 bg-muted rounded-md">
                 <p className="text-sm">{t.about}</p>
                 <p className="text-xs text-foreground/60 mt-2">Contact: {t.email} {t.phone && `• ${t.phone}`}</p>
               </div>
