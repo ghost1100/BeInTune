@@ -371,7 +371,7 @@ function ScheduleManager({visual}:{visual?:boolean}={}){
 
       {/* Student selection modal */}
       {showStudentModal && selectedSlot && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40" onMouseDown={(e)=>{ if(e.target === e.currentTarget) { setShowStudentModal(false); setSelectedSlot(null); setSelectedStudentId(null); } }}>
           <div className="bg-card rounded-md p-4 w-full max-w-lg">
             <div className="flex justify-between items-center">
               <h4 className="font-semibold">Select student for {selectedSlot} on {date}</h4>
