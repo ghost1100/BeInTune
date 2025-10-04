@@ -341,7 +341,7 @@ function ScheduleManager({visual}:{visual?:boolean}={}){
               <div key={s} className="">
                 <button
                   onClick={()=>{ if(!booked) toggle(s); }}
-                  className={`w-full h-10 rounded-md text-sm ${booked? 'bg-red-100 text-red-800 border' : available? 'bg-green-600 text-white' : 'bg-gray-100 text-foreground/80 border'}`}
+                  className={`w-full h-10 rounded-md text-sm ${booked? 'bg-red-600 text-white' : available? 'bg-green-600 text-white' : 'bg-card text-foreground/80 border'}`}
                   title={booked? `Booked by ${booked?.name}` : (available? 'Available - click to remove' : 'Not available - click to add')}
                 >
                   {s}
@@ -772,7 +772,7 @@ function StudentsManager(){
         {students.map(s=> (
           <div key={s.id} className="flex items-center justify-between rounded-md border p-2">
             <div>
-              <div className="font-medium">{s.name} {s.age ? `• ${s.age}` : ''} {s.isElderly ? '• Elderly' : ''}</div>
+              <div className="font-medium">{s.name} {s.age ? `�� ${s.age}` : ''} {s.isElderly ? '• Elderly' : ''}</div>
               <div className="text-sm text-foreground/70">{s.email} {s.phone && `• ${s.phone}`}</div>
               {s.bandName && <div className="text-sm text-foreground/70">Band: {s.bandName}</div>}
               {s.instruments && s.instruments.length>0 && <div className="text-sm text-foreground/70">Instruments: {s.instruments.join(', ')}</div>}
