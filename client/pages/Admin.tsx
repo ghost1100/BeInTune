@@ -382,7 +382,7 @@ function ScheduleManager({visual}:{visual?:boolean}={}){
               <div className="mt-3 max-h-64 overflow-auto space-y-2">
                 {filteredStudents.length===0 && <div className="text-foreground/70">No students found.</div>}
                 {filteredStudents.map(s=> (
-                  <div key={s.id} className={`p-2 rounded-md border flex items-center justify-between ${selectedStudentId===s.id ? 'bg-gray-100' : ''}`}>
+                  <div key={s.id} className={`p-2 rounded-md border flex items-center justify-between ${selectedStudentId===s.id ? 'bg-card' : ''}`}>
                     <div>
                       <div className="font-medium">{s.name} {s.age ? `• ${s.age}` : ''}</div>
                       <div className="text-sm text-foreground/70">{s.email} {s.phone && `• ${s.phone}`}</div>
@@ -772,7 +772,7 @@ function StudentsManager(){
         {students.map(s=> (
           <div key={s.id} className="flex items-center justify-between rounded-md border p-2">
             <div>
-              <div className="font-medium">{s.name} {s.age ? `�� ${s.age}` : ''} {s.isElderly ? '• Elderly' : ''}</div>
+              <div className="font-medium">{s.name} {s.age ? `• ${s.age}` : ''} {s.isElderly ? '• Elderly' : ''}</div>
               <div className="text-sm text-foreground/70">{s.email} {s.phone && `• ${s.phone}`}</div>
               {s.bandName && <div className="text-sm text-foreground/70">Band: {s.bandName}</div>}
               {s.instruments && s.instruments.length>0 && <div className="text-sm text-foreground/70">Instruments: {s.instruments.join(', ')}</div>}
