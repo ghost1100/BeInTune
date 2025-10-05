@@ -19,6 +19,7 @@ import {
 import ThemeHomePreview from "@/components/admin/ThemeHomePreview";
 import useTheme from "@/hooks/useTheme";
 import NewsletterComposer from "@/components/admin/NewsletterComposer";
+import StudentPasswordControls from "@/components/admin/StudentPasswordControls";
 
 type Teacher = {
   id: string;
