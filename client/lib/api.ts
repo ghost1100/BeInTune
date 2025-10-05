@@ -21,10 +21,29 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
   try {
     res = await fetch(input, opts);
   } catch (err: any) {
-    // Network or CORS failure
-    throw new Error(
-      `Network request failed for ${typeof input === "string" ? input : "request"}: ${err?.message || err}`,
-    );
+    // Network or CORS failure — attempt common fallbacks for serverless deployments
+    const attempted: string[] = [];
+    try {
+      if (typeof input === "string" && input.startsWith("/api/") && typeof window !== "undefined") {
+        // try Netlify functions path
+        const alt1 = `/.netlify/functions/api${input.slice(4)}`;
+        attempted.push(alt1);
+        try {
+          res = await fetch(alt1, opts);
+        } catch (e) {
+          // try absolute origin + api
+          const alt2 = `${window.location.origin}${input}`;
+          attempted.push(alt2);
+          res = await fetch(alt2, opts);
+        }
+      } else {
+        throw err;
+      }
+    } catch (innerErr: any) {
+      throw new Error(
+        `Network request failed for ${typeof input === "string" ? input : "request"}: ${err?.message || err}. Fallback attempts: ${attempted.join(", ")}. Last error: ${innerErr?.message || innerErr}`,
+      );
+    }
   }
   const contentType = res.headers.get("content-type") || "";
   const isJson = contentType.includes("application/json");
