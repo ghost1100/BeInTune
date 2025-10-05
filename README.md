@@ -183,10 +183,88 @@ Integrations I recommend (available MCP servers):
 
 Note: Neon and Netlify are already connected for this project.
 
-If you'd like me to proceed, reply with one of the following commands:
-- `sweep` — run the final automated repo-wide sweep and apply safe replacements.
-- `hook` — convert remaining files/components to use `useTheme()` where applicable.
-- `auth+db` — start implementing student auth, roles, forum, posts & ephemeral chat (I will request a Supabase connection).
-- `tests` — add tests for theme flows and persistence.
+Security features required (overview)
 
-If you want me to start implementing the student/forum/chat/booking features now, I'll begin by creating a todo plan and asking you to connect Supabase via the MCP popover.
+- Authentication & identity
+  - Use a secure auth provider (Supabase Auth or custom via Neon + OAuth/JWT). Enforce email verification, rate-limit signups, and require strong passwords (min length, complexity). Enable MFA for admin accounts.
+  - Hash passwords using bcrypt/argon2 on the server; never store plaintext. Use secure password reset tokens with single-use and expiry.
+- Authorization & roles
+  - Role-based access control (admin, content-manager, student). Implement server-side checks for every privileged API.
+  - Ability for admin to revoke forum/post access and to mark content as 16+ (age gating). Ensure frontend hides 16+ content unless check passes.
+- Session & token security
+  - Use short-lived access tokens and refresh tokens with secure, HTTP-only cookies (SameSite=strict) or robust JWT handling. Rotate refresh tokens on use.
+  - Protect against CSRF for stateful requests (use SameSite cookies or CSRF tokens).
+- Data protection
+  - Use TLS everywhere (HTTPS) and enforce HSTS. Encrypt sensitive data at rest where supported by the DB/storage provider.
+  - Principle of least privilege for DB users and storage buckets. Use separate DB roles for read/write/admin operations.
+- Media & uploads
+  - Scan uploaded files for malware, restrict allowed file types, apply size limits, and store in a private bucket with signed URLs for public access.
+  - Use storage rules to limit who can upload and who can read media (e.g., only owners and admins for private posts).
+- Ephemeral messages & retention
+  - Implement TTL-based deletion for ephemeral messages (e.g., store createdAt and expireAt, run a scheduled job to delete older messages after 3 weeks). Allow manual save of messages to bypass TTL when user opts in.
+  - Provide audit logs for moderation and deletions.
+- Moderation & content safety
+  - Implement content moderation flows: user reporting, admin review, and automatic filtering (profanity/NSFW detection). Age-gate content flagged as 16+.
+  - Maintain a content visibility flag (public/private/16+) and enforce it on the server.
+- Network & infra
+  - Rate limiting and IP throttling on public APIs. Use Web Application Firewall (Cloudflare or Netlify/proxy rules) for edge protection.
+  - Monitor and log suspicious activity; integrate Sentry for error monitoring and alerts.
+- CI/CD & secrets
+  - Ensure secrets (API keys, DB credentials) are injected via environment variables and stored in the hosting provider’s secret store (Netlify env vars). Do not commit secrets to git.
+  - Run dependency vulnerability scans (npm audit, Snyk) and static analysis (Semgrep). Add automated tests in CI.
+- Compliance & privacy
+  - Provide data export/deletion paths for GDPR. Collect parental consent for under-16 accounts where required. Document retention policies.
+
+Concrete steps to complete (high level)
+
+1) Connect required MCPs
+- Connect Supabase (recommended for auth, DB, realtime), Neon (Postgres) and Netlify (hosting) via the MCP popover: Click [Open MCP popover](#open-mcp-popover) and connect the providers (Supabase, Neon, Netlify). If you specifically want Neon for Postgres, we can use Neon for DB and Supabase just for Auth/Realtime, or choose Supabase for both to simplify integration.
+- Also consider connecting: Builder.io (CMS), Sentry (monitoring), Semgrep (security scanning), Notion (docs), Linear (tickets) and Zapier (automation) via the same popover.
+
+2) Provision DB & auth
+- Create DB schema (users, roles, posts, comments, media, chats, messages, bookings, slots, audit_logs).
+- Set up authentication (email/password, email verification). Use Supabase Auth or build an auth microservice that stores hashed passwords in Neon/Postgres.
+- Implement RBAC: store roles in the users table and check server-side on every API call.
+
+3) Storage & media
+- Create a storage bucket for media (user posts). Enforce server-side checks for file types and sizes. Use signed URLs for uploads/downloads and set read rules per post visibility.
+
+4) Ephemeral chat implementation
+- Design message table with fields: id, senderId, recipientId/roomId, content (encrypted if needed), createdAt, expireAt, savedBy (array), editedAt, deletedAt.
+- Use realtime (Supabase Realtime or websockets) for live delivery. Create a background job (serverless cron or worker) that deletes expired messages.
+
+5) Booking & scheduling sync
+- Move bookings/availability into DB. Implement server-side booking creation with optimistic locking to prevent double-booking.
+- Notify teachers/admins via email or webhook when a slot is booked.
+
+6) Deploy & secure
+- Configure Netlify deploy and set environment variables (DB URL, API keys) in Netlify's dashboard.
+- Enable HTTPS and HSTS. Configure Cloudflare or Netlify Edge rules for WAF if needed.
+- Add CI checks: lint, typecheck, tests, security scans.
+
+7) Monitoring & audits
+- Integrate Sentry and Semgrep. Enable audit logging for admin actions and content moderation.
+
+MCP integrations (reminder)
+- Supabase (recommended for auth, DB, realtime)
+- Neon
+- Netlify
+- Builder.io
+- Prisma Postgres
+- Zapier
+- Figma (plugin)
+- Linear
+- Notion
+- Sentry
+- Context7
+- Semgrep
+
+Next actions I can take for you
+
+- Update the hero subtitle color to be white in light mode (done).
+- If you want, I can:
+  - Run a final `sweep` across the repo to replace remaining hard-coded color utilities.
+  - Start wiring auth & DB: to begin I will need you to click [Open MCP popover](#open-mcp-popover) and connect Supabase or Neon (prefer Supabase for auth/realtime). After connection I will create the initial schema and API endpoints.
+  - Create a security checklist and PR template for future releases (CI integration with Semgrep/Snyk/Sentry).
+
+Reply with which task to start next: `sweep`, `hook`, `auth+db`, or `security-pr`.
