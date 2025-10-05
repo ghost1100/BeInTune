@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Button } from "@/components/ui/button";
 import { getSiteContent } from "@/lib/siteContent";
 import { Sun, Moon } from "lucide-react";
 
