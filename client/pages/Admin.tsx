@@ -647,6 +647,19 @@ export default function Admin() {
   );
 }
 
+function normalizeTime(value: any): string {
+  if (!value && value !== 0) return "";
+  if (typeof value === "string") {
+    const match = value.match(/(\d{2}:\d{2})/);
+    if (match) return match[1];
+    return value;
+  }
+  if (value instanceof Date) {
+    return value.toISOString().slice(11, 16);
+  }
+  return String(value);
+}
+
 function ScheduleManager({ visual }: { visual?: boolean } = {}) {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [slots, setSlots] = useState<string[]>([]);
