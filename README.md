@@ -274,6 +274,15 @@ Note: Neon and Netlify are already connected for this project.
 
 ## New: Gmail & Google Calendar integration (next steps)
 
+### Security & access
+
+- The Discussion, My Learning, and Chats pages are intended for authenticated users only. The app now requires users to be signed in to access these sections; they will be hidden from the header and protected on the client and server-side. Use the `/api/auth/me` endpoint to verify the current user and role.
+
+### DB migration / audit_logs fix
+
+- If you saw errors about missing relations (e.g., `relation "audit_logs" does not exist`), the server will now automatically apply the initial migration (server/db/migrations/001_init.sql) if core tables are missing and also creates missing helper tables such as `audit_logs`, `comments`, `post_reactions`, and `learning_resources` during startup. Check server logs for `Applied initial DB migrations` on startup.
+
+
 This project will add two important features:
 
 1. Sending transactional and scheduled emails using a dedicated Gmail account with an App Password (for admin notifications, booking confirmations and lesson reminders).
