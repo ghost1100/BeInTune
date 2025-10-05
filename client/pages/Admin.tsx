@@ -660,8 +660,10 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
       try {
         const b = await getBookings(date);
         const a = await getAvailability(date);
+        const meta = await getSlotsWithMeta(date);
         setBookingsState(Array.isArray(b) ? b : []);
         setAvailState(Array.isArray(a) ? a : []);
+        setSlotMeta(Array.isArray(meta) ? meta : []);
       } catch (e) {
         console.error(e);
       }
@@ -1815,7 +1817,7 @@ function StudentsManager() {
                 {s.isElderly ? "• Elderly" : ""}
               </div>
               <div className="text-sm text-foreground/70">
-                {s.email} {s.phone && `�� ${s.phone}`}
+                {s.email} {s.phone && `• ${s.phone}`}
               </div>
               {s.bandName && (
                 <div className="text-sm text-foreground/70">
