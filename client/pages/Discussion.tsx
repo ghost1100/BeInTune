@@ -24,12 +24,10 @@ export default function Discussion() {
 
   async function load() {
     try {
-      const res = await fetch("/api/posts");
-      if (!res.ok) throw new Error("Failed to load posts");
-      const j = await res.json();
-      setPosts(j);
+      const j = await (await import('@/lib/api')).apiFetch('/api/posts');
+      setPosts(j as any[]);
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Failed to load" });
+      toast({ title: 'Error', description: err?.message || 'Failed to load' });
     }
   }
 
