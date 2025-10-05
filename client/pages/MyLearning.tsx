@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import useAuth from "@/hooks/use-auth";
 
 function fileToBase64(file: File) {
   return new Promise<string>((resolve, reject) => {
