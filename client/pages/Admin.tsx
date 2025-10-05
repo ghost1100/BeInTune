@@ -1744,7 +1744,10 @@ function StudentsManager() {
 
   const addResourceFiles = useCallback(
     (incoming: FileList | File[]) => {
-      const list = Array.from(incoming ?? []);
+      if (!incoming) return;
+      const list = Array.isArray(incoming)
+        ? [...incoming]
+        : Array.from(incoming);
       if (!list.length) return;
       const accepted: File[] = [];
       const rejected: string[] = [];
