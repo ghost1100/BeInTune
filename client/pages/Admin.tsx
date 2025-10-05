@@ -310,6 +310,22 @@ export default function Admin() {
             Reports
           </button>
           <button
+            onClick={() => setActiveTab("discussion")}
+            role="tab"
+            aria-selected={activeTab === "discussion"}
+            className={`px-4 py-2 rounded-md ${activeTab === "discussion" ? "bg-card shadow" : "bg-muted"} text-foreground`}
+          >
+            Discussion
+          </button>
+          <button
+            onClick={() => setActiveTab("chats")}
+            role="tab"
+            aria-selected={activeTab === "chats"}
+            className={`px-4 py-2 rounded-md ${activeTab === "chats" ? "bg-card shadow" : "bg-muted"} text-foreground`}
+          >
+            Chats
+          </button>
+          <button
             onClick={() => setActiveTab("security")}
             role="tab"
             aria-selected={activeTab === "security"}
