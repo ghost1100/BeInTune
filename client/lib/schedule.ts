@@ -61,7 +61,15 @@ async function readBookings(date?: string): Promise<Booking[]> {
     const api = (await import("@/lib/api")).apiFetch;
     const rows = await api(`/api/admin/bookings${q}`);
     if (!rows) return [];
-    return Array.isArray(rows) ? rows : (rows.rows || []);
+    const list = Array.isArray(rows)
+      ? rows
+      : rows && Array.isArray((rows as any).rows)
+        ? (rows as any).rows
+        : [];
+    return list.map((r: any) => ({
+      ...r,
+      time: normalizeTime(r.time || r.slot_time || r.slotTime),
+    }));
   } catch (e) {
     console.error("readBookings error", e);
     return [];
