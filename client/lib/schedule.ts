@@ -39,6 +39,7 @@ async function readAvail(date?: string): Promise<Record<string, string[]>> {
         : [];
 
     const defaults = new Set(getSlotsForDay(d));
+    const allowedTimes = new Set(defaults);
 
     if (list.length === 0) {
       map[d] = Array.from(defaults);
@@ -49,7 +50,7 @@ async function readAvail(date?: string): Promise<Record<string, string[]>> {
       const time = normalizeTime(
         entry.slot_time || entry.slotTime || entry.time,
       );
-      if (!time) continue;
+      if (!time || !allowedTimes.has(time)) continue;
       if (entry.is_available === false) {
         defaults.delete(time);
       } else {
