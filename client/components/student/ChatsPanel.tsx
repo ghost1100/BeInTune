@@ -127,6 +127,26 @@ export default function ChatsPanel({ className }: { className?: string }) {
     }
   }
 
+  async function handleMessageReaction(messageId: string, reaction: string, current?: string | null) {
+    try {
+      if (current === reaction) {
+        await (await import("@/lib/api")).apiFetch(`/api/admin/messages/${messageId}/reactions`, { method: "DELETE" });
+      } else {
+        await (await import("@/lib/api")).apiFetch(`/api/admin/messages/${messageId}/reactions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: reaction }),
+        });
+      }
+      setTimeout(() => loadMessages(), 200);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingMessageText, setEditingMessageText] = useState("");
+
   return (
     <section className={cn("space-y-6", className)}>
       <div className="flex flex-col gap-1">
@@ -178,21 +198,122 @@ export default function ChatsPanel({ className }: { className?: string }) {
         <div className="flex flex-col rounded-lg border bg-card p-4">
           <div className="flex-1 space-y-2 overflow-auto">
             {conversationMessages().map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "max-w-sm rounded p-2 text-sm",
-                  message.sender_id === user?.id
-                    ? "ml-auto bg-primary/10 text-right"
-                    : "mr-auto bg-muted/60 text-left",
-                )}
-              >
-                <p>{message.content}</p>
-                {message.created_at && (
-                  <time className="mt-1 block text-xs text-foreground/60">
-                    {new Date(message.created_at).toLocaleString()}
-                  </time>
-                )}
+              <div key={message.id} className="relative">
+                <div
+                  className={cn(
+                    "max-w-sm rounded p-2 text-sm",
+                    message.sender_id === user?.id
+                      ? "ml-auto bg-primary/10 text-right"
+                      : "mr-auto bg-muted/60 text-left",
+                  )}
+                >
+                  {editingMessageId === message.id ? (
+                    <div>
+                      <input
+                        value={editingMessageText}
+                        onChange={(e) => setEditingMessageText(e.target.value)}
+                        className="w-full rounded border p-2 text-sm"
+                      />
+                      <div className="flex gap-2 mt-2 justify-end">
+                        <button
+                          className="px-3 py-1 rounded bg-primary text-primary-foreground"
+                          onClick={async () => {
+                            try {
+                              await (await import("@/lib/api")).apiFetch(`/api/admin/messages/${message.id}`, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ content: editingMessageText }),
+                              });
+                              setEditingMessageId(null);
+                              setEditingMessageText("");
+                              loadMessages();
+                              toast({ title: "Message updated" });
+                            } catch (err: any) {
+                              toast({ title: "Unable to update", description: err?.message });
+                            }
+                          }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="px-3 py-1 rounded border"
+                          onClick={() => {
+                            setEditingMessageId(null);
+                            setEditingMessageText("");
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p>{message.content}</p>
+                      {message.created_at && (
+                        <time className="mt-1 block text-xs text-foreground/60">
+                          {new Date(message.created_at).toLocaleString()}
+                        </time>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* reactions and controls */}
+                <div className="mt-1 flex items-center gap-2 text-xs ml-2">
+                  {[
+                    ["heart", "❤️"],
+                    ["like", "👍"],
+                    ["smile", "😊"],
+                  ].map(([type, icon]) => {
+                    const count = (message as any).reactions && ((message as any).reactions as any)[type] || 0;
+                    const active = (message as any).user_reaction === type;
+                    return (
+                      <button
+                        key={type}
+                        onClick={() => handleMessageReaction(message.id, type as string, (message as any).user_reaction)}
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded ${active ? "bg-primary/20" : "hover:bg-muted/20"}`}
+                      >
+                        <span aria-hidden>{icon}</span>
+                        <span className="text-xs font-medium">{count}</span>
+                      </button>
+                    );
+                  })}
+
+                  {/* edited tag */}
+                  {message.edited_at && (
+                    <div className="text-xs text-black dark:text-blue-400">edited</div>
+                  )}
+
+                  {/* edit/delete for sender */}
+                  {message.sender_id === user?.id && (
+                    <div className="ml-auto flex items-center gap-2 border-dashed border rounded px-2 py-1">
+                      <button
+                        className="text-sm px-2"
+                        onClick={() => {
+                          setEditingMessageId(message.id);
+                          setEditingMessageText(message.content);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="text-sm text-destructive"
+                        onClick={async () => {
+                          if (!confirm("Delete this message?")) return;
+                          try {
+                            await (await import("@/lib/api")).apiFetch(`/api/admin/messages/${message.id}`, { method: "DELETE" });
+                            loadMessages();
+                            toast({ title: "Message deleted" });
+                          } catch (err: any) {
+                            toast({ title: "Unable to delete", description: err?.message });
+                          }
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
             {!selected && (
