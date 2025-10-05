@@ -2,13 +2,16 @@ import { Link, NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Logo } from "./Logo";
 import ThemeToggle from "./ThemeToggle";
+import useAuth from "@/hooks/use-auth";
 
-const nav = [
+const publicNav = [
   { href: "/lessons", label: "Lessons" },
   { href: "/teachers", label: "Teachers" },
   { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
+];
+const protectedNav = [
   { href: "/discussion", label: "Discussion" },
   { href: "/mylearning", label: "My Learning" },
   { href: "/chats", label: "Chats" },
