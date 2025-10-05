@@ -719,7 +719,13 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                   <div key={s} className="flex items-center gap-2">
                     <div
                       onClick={() => {
-                        if (!booked) toggle(s);
+                        if (booked) return;
+                        if (available) {
+                          setSelectedSlot(s);
+                          setShowStudentModal(true);
+                        } else {
+                          toggle(s);
+                        }
                       }}
                       className={`w-full rounded-md py-2 px-3 text-sm cursor-pointer ${booked ? "bg-destructive text-destructive-foreground" : available ? "bg-primary text-primary-foreground" : "bg-card text-foreground/80 border"}`}
                     >
