@@ -38,7 +38,7 @@ export async function ensureDbSetup() {
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS about text;");
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS image text;");
 
-    // Ensure comment, reaction, and learning tables exist
+    // Ensure comment, reaction, learning and audit tables exist
     await query(`CREATE TABLE IF NOT EXISTS comments (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
       post_id uuid REFERENCES posts(id) ON DELETE CASCADE,
@@ -62,6 +62,14 @@ export async function ensureDbSetup() {
       title text,
       description text,
       media jsonb DEFAULT '[]',
+      created_at timestamptz NOT NULL DEFAULT now()
+    )`);
+
+    await query(`CREATE TABLE IF NOT EXISTS audit_logs (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid REFERENCES users(id) ON DELETE SET NULL,
+      action text NOT NULL,
+      meta jsonb DEFAULT '{}',
       created_at timestamptz NOT NULL DEFAULT now()
     )`);
 
