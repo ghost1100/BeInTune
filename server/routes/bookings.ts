@@ -56,13 +56,13 @@ router.get("/bookings", async (req, res) => {
          LEFT JOIN slots sl ON b.slot_id = sl.id
          LEFT JOIN students s ON b.student_id = s.id
          LEFT JOIN users u ON s.user_id = u.id
-         ORDER BY sl.slot_date DESC, sl.slot_time ASC`
+         ORDER BY sl.slot_date DESC, sl.slot_time ASC`,
       );
     }
     res.json(q.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to load bookings' });
+    res.status(500).json({ error: "Failed to load bookings" });
   }
 });
 

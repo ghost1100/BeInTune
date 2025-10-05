@@ -61,7 +61,8 @@ export const API = {
       return { ok: true, skipped: true };
     }
     if (!res.ok) {
-      const message = body?.error || body?.message || "Failed to delete student";
+      const message =
+        body?.error || body?.message || "Failed to delete student";
       throw new Error(message);
     }
     if (body && typeof body === "object" && body.ok === false) {

@@ -46,7 +46,9 @@ async function readAvail(date?: string): Promise<Record<string, string[]>> {
     }
 
     for (const entry of list) {
-      const time = normalizeTime(entry.slot_time || entry.slotTime || entry.time);
+      const time = normalizeTime(
+        entry.slot_time || entry.slotTime || entry.time,
+      );
       if (!time) continue;
       if (entry.is_available === false) {
         defaults.delete(time);
@@ -182,7 +184,10 @@ export async function addBooking(
       const create = await api(`/api/admin/slots`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slot_date: booking.date, slot_time: booking.time }),
+        body: JSON.stringify({
+          slot_date: booking.date,
+          slot_time: booking.time,
+        }),
       }).catch(() => null);
       if (!create || !create.id) {
         return null;
@@ -215,7 +220,6 @@ export async function removeBooking(id: string) {
     console.error(e);
   }
 }
-
 
 export function isSlotBooked(date: string, time: string): boolean {
   // synchronous check not supported for API-backed storage

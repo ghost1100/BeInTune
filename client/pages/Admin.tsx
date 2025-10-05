@@ -263,7 +263,9 @@ export default function Admin() {
               <div className="md:col-span-1 rounded-lg border p-4">
                 <h2 className="font-semibold">Add / edit teacher</h2>
                 <form className="mt-3" onSubmit={add}>
-                  <label htmlFor="teacherName" className="sr-only">Name</label>
+                  <label htmlFor="teacherName" className="sr-only">
+                    Name
+                  </label>
                   <input
                     id="teacherName"
                     name="name"
@@ -275,7 +277,9 @@ export default function Admin() {
                     }
                     autoComplete="name"
                   />
-                  <label htmlFor="teacherEmail" className="sr-only">Email</label>
+                  <label htmlFor="teacherEmail" className="sr-only">
+                    Email
+                  </label>
                   <input
                     id="teacherEmail"
                     name="email"
@@ -287,7 +291,9 @@ export default function Admin() {
                     }
                     autoComplete="email"
                   />
-                  <label htmlFor="teacherPhone" className="sr-only">Phone</label>
+                  <label htmlFor="teacherPhone" className="sr-only">
+                    Phone
+                  </label>
                   <input
                     id="teacherPhone"
                     name="phone"
@@ -299,7 +305,9 @@ export default function Admin() {
                     }
                     autoComplete="tel"
                   />
-                  <label htmlFor="teacherYears" className="sr-only">Years of experience</label>
+                  <label htmlFor="teacherYears" className="sr-only">
+                    Years of experience
+                  </label>
                   <input
                     id="teacherYears"
                     name="years"
@@ -311,7 +319,9 @@ export default function Admin() {
                     }
                     autoComplete="off"
                   />
-                  <label htmlFor="teacherAbout" className="sr-only">About</label>
+                  <label htmlFor="teacherAbout" className="sr-only">
+                    About
+                  </label>
                   <textarea
                     id="teacherAbout"
                     name="about"
@@ -324,7 +334,10 @@ export default function Admin() {
                   />
 
                   <div className="mb-2">
-                    <label htmlFor="teacherImage" className="block text-sm font-medium mb-2">
+                    <label
+                      htmlFor="teacherImage"
+                      className="block text-sm font-medium mb-2"
+                    >
                       Profile picture (drop file or choose)
                     </label>
                     <div
@@ -416,7 +429,9 @@ export default function Admin() {
                     }))
                   }
                 />
-                <label htmlFor="heroHeading" className="sr-only">Hero heading</label>
+                <label htmlFor="heroHeading" className="sr-only">
+                  Hero heading
+                </label>
                 <input
                   id="heroHeading"
                   name="heroHeading"
@@ -430,7 +445,9 @@ export default function Admin() {
                     }))
                   }
                 />
-                <label htmlFor="heroSubheading" className="sr-only">Hero subheading</label>
+                <label htmlFor="heroSubheading" className="sr-only">
+                  Hero subheading
+                </label>
                 <input
                   id="heroSubheading"
                   name="heroSubheading"
@@ -444,7 +461,9 @@ export default function Admin() {
                     }))
                   }
                 />
-                <label htmlFor="ctaPrimary" className="sr-only">Primary CTA</label>
+                <label htmlFor="ctaPrimary" className="sr-only">
+                  Primary CTA
+                </label>
                 <input
                   id="ctaPrimary"
                   name="ctaPrimary"
@@ -458,7 +477,9 @@ export default function Admin() {
                     }))
                   }
                 />
-                <label htmlFor="ctaSecondary" className="sr-only">Secondary CTA</label>
+                <label htmlFor="ctaSecondary" className="sr-only">
+                  Secondary CTA
+                </label>
                 <input
                   id="ctaSecondary"
                   name="ctaSecondary"
@@ -472,7 +493,9 @@ export default function Admin() {
                     }))
                   }
                 />
-                <label htmlFor="programsIntro" className="sr-only">Programs intro</label>
+                <label htmlFor="programsIntro" className="sr-only">
+                  Programs intro
+                </label>
                 <textarea
                   id="programsIntro"
                   name="programsIntro"
@@ -486,7 +509,9 @@ export default function Admin() {
                     }))
                   }
                 />
-                <label htmlFor="aboutHtml" className="sr-only">About HTML</label>
+                <label htmlFor="aboutHtml" className="sr-only">
+                  About HTML
+                </label>
                 <textarea
                   id="aboutHtml"
                   name="aboutHtml"
@@ -500,7 +525,9 @@ export default function Admin() {
                     }))
                   }
                 />
-                <label htmlFor="siteAddress" className="sr-only">Address</label>
+                <label htmlFor="siteAddress" className="sr-only">
+                  Address
+                </label>
                 <input
                   id="siteAddress"
                   name="address"
@@ -514,7 +541,9 @@ export default function Admin() {
                     }))
                   }
                 />
-                <label htmlFor="siteEmail" className="sr-only">Email</label>
+                <label htmlFor="siteEmail" className="sr-only">
+                  Email
+                </label>
                 <input
                   id="siteEmail"
                   name="email"
@@ -528,7 +557,9 @@ export default function Admin() {
                     }))
                   }
                 />
-                <label htmlFor="sitePhone" className="sr-only">Phone</label>
+                <label htmlFor="sitePhone" className="sr-only">
+                  Phone
+                </label>
                 <input
                   id="sitePhone"
                   name="phone"
@@ -781,7 +812,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
             <div className="space-y-2">
               {slots.map((s) => {
                 const meta = slotMeta.find(
-                  (m) => normalizeTime(m.slot_time || m.slotTime || m.time) === s,
+                  (m) =>
+                    normalizeTime(m.slot_time || m.slotTime || m.time) === s,
                 );
                 const booked = bookingsState.find((b) => b.time === s);
                 const available = availState.includes(s);
@@ -908,7 +940,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                 {b.time} — {b.student_name || b.name || "Student"}
               </div>
               <div className="text-sm text-foreground/70">
-                {(b.student_email || b.email || "") && (b.student_email || b.email)}
+                {(b.student_email || b.email || "") &&
+                  (b.student_email || b.email)}
                 {b.phone ? ` • ${b.phone}` : ""}
                 {b.lessonType ? ` • ${b.lessonType}` : ""}
               </div>
@@ -1847,60 +1880,61 @@ function StudentsManager() {
               key={studentId || userId}
               className="flex items-center justify-between rounded-md border p-2"
             >
-            <div>
-              <div className="font-medium">
-                {s.name} {s.age ? `• ${s.age}` : ""}{" "}
-                {s.isElderly ? "• Elderly" : ""}
+              <div>
+                <div className="font-medium">
+                  {s.name} {s.age ? `• ${s.age}` : ""}{" "}
+                  {s.isElderly ? "• Elderly" : ""}
+                </div>
+                <div className="text-sm text-foreground/70">
+                  {s.email} {s.phone && `• ${s.phone}`}
+                </div>
+                {s.bandName && (
+                  <div className="text-sm text-foreground/70">
+                    Band: {s.bandName}
+                  </div>
+                )}
+                {s.instruments && s.instruments.length > 0 && (
+                  <div className="text-sm text-foreground/70">
+                    Instruments: {s.instruments.join(", ")}
+                  </div>
+                )}
+                {s.parentGuardianName && (
+                  <div className="text-sm text-foreground/70">
+                    Guardian: {s.parentGuardianName}{" "}
+                    {s.parentGuardianPhone && `• ${s.parentGuardianPhone}`}
+                  </div>
+                )}
+                {s.isElderly && s.medications && (
+                  <div className="text-sm text-foreground/70">
+                    Medications: {s.medications}
+                  </div>
+                )}
+                {s.allergies && (
+                  <div className="text-sm text-foreground/70">
+                    Allergies: {s.allergies}
+                  </div>
+                )}
+                <div className="text-sm text-foreground/70">
+                  Marketing consent:{" "}
+                  {s.marketing_consent || s.marketingConsent ? "Yes" : "No"}
+                </div>
               </div>
-              <div className="text-sm text-foreground/70">
-                {s.email} {s.phone && `• ${s.phone}`}
-              </div>
-              {s.bandName && (
-                <div className="text-sm text-foreground/70">
-                  Band: {s.bandName}
-                </div>
-              )}
-              {s.instruments && s.instruments.length > 0 && (
-                <div className="text-sm text-foreground/70">
-                  Instruments: {s.instruments.join(", ")}
-                </div>
-              )}
-              {s.parentGuardianName && (
-                <div className="text-sm text-foreground/70">
-                  Guardian: {s.parentGuardianName}{" "}
-                  {s.parentGuardianPhone && `• ${s.parentGuardianPhone}`}
-                </div>
-              )}
-              {s.isElderly && s.medications && (
-                <div className="text-sm text-foreground/70">
-                  Medications: {s.medications}
-                </div>
-              )}
-              {s.allergies && (
-                <div className="text-sm text-foreground/70">
-                  Allergies: {s.allergies}
-                </div>
-              )}
-              <div className="text-sm text-foreground/70">
-                Marketing consent: {s.marketing_consent || s.marketingConsent ? "Yes" : "No"}
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => edit(s)}
+                  className="px-2 py-1 rounded-md border"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => remove(studentId)}
+                  className="px-2 py-1 rounded-md border"
+                >
+                  Remove
+                </button>
               </div>
             </div>
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => edit(s)}
-                className="px-2 py-1 rounded-md border"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => remove(studentId)}
-                className="px-2 py-1 rounded-md border"
-              >
-                Remove
-              </button>
-            </div>
-          </div>
-        );
+          );
         })}
       </div>
     </div>

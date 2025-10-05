@@ -15,8 +15,14 @@ export default function Chats() {
 
   async function loadMessages() {
     try {
-      const j = await (await import("@/lib/api")).apiFetch("/api/admin/messages?limit=200");
-      const arr = Array.isArray(j) ? j : (j && (j as any).rows ? (j as any).rows : []);
+      const j = await (
+        await import("@/lib/api")
+      ).apiFetch("/api/admin/messages?limit=200");
+      const arr = Array.isArray(j)
+        ? j
+        : j && (j as any).rows
+          ? (j as any).rows
+          : [];
       setMessages(arr.reverse()); // oldest first
     } catch (e) {
       console.error(e);
@@ -26,8 +32,14 @@ export default function Chats() {
 
   async function loadStudents() {
     try {
-      const j = await (await import("@/lib/api")).apiFetch('/api/admin/students');
-      const list = Array.isArray(j) ? j : (j && (j as any).rows ? (j as any).rows : []);
+      const j = await (
+        await import("@/lib/api")
+      ).apiFetch("/api/admin/students");
+      const list = Array.isArray(j)
+        ? j
+        : j && (j as any).rows
+          ? (j as any).rows
+          : [];
       setStudents(list);
     } catch (e) {
       console.error(e);
@@ -38,12 +50,12 @@ export default function Chats() {
   useEffect(() => {
     loadStudents();
     loadMessages();
-    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
     const ws = new WebSocket(`${proto}://${window.location.host}/ws`);
-    ws.addEventListener('message', (ev) => {
+    ws.addEventListener("message", (ev) => {
       try {
         const msg = JSON.parse(ev.data);
-        if (msg.type === 'message:new') {
+        if (msg.type === "message:new") {
           // append
           setMessages((m) => [msg.payload, ...m]);
         }
@@ -70,7 +82,9 @@ export default function Chats() {
     if (!text || !selected) return;
     try {
       const recipient = selected.user_id || selected.userId || selected.id;
-      await (await import("@/lib/api")).apiFetch("/api/admin/messages", {
+      await (
+        await import("@/lib/api")
+      ).apiFetch("/api/admin/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: text, recipient_id: recipient }),
@@ -88,7 +102,9 @@ export default function Chats() {
     setQuery(q);
     if (!q || q.length < 1) return setSearchResults([]);
     try {
-      const filtered = students.filter((s: any) => (s.name || s.email || '').toLowerCase().includes(q.toLowerCase()));
+      const filtered = students.filter((s: any) =>
+        (s.name || s.email || "").toLowerCase().includes(q.toLowerCase()),
+      );
       setSearchResults(filtered);
     } catch (e) {
       console.error(e);
@@ -101,11 +117,24 @@ export default function Chats() {
       <h2 className="text-xl font-semibold">Chats</h2>
       <div className="mt-4 bg-card p-4 rounded flex gap-4">
         <aside className="w-64 border rounded p-2">
-          <label htmlFor="searchStudents" className="sr-only">Search students</label>
-          <input id="searchStudents" name="search" className="w-full p-2 rounded border mb-2" placeholder="Search students" value={query} onChange={(e)=>search(e.target.value)} />
+          <label htmlFor="searchStudents" className="sr-only">
+            Search students
+          </label>
+          <input
+            id="searchStudents"
+            name="search"
+            className="w-full p-2 rounded border mb-2"
+            placeholder="Search students"
+            value={query}
+            onChange={(e) => search(e.target.value)}
+          />
           <div className="space-y-2 max-h-[60vh] overflow-auto">
-            {(searchResults.length?searchResults:students).map((s)=> (
-              <div key={s.student_id || s.id} className={`p-2 rounded cursor-pointer ${selected && (selected.student_id||selected.id) === (s.student_id||s.id) ? 'bg-muted':''}`} onClick={()=>setSelected(s)}>
+            {(searchResults.length ? searchResults : students).map((s) => (
+              <div
+                key={s.student_id || s.id}
+                className={`p-2 rounded cursor-pointer ${selected && (selected.student_id || selected.id) === (s.student_id || s.id) ? "bg-muted" : ""}`}
+                onClick={() => setSelected(s)}
+              >
                 <div className="font-medium">{s.name || s.email}</div>
                 <div className="text-sm text-foreground/70">{s.email}</div>
               </div>
@@ -114,17 +143,37 @@ export default function Chats() {
         </aside>
         <section className="flex-1 flex flex-col">
           <div className="flex-1 overflow-auto p-2 space-y-2 max-h-[60vh]">
-            {conversationMessages().map((m)=> (
-              <div key={m.id} className={`p-2 rounded ${m.sender_id===user?.id? 'bg-primary/10 self-end text-right':'bg-card/90 self-start text-left'}`}>
+            {conversationMessages().map((m) => (
+              <div
+                key={m.id}
+                className={`p-2 rounded ${m.sender_id === user?.id ? "bg-primary/10 self-end text-right" : "bg-card/90 self-start text-left"}`}
+              >
                 <div className="text-sm text-foreground/80">{m.content}</div>
-                <div className="text-xs text-foreground/60 mt-1">{new Date(m.created_at).toLocaleString()}</div>
+                <div className="text-xs text-foreground/60 mt-1">
+                  {new Date(m.created_at).toLocaleString()}
+                </div>
               </div>
             ))}
           </div>
           <div className="mt-2 flex gap-2">
-            <label htmlFor="chatMessage" className="sr-only">Message</label>
-            <input id="chatMessage" name="message" className="flex-1 p-2 rounded border" value={text} onChange={(e)=>setText(e.target.value)} placeholder={selected?`Message ${selected.name||selected.email}`:'Select a student to chat'} />
-            <Button onClick={send} disabled={!selected}>Send</Button>
+            <label htmlFor="chatMessage" className="sr-only">
+              Message
+            </label>
+            <input
+              id="chatMessage"
+              name="message"
+              className="flex-1 p-2 rounded border"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={
+                selected
+                  ? `Message ${selected.name || selected.email}`
+                  : "Select a student to chat"
+              }
+            />
+            <Button onClick={send} disabled={!selected}>
+              Send
+            </Button>
           </div>
         </section>
       </div>

@@ -21,12 +21,12 @@ export default function Discussion() {
   useEffect(() => {
     load();
     // setup websocket for realtime
-    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
     const ws = new WebSocket(`${proto}://${window.location.host}/ws`);
-    ws.addEventListener('message', (ev) => {
+    ws.addEventListener("message", (ev) => {
       try {
         const msg = JSON.parse(ev.data);
-        if (msg.type === 'post:new') {
+        if (msg.type === "post:new") {
           // reload posts
           load();
         }
@@ -34,16 +34,22 @@ export default function Discussion() {
         // ignore
       }
     });
-    return () => { ws.close(); };
+    return () => {
+      ws.close();
+    };
   }, []);
 
   async function load() {
     try {
-      const j = await (await import('@/lib/api')).apiFetch('/api/posts');
-      const arr = Array.isArray(j) ? j : (j && (j as any).rows ? (j as any).rows : []);
+      const j = await (await import("@/lib/api")).apiFetch("/api/posts");
+      const arr = Array.isArray(j)
+        ? j
+        : j && (j as any).rows
+          ? (j as any).rows
+          : [];
       setPosts(arr as any[]);
     } catch (err: any) {
-      toast({ title: 'Error', description: err?.message || 'Failed to load' });
+      toast({ title: "Error", description: err?.message || "Failed to load" });
     }
   }
 
@@ -52,14 +58,19 @@ export default function Discussion() {
     for (const f of Array.from(files)) {
       try {
         const b64 = await fileToBase64(f);
-        const p = await (await import('@/lib/api')).apiFetch('/api/admin/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const p = await (
+          await import("@/lib/api")
+        ).apiFetch("/api/admin/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ filename: f.name, data: b64 }),
         });
         // apiFetch returns parsed JSON or text
-        if (!p || (typeof p === 'string')) throw new Error('Upload failed');
-        setAttachments((a) => [...a, { id: (p as any).id, url: (p as any).url, mime: f.type }]);
+        if (!p || typeof p === "string") throw new Error("Upload failed");
+        setAttachments((a) => [
+          ...a,
+          { id: (p as any).id, url: (p as any).url, mime: f.type },
+        ]);
       } catch (err: any) {
         toast({
           title: "Upload error",
@@ -72,17 +83,22 @@ export default function Discussion() {
   async function submitPost() {
     if (!body && attachments.length === 0) return;
     try {
-      const r = await (await import('@/lib/api')).apiFetch('/api/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body, attachments: attachments.map((a) => a.id) }),
+      const r = await (
+        await import("@/lib/api")
+      ).apiFetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          body,
+          attachments: attachments.map((a) => a.id),
+        }),
       });
-      setBody('');
+      setBody("");
       setAttachments([]);
-      toast({ title: 'Posted' });
+      toast({ title: "Posted" });
       load();
     } catch (err: any) {
-      toast({ title: 'Error', description: err?.message || 'Failed' });
+      toast({ title: "Error", description: err?.message || "Failed" });
     }
   }
 
@@ -90,7 +106,9 @@ export default function Discussion() {
     <div className="container mx-auto py-8">
       <h2 className="text-xl font-semibold">Community Discussion</h2>
       <div className="mt-4 bg-card p-4 rounded">
-        <label htmlFor="postBody" className="sr-only">Share something</label>
+        <label htmlFor="postBody" className="sr-only">
+          Share something
+        </label>
         <textarea
           id="postBody"
           name="body"
@@ -178,18 +196,43 @@ export default function Discussion() {
             )}
             <div className="mt-2 flex items-center gap-3 text-sm text-foreground/70">
               <div className="flex items-center gap-2">
-                {['heart','like','smile','clap','wow','sad'].map((r) => (
-                  <button key={r} className="text-lg" onClick={async ()=>{
-                    try{
-                      await (await import('@/lib/api')).apiFetch(`/api/posts/${p.id}/reactions`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ type: r }) });
-                      load();
-                    }catch(e){console.error(e);}
-                  }}>
-                    {{ heart: '❤️', like: '👍', smile: '😊', clap: '👏', wow: '😮', sad: '😢' }[r]}
+                {["heart", "like", "smile", "clap", "wow", "sad"].map((r) => (
+                  <button
+                    key={r}
+                    className="text-lg"
+                    onClick={async () => {
+                      try {
+                        await (
+                          await import("@/lib/api")
+                        ).apiFetch(`/api/posts/${p.id}/reactions`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ type: r }),
+                        });
+                        load();
+                      } catch (e) {
+                        console.error(e);
+                      }
+                    }}
+                  >
+                    {
+                      {
+                        heart: "❤️",
+                        like: "👍",
+                        smile: "😊",
+                        clap: "👏",
+                        wow: "😮",
+                        sad: "😢",
+                      }[r]
+                    }
                   </button>
                 ))}
               </div>
-              <div>{Object.entries(p.reactions || {}).map(([k, v]) => `${k}: ${v}`).join(' • ')}</div>
+              <div>
+                {Object.entries(p.reactions || {})
+                  .map(([k, v]) => `${k}: ${v}`)
+                  .join(" • ")}
+              </div>
               <div>{p.comment_count} comments</div>
             </div>
             <div className="mt-2">
@@ -205,39 +248,76 @@ export default function Discussion() {
 function Comments({ postId }: { postId: string }) {
   const [comments, setComments] = useState<any[]>([]);
   const [text, setText] = useState("");
-  useEffect(()=>{(async ()=>{
-    try{
-      const j = await (await import('@/lib/api')).apiFetch(`/api/posts/${postId}/comments`);
-      const arr = Array.isArray(j)? j : (j && (j as any).rows? (j as any).rows : []);
-      setComments(arr);
-    }catch(e){console.error(e);}
-  })()},[postId]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const j = await (
+          await import("@/lib/api")
+        ).apiFetch(`/api/posts/${postId}/comments`);
+        const arr = Array.isArray(j)
+          ? j
+          : j && (j as any).rows
+            ? (j as any).rows
+            : [];
+        setComments(arr);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  }, [postId]);
 
-  async function add(){
-    if(!text) return;
-    try{
-      await (await import('@/lib/api')).apiFetch(`/api/posts/${postId}/comments`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ body: text }) });
-      setText('');
-      const j = await (await import('@/lib/api')).apiFetch(`/api/posts/${postId}/comments`);
-      const arr = Array.isArray(j)? j : (j && (j as any).rows? (j as any).rows : []);
+  async function add() {
+    if (!text) return;
+    try {
+      await (
+        await import("@/lib/api")
+      ).apiFetch(`/api/posts/${postId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: text }),
+      });
+      setText("");
+      const j = await (
+        await import("@/lib/api")
+      ).apiFetch(`/api/posts/${postId}/comments`);
+      const arr = Array.isArray(j)
+        ? j
+        : j && (j as any).rows
+          ? (j as any).rows
+          : [];
       setComments(arr);
-    }catch(e){console.error(e);}
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   return (
     <div>
       <div className="space-y-2">
-        {comments.map(c=> (
+        {comments.map((c) => (
           <div key={c.id} className="p-2 border rounded">
-            <div className="font-medium">{c.author_name || 'User'}</div>
+            <div className="font-medium">{c.author_name || "User"}</div>
             <div className="text-sm text-foreground/70">{c.body}</div>
           </div>
         ))}
       </div>
       <div className="mt-2 flex gap-2">
-        <label htmlFor="commentInput" className="sr-only">Add comment</label>
-        <input id="commentInput" name="comment" className="flex-1 p-2 rounded border" value={text} onChange={(e)=>setText(e.target.value)} />
-        <button onClick={add} className="h-10 px-4 rounded-md bg-primary text-primary-foreground">Comment</button>
+        <label htmlFor="commentInput" className="sr-only">
+          Add comment
+        </label>
+        <input
+          id="commentInput"
+          name="comment"
+          className="flex-1 p-2 rounded border"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+        <button
+          onClick={add}
+          className="h-10 px-4 rounded-md bg-primary text-primary-foreground"
+        >
+          Comment
+        </button>
       </div>
     </div>
   );

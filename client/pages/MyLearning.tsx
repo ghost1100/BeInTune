@@ -23,10 +23,16 @@ export default function MyLearning() {
   useEffect(() => {
     (async () => {
       try {
-        const j = await (await import('@/lib/api')).apiFetch('/api/admin/students');
-        const list = Array.isArray(j) ? j : (j && (j as any).rows ? (j as any).rows : []);
+        const j = await (
+          await import("@/lib/api")
+        ).apiFetch("/api/admin/students");
+        const list = Array.isArray(j)
+          ? j
+          : j && (j as any).rows
+            ? (j as any).rows
+            : [];
         // If current user is a student, filter to only their student record
-        if (user && user.role === 'student') {
+        if (user && user.role === "student") {
           const mine = list.find((s: any) => s.user_id === user.id);
           if (mine) {
             setStudents([mine]);
@@ -48,8 +54,14 @@ export default function MyLearning() {
     if (!selected) return;
     (async () => {
       try {
-        const j = await (await import("@/lib/api")).apiFetch(`/api/admin/learning/${selected}`);
-        const arr = Array.isArray(j) ? j : (j && (j as any).rows ? (j as any).rows : []);
+        const j = await (
+          await import("@/lib/api")
+        ).apiFetch(`/api/admin/learning/${selected}`);
+        const arr = Array.isArray(j)
+          ? j
+          : j && (j as any).rows
+            ? (j as any).rows
+            : [];
         setResources(arr as any[]);
       } catch (e) {
         console.error(e);
@@ -64,7 +76,9 @@ export default function MyLearning() {
       const uploaded: any[] = [];
       for (const f of Array.from(files)) {
         const b64 = await fileToBase64(f);
-        const p = await (await import("@/lib/api")).apiFetch("/api/admin/upload", {
+        const p = await (
+          await import("@/lib/api")
+        ).apiFetch("/api/admin/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ filename: f.name, data: b64 }),
@@ -73,12 +87,22 @@ export default function MyLearning() {
         uploaded.push({ id: (p as any).id, url: (p as any).url, mime: f.type });
       }
       // create a learning resource record
-      const r = await (await import("@/lib/api")).apiFetch(`/api/admin/learning/${selected}`, {
+      const r = await (
+        await import("@/lib/api")
+      ).apiFetch(`/api/admin/learning/${selected}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: "Resources", description: "", media: uploaded }),
+        body: JSON.stringify({
+          title: "Resources",
+          description: "",
+          media: uploaded,
+        }),
       });
-      const arr = Array.isArray(r) ? r : (r && (r as any).rows ? (r as any).rows : []);
+      const arr = Array.isArray(r)
+        ? r
+        : r && (r as any).rows
+          ? (r as any).rows
+          : [];
       if (!arr.length) {
         toast({ title: "Uploaded" });
       } else {
@@ -96,12 +120,26 @@ export default function MyLearning() {
     (async () => {
       if (!selected) return;
       try {
-        const j = await (await import('@/lib/api')).apiFetch('/api/admin/bookings');
-        const list = Array.isArray(j) ? j : (j && (j as any).rows ? (j as any).rows : []);
+        const j = await (
+          await import("@/lib/api")
+        ).apiFetch("/api/admin/bookings");
+        const list = Array.isArray(j)
+          ? j
+          : j && (j as any).rows
+            ? (j as any).rows
+            : [];
         // find next upcoming booking for selected student
         const next = list
-          .filter((b: any) => (b.student_id === selected) || (b.student_user_id && user && b.student_user_id === user.id))
-          .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
+          .filter(
+            (b: any) =>
+              b.student_id === selected ||
+              (b.student_user_id && user && b.student_user_id === user.id),
+          )
+          .sort(
+            (a: any, b: any) =>
+              new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime(),
+          )[0];
         setUpcoming(next || null);
       } catch (e) {
         console.error(e);
@@ -140,7 +178,7 @@ export default function MyLearning() {
                 className="hidden"
                 onChange={(e) => uploadResources(e.target.files)}
               />
-              {user && user.role === 'admin' && (
+              {user && user.role === "admin" && (
                 <Button
                   variant="outline"
                   size="sm"

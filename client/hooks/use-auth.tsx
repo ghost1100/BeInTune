@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 export default function useAuth() {
   const [user, setUser] = useState<any | null>(null);
@@ -8,7 +8,7 @@ export default function useAuth() {
     let mounted = true;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        const res = await fetch("/api/auth/me", { credentials: "include" });
         if (!res.ok) {
           setUser(null);
         } else {

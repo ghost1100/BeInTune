@@ -1,5 +1,8 @@
 export async function apiFetch(input: RequestInfo, init?: RequestInit) {
-  const opts = Object.assign({ credentials: "include" } as RequestInit, init || {});
+  const opts = Object.assign(
+    { credentials: "include" } as RequestInit,
+    init || {},
+  );
   const res = await fetch(input, opts);
   const contentType = res.headers.get("content-type") || "";
   const isJson = contentType.includes("application/json");
@@ -50,7 +53,9 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
 
   if (!res.ok) {
     if (isJson && data && typeof data === "object") {
-      const message = (data.error || data.message || data.detail) as string | undefined;
+      const message = (data.error || data.message || data.detail) as
+        | string
+        | undefined;
       if (message) throw new Error(message);
     }
     const snippet = raw ? raw.slice(0, 200) : "";
