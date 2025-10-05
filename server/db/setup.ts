@@ -24,6 +24,20 @@ export async function ensureDbSetup() {
       }
     }
 
+    // If posts table missing (partial DB), attempt to apply migrations as well
+    try {
+      const checkPosts = await query("SELECT to_regclass('public.posts') as reg");
+      const postsExists = checkPosts.rows[0] && checkPosts.rows[0].reg;
+      if (!postsExists) {
+        const migrationsPath = path.join(__dirname, "migrations", "001_init.sql");
+        const sql = await fs.readFile(migrationsPath, "utf-8");
+        await query(sql);
+        console.log("Applied initial DB migrations (posts missing)");
+      }
+    } catch (e) {
+      console.error("Failed to apply migrations for posts (continuing):", e);
+    }
+
     // Add username column if missing (safe after migrations)
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS username text;");
     // Create unique index on username
