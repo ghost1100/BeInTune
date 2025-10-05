@@ -32,15 +32,30 @@ export default function MyLearning() {
   async function uploadResources(files: FileList | null) {
     if (!files || !selected) return;
     try {
-      const form = new FormData();
-      for (const f of Array.from(files)) form.append("files", f, f.name);
-      const res = await fetch(`/api/admin/learning/${selected}`, { method: "POST", body: form });
-      if (!res.ok) throw new Error("Upload failed");
-      toast({ title: "Uploaded" });
+      const uploaded: any[] = [];
+      for (const f of Array.from(files)) {
+        const reader = await fileToBase64(f);
+        const p = await fetch('/api/admin/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: f.name, data: reader }),
+        });
+        if (!p.ok) throw new Error('Upload failed');
+        const j = await p.json();
+        uploaded.push({ id: j.id, url: j.url, mime: f.type });
+      }
+      // create a learning resource record
+      const res = await fetch(`/api/admin/learning/${selected}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Resources', description: '', media: uploaded }),
+      });
+      if (!res.ok) throw new Error('Failed to create resource');
+      toast({ title: 'Uploaded' });
       const j = await res.json();
       setResources(j);
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Upload failed" });
+      toast({ title: 'Error', description: err?.message || 'Upload failed' });
     }
   }
 
