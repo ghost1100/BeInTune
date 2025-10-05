@@ -14,6 +14,7 @@ import auditRoutes from "./routes/audit";
 import learningRoutes from "./routes/learning";
 import messagesRoutes from "./routes/messages";
 import postsRoutes from "./routes/posts";
+import notificationsRoutes from "./routes/notifications";
 import { ensureDbSetup } from "./db/setup";
 import { authMiddleware } from "./middleware/auth";
 
