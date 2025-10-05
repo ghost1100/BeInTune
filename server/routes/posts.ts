@@ -321,6 +321,20 @@ router.put("/posts/:id", async (req, res) => {
       "UPDATE posts SET body = $1, title = $2, metadata = $3, updated_at = now() WHERE id = $4",
       [body || null, title || null, JSON.stringify(metadata), id],
     );
+    // notify post author if edited by admin and not the same user
+    try {
+      if (req.user.role === 'admin') {
+        const postAuthor = post.author_id;
+        if (postAuthor && postAuthor !== req.user.id) {
+          await query(
+            "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
+            [postAuthor, req.user.id, 'post:edited_by_admin', JSON.stringify({ postId: id })],
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Failed to create notification for post edit:', err);
+    }
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
