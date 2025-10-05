@@ -17,7 +17,7 @@ export default function ThemeHomePreview({
   const effectiveMode = mode ?? themeHook.mode;
   const effectiveSetMode = setMode ?? themeHook.setMode;
   const content = getSiteContent();
-  const wrapperClass = mode === "dark" ? "dark" : "";
+  const wrapperClass = effectiveMode === "dark" ? "dark" : "";
 
   if (compact) {
     return (
