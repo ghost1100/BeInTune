@@ -10,10 +10,8 @@ export default function Chats() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/admin/messages?limit=50");
-        if (!res.ok) return;
-        const j = await res.json();
-        setMessages(j.rows || j);
+        const j = await (await import('@/lib/api')).apiFetch('/api/admin/messages?limit=50');
+        setMessages((j as any).rows || (j as any) || []);
       } catch (e) {
         console.error(e);
       }
@@ -23,16 +21,15 @@ export default function Chats() {
   async function send() {
     if (!text) return;
     try {
-      const res = await fetch("/api/admin/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const r = await (await import('@/lib/api')).apiFetch('/api/admin/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: text }),
       });
-      if (!res.ok) throw new Error("Send failed");
-      setText("");
-      toast({ title: "Sent" });
+      setText('');
+      toast({ title: 'Sent' });
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Failed" });
+      toast({ title: 'Error', description: err?.message || 'Failed' });
     }
   }
 
