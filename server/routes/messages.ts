@@ -14,7 +14,20 @@ router.get("/messages", async (req, res) => {
       `SELECT * FROM messages WHERE deleted_at IS NULL AND (expire_at IS NULL OR expire_at > now() OR saved_by @> $2::jsonb) ORDER BY created_at DESC LIMIT $1`,
       [limit, JSON.stringify([req.user.id])],
     );
-    const rows = r.rows;
+    let rows = r.rows || [];
+    // attempt decrypting content if stored encrypted JSON
+    rows = rows.map((m: any) => {
+      try {
+        const parsed = typeof m.content === 'string' ? JSON.parse(m.content) : m.content;
+        const dec = decryptText(parsed);
+        if (dec !== null && typeof dec === 'string') {
+          m.content = dec;
+        }
+      } catch (e) {
+        // leave content as-is
+      }
+      return m;
+    });
     const ids = rows.map((m: any) => m.id);
     // reactions counts
     let reactionMap: Record<string, Record<string, number>> = {};
