@@ -20,6 +20,7 @@ import { Footer } from "./components/site/Footer";
 import Discussion from "./pages/Discussion";
 import MyLearning from "./pages/MyLearning";
 import Chats from "./pages/Chats";
+import PrivateRoute from "./components/PrivateRoute";
 
 const queryClient = new QueryClient();
 
