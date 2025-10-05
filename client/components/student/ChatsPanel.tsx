@@ -249,6 +249,12 @@ export default function ChatsPanel({ className }: { className?: string }) {
 
         <div className="flex flex-col rounded-lg border bg-card p-4">
           <div className="flex-1 space-y-2 overflow-auto">
+            {selected && (
+              <div className="mb-2">
+                <button onClick={() => setSelected(null)} className="text-sm text-foreground/70">← Back</button>
+                <div className="text-lg font-semibold mt-1">{selected.name || selected.email}</div>
+              </div>
+            )}
             {conversationMessages().map((message) => (
               <div key={message.id} className="relative">
                 <div
@@ -353,6 +359,17 @@ export default function ChatsPanel({ className }: { className?: string }) {
                       edited
                     </div>
                   )}
+
+                  {/* save/unsave toggle */}
+                  <button
+                    className={`text-sm px-2 ${((message as any).saved_by || []).includes(user?.id) ? 'text-primary' : ''}`}
+                    onClick={async () => {
+                      const saved = ((message as any).saved_by || []).includes(user?.id);
+                      await toggleSaveMessage(message.id, !saved);
+                    }}
+                  >
+                    {((message as any).saved_by || []).includes(user?.id) ? 'Saved' : 'Save'}
+                  </button>
 
                   {/* edit/delete for sender */}
                   {message.sender_id === user?.id && (
