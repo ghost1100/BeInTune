@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import useAuth from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import Lightbox from "@/components/ui/Lightbox";
 
 interface StudentRecord {
   id?: string;
