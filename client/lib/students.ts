@@ -48,12 +48,27 @@ export const API = {
     return res.json();
   },
   async remove(id: string) {
+    if (!id) throw new Error("Missing student id");
     const res = await fetch(`/api/admin/students/${id}`, { method: "DELETE" });
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({}));
-      throw new Error(error.error || "Failed to delete student");
+    let body: any = null;
+    try {
+      body = await res.json();
+    } catch (e) {
+      body = null;
     }
-    return res.json();
+    if (res.status === 404) {
+      // Already gone; treat as success so UI stays in sync
+      return { ok: true, skipped: true };
+    }
+    if (!res.ok) {
+      const message = body?.error || body?.message || "Failed to delete student";
+      throw new Error(message);
+    }
+    if (body && typeof body === "object" && body.ok === false) {
+      const message = body.error || body.message || "Failed to delete student";
+      throw new Error(message);
+    }
+    return body || { ok: true };
   },
 };
 
