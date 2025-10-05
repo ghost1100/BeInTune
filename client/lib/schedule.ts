@@ -97,16 +97,21 @@ export async function addBooking(
   booking: Omit<Booking, "id">,
 ): Promise<Booking | null> {
   try {
-    const res = await fetch(`/api/admin/bookings`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(booking),
-    });
-    if (!res.ok) return null;
-    return res.json();
+    const api = (await import("@/lib/api")).apiFetch;
+    const res = await api(`/api/admin/bookings`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(booking) });
+    return res as any;
   } catch (e) {
     console.error(e);
     return null;
+  }
+}
+
+export async function removeBooking(id: string) {
+  try {
+    const api = (await import("@/lib/api")).apiFetch;
+    await api(`/api/admin/bookings/${id}`, { method: "DELETE" });
+  } catch (e) {
+    console.error(e);
   }
 }
 
