@@ -7,8 +7,26 @@ const router = express.Router();
 // GET /api/admin/students - list students with user info
 router.get("/students", async (_req, res) => {
   const q = await query(
-    `SELECT u.id as user_id, u.email, u.name, s.id as student_id, s.id as id, s.age, s.parent_name, s.parent_email, s.phone, s.address, s.marketing_consent
-     FROM users u JOIN students s ON s.user_id = u.id WHERE u.role = 'student' ORDER BY u.created_at DESC`,
+    `SELECT
+        u.id AS user_id,
+        s.id AS student_id,
+        s.id AS id,
+        COALESCE(s.name, u.name) AS name,
+        u.email,
+        s.age,
+        s.parent_name,
+        s.parent_email,
+        s.phone,
+        s.address,
+        s.marketing_consent,
+        s.created_at,
+        s.updated_at,
+        u.created_at AS user_created_at,
+        u.updated_at AS user_updated_at
+      FROM users u
+      JOIN students s ON s.user_id = u.id
+      WHERE u.role = 'student'
+      ORDER BY u.created_at DESC`,
   );
   res.json(q.rows);
 });
@@ -96,26 +114,44 @@ router.put("/students/:id", async (req, res) => {
     return res.status(404).json({ error: "Student not found" });
   const s = sRes.rows[0];
 
+  const nextName = patch.name === undefined ? s.name : patch.name;
+  const nextAge = patch.age === undefined ? s.age : patch.age;
+  const nextParentName =
+    patch.parent_name === undefined ? s.parent_name : patch.parent_name;
+  const nextParentEmail =
+    patch.parent_email === undefined ? s.parent_email : patch.parent_email;
+  const nextPhone = patch.phone === undefined ? s.phone : patch.phone;
+  const nextAddress = patch.address === undefined ? s.address : patch.address;
+  const nextMarketing =
+    patch.marketing_consent === undefined
+      ? s.marketing_consent
+      : patch.marketing_consent;
+
   await query(
     "UPDATE students SET name=$1, age=$2, parent_name=$3, parent_email=$4, phone=$5, address=$6, marketing_consent=$7, updated_at=now() WHERE id=$8",
     [
-      patch.name || s.name,
-      patch.age || s.age,
-      patch.parent_name || s.parent_name,
-      patch.parent_email || s.parent_email,
-      patch.phone || s.phone,
-      patch.address || s.address,
-      patch.marketing_consent ?? s.marketing_consent,
+      nextName,
+      nextAge,
+      nextParentName,
+      nextParentEmail,
+      nextPhone,
+      nextAddress,
+      nextMarketing,
       id,
     ],
   );
 
-  if (patch.email || patch.name) {
-    await query("UPDATE users SET email=$1, name=$2 WHERE id=$3", [
-      patch.email || null,
-      patch.name || null,
+  if (patch.email !== undefined || patch.name !== undefined) {
+    const userRes = await query("SELECT email, name FROM users WHERE id = $1", [
       s.user_id,
     ]);
+    const user = userRes.rows[0] || {};
+    const nextEmail = patch.email === undefined ? user.email : patch.email;
+    const nextUserName = patch.name === undefined ? user.name : patch.name;
+    await query(
+      "UPDATE users SET email = COALESCE($1, email), name = COALESCE($2, name), updated_at = now() WHERE id = $3",
+      [nextEmail ?? null, nextUserName ?? null, s.user_id],
+    );
   }
 
   res.json({ ok: true });
