@@ -45,6 +45,23 @@ function fileToBase64(file: File) {
   });
 }
 
+async function getVideoDuration(file: File) {
+  return new Promise<number>((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const vid = document.createElement("video");
+    vid.preload = "metadata";
+    vid.src = url;
+    vid.onloadedmetadata = () => {
+      URL.revokeObjectURL(url);
+      resolve(vid.duration || 0);
+    };
+    vid.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      reject(e);
+    };
+  });
+}
+
 export default function MyLearningPanel({ className }: { className?: string }) {
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
