@@ -239,6 +239,14 @@ export default function Admin() {
           >
             Reports
           </button>
+          <button
+            onClick={() => setActiveTab("security")}
+            role="tab"
+            aria-selected={activeTab === "security"}
+            className={`px-4 py-2 rounded-md ${activeTab === "security" ? "bg-card shadow" : "bg-muted"} text-foreground`}
+          >
+            Security
+          </button>
         </div>
 
         <div className="mt-6">
