@@ -1,16 +1,21 @@
 import { Button } from "@/components/ui/button";
 import { getSiteContent } from "@/lib/siteContent";
 import { Sun, Moon } from "lucide-react";
+import useTheme from "@/hooks/useTheme";
 
 export default function ThemeHomePreview({
   mode,
   setMode,
   compact,
 }: {
-  mode: "light" | "dark";
-  setMode: (m: "light" | "dark") => void;
+  mode?: "light" | "dark";
+  setMode?: (m: "light" | "dark") => void;
   compact?: boolean;
 }) {
+  // fallback to central hook when props are not provided
+  const themeHook = useTheme();
+  const effectiveMode = mode ?? themeHook.mode;
+  const effectiveSetMode = setMode ?? themeHook.setMode;
   const content = getSiteContent();
   const wrapperClass = mode === "dark" ? "dark" : "";
 
