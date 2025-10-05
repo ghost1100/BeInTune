@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState, FormEvent, DragEvent, ChangeEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  FormEvent,
+  DragEvent,
+  ChangeEvent,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { getRandomImage } from "@/lib/unsplash";
 import {
@@ -18,6 +25,7 @@ import SecurityPanel from "@/components/admin/SecurityPanel";
 import NewsletterComposer from "@/components/admin/NewsletterComposer";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 
 type Teacher = {
   id: string;
@@ -1586,33 +1594,53 @@ function StudentsManager() {
   );
   const [passwordLoading, setPasswordLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedStudentIds, setExpandedStudentIds] = useState<Record<string, boolean>>({});
   const filteredStudents = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return students;
     return students.filter((s) => {
-      const instruments = Array.isArray(s.instruments)
-        ? (s.instruments as string[])
-        : [];
-      const values = [
-        s.name,
-        s.email,
-        s.phone,
-        s.bandName,
-        s.parentGuardianName,
-        s.parentGuardianEmail,
-        s.parentGuardianPhone,
-        s.parent_name,
-        s.parent_email,
-        ...instruments,
-      ];
-      return values.some(
-        (value) =>
-          typeof value === "string" &&
-          value.toLowerCase().includes(query),
-      );
+      const stringValues: string[] = [];
+      const addIfString = (value: unknown) => {
+        if (typeof value === "string" && value.trim().length > 0) {
+          stringValues.push(value.toLowerCase());
+        }
+      };
+      addIfString(s.name);
+      addIfString(s.email);
+      addIfString(s.phone);
+      addIfString(s.address);
+      addIfString(s.bandName);
+      addIfString(s.parentGuardianName);
+      addIfString(s.parentGuardianEmail);
+      addIfString(s.parentGuardianPhone);
+      addIfString(s.parent_name);
+      addIfString(s.parent_email);
+      addIfString(String(s.age ?? ""));
+      if (Array.isArray(s.instruments)) {
+        (s.instruments as string[]).forEach(addIfString);
+      }
+      return stringValues.some((value) => value.includes(query));
     });
   }, [students, searchQuery]);
   const hasSearch = searchQuery.trim().length > 0;
+
+  const toggleStudentDetails = (id: string | undefined | null) => {
+    if (!id) return;
+    setExpandedStudentIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const formatDateTime = (value: string | null | undefined) => {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+    return date.toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  };
 
   const refresh = async () => {
     try {
@@ -1630,30 +1658,31 @@ function StudentsManager() {
 
   const save = async (e?: FormEvent) => {
     if (e) e.preventDefault();
-    if (!form.name) {
+    if (!form.name?.trim()) {
       alert("Name is required");
       return;
     }
-    if (typeof form.age !== "number" || isNaN(form.age as any)) {
-      alert("Age is required");
+    if (!form.email?.trim()) {
+      alert("Email is required");
       return;
     }
+    const normalizedAge =
+      typeof form.age === "number" && !Number.isNaN(form.age)
+        ? form.age
+        : null;
+    const primaryPhone =
+      (isUnder16 ? form.parentGuardianPhone : form.phone) ||
+      form.phone ||
+      form.parentGuardianPhone;
     const payload: any = {
-      name: form.name,
-      age: form.age,
-      isElderly: !!form.isElderly,
-      medications: form.medications || "",
+      name: form.name.trim(),
+      age: normalizedAge,
+      parent_name: form.parentGuardianName?.trim() || null,
+      parent_email: form.parentGuardianEmail?.trim() || null,
+      phone: primaryPhone ? primaryPhone.trim() : null,
+      address: form.address?.trim() || null,
       marketing_consent: !!form.marketingConsent,
-      allergies: form.allergies || "",
-      instruments: form.instruments || [],
-      bandName: form.bandName || "",
-      email: form.email || "",
-      phone: form.phone || "",
-      address: form.address || "",
-      emergencyContacts: form.emergencyContacts || "",
-      parentGuardianName: form.parentGuardianName || "",
-      parentGuardianEmail: form.parentGuardianEmail || "",
-      parentGuardianPhone: form.parentGuardianPhone || "",
+      email: form.email.trim(),
     };
     try {
       if (editing) {
@@ -1687,23 +1716,26 @@ function StudentsManager() {
   };
 
   const edit = (s: any) => {
-    setEditing(s.student_id);
+    const studentId = s.student_id || s.id;
+    if (!studentId) return;
+    const minor = typeof s.age === "number" && s.age < 16;
+    setEditing(studentId);
     setForm({
-      name: s.name,
-      age: s.age || 16,
+      name: s.name || "",
+      age: typeof s.age === "number" ? s.age : 16,
       isElderly: !!s.isElderly,
       medications: s.medications || "",
-      marketingConsent: !!s.marketing_consent,
+      marketingConsent: !!(s.marketing_consent ?? s.marketingConsent),
       allergies: s.allergies || "",
       instruments: s.instruments || [],
       bandName: s.bandName || "",
-      email: s.email,
-      phone: s.phone,
-      address: s.address,
-      emergencyContacts: s.emergencyContacts,
-      parentGuardianName: s.parent_name,
-      parentGuardianEmail: s.parent_email,
-      parentGuardianPhone: s.parentGuardianPhone,
+      email: s.email || "",
+      phone: minor ? "" : s.phone || "",
+      address: s.address || "",
+      emergencyContacts: s.emergencyContacts || "",
+      parentGuardianName: s.parent_name || "",
+      parentGuardianEmail: s.parent_email || "",
+      parentGuardianPhone: minor ? s.phone || "" : s.parentGuardianPhone || "",
     });
   };
   const remove = async (id?: string) => {
@@ -2062,54 +2094,69 @@ function StudentsManager() {
           return (
             <div
               key={studentId || userId}
-              className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-3 rounded-md border p-3"
             >
-              <div>
-                <div className="font-medium">
-                  {s.name} {s.age ? `• ${s.age}` : ""}{" "}
-                  {s.isElderly ? "• Elderly" : ""}
-                </div>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => toggleStudentDetails(studentId || userId)}
+                  className="flex w-full items-center justify-between gap-2 text-left"
+                >
+                  <span className="font-medium">
+                    {s.name}
+                    {s.age ? ` • ${s.age}` : ""}
+                    {s.isElderly ? " • Elderly" : ""}
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 transition-transform ${
+                      expandedStudentIds[studentId || userId]
+                        ? "rotate-180"
+                        : ""
+                    }`}
+                  />
+                </button>
                 <div className="text-sm text-foreground/70">
-                  {s.email} {s.phone && `• ${s.phone}`}
-                </div>
-                {s.bandName && (
-                  <div className="text-sm text-foreground/70">
-                    Band: {s.bandName}
-                  </div>
-                )}
-                {s.instruments && s.instruments.length > 0 && (
-                  <div className="text-sm text-foreground/70">
-                    Instruments: {s.instruments.join(", ")}
-                  </div>
-                )}
-                {s.parentGuardianName && (
-                  <div className="text-sm text-foreground/70">
-                    Guardian: {s.parentGuardianName}{" "}
-                    {s.parentGuardianPhone && `• ${s.parentGuardianPhone}`}
-                  </div>
-                )}
-                {s.isElderly && s.medications && (
-                  <div className="text-sm text-foreground/70">
-                    Medications: {s.medications}
-                  </div>
-                )}
-                {s.allergies && (
-                  <div className="text-sm text-foreground/70">
-                    Allergies: {s.allergies}
-                  </div>
-                )}
-                <div className="text-sm text-foreground/70">
-                  Marketing consent:{" "}
-                  {s.marketing_consent || s.marketingConsent ? "Yes" : "No"}
+                  {s.email || "No email"}
+                  {s.phone ? ` • ${s.phone}` : ""}
                 </div>
               </div>
+
+              {expandedStudentIds[studentId || userId] && (
+                <dl className="grid gap-2 rounded-md bg-muted/40 p-3 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt className="font-medium text-foreground/80">Address</dt>
+                    <dd>{s.address || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-foreground/80">Marketing consent</dt>
+                    <dd>{s.marketing_consent || s.marketingConsent ? "Yes" : "No"}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-foreground/80">Guardian name</dt>
+                    <dd>{s.parent_name || s.parentGuardianName || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-foreground/80">Guardian email</dt>
+                    <dd>{s.parent_email || s.parentGuardianEmail || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-foreground/80">Created</dt>
+                    <dd>{formatDateTime(s.created_at)}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-foreground/80">Last updated</dt>
+                    <dd>{formatDateTime(s.updated_at)}</dd>
+                  </div>
+                </dl>
+              )}
+
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
                 <Button
                   type="button"
                   onClick={() => edit(s)}
                   variant="outline"
                   size="sm"
-                  className="w-full sm:w-auto whitespace-normal"
+                  className="w-full whitespace-normal sm:w-auto"
                 >
                   Edit
                 </Button>
@@ -2118,7 +2165,7 @@ function StudentsManager() {
                   onClick={() => remove(studentId)}
                   variant="destructive"
                   size="sm"
-                  className="w-full sm:w-auto whitespace-normal"
+                  className="w-full whitespace-normal sm:w-auto"
                 >
                   Remove
                 </Button>
@@ -2133,7 +2180,7 @@ function StudentsManager() {
                   }
                   variant="secondary"
                   size="sm"
-                  className="w-full sm:w-auto whitespace-normal"
+                  className="w-full whitespace-normal sm:w-auto"
                   disabled={passwordLoading === userId}
                 >
                   {passwordLoading === userId
@@ -2149,7 +2196,7 @@ function StudentsManager() {
                   }}
                   variant="outline"
                   size="sm"
-                  className="w-full sm:w-auto whitespace-normal"
+                  className="w-full whitespace-normal sm:w-auto"
                   disabled={passwordLoading === userId}
                 >
                   Set password
@@ -2159,7 +2206,7 @@ function StudentsManager() {
                   onClick={() => sendReset(userId, email)}
                   variant="secondary"
                   size="sm"
-                  className="w-full sm:w-auto whitespace-normal"
+                  className="w-full whitespace-normal sm:w-auto"
                   disabled={passwordLoading === (userId || email)}
                 >
                   {passwordLoading === (userId || email)
