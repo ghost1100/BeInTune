@@ -37,6 +37,20 @@ router.get("/posts", async (req, res) => {
       reactionMap[r.post_id][r.type] = parseInt(r.cnt, 10);
     }
 
+    // user reactions for the current user
+    const userReactionMap: Record<string, string | null> = {};
+    try {
+      if (req.user && ids.length) {
+        const ur = await query(
+          `SELECT post_id, type FROM post_reactions WHERE post_id = ANY($1) AND user_id = $2`,
+          [ids, req.user.id],
+        );
+        for (const r of ur.rows) userReactionMap[r.post_id] = r.type;
+      }
+    } catch (e) {
+      console.error("Failed to load user reactions:", e);
+    }
+
     // comment counts
     const cc = await query(
       `SELECT post_id, count(*) as cnt FROM comments WHERE post_id = ANY($1) GROUP BY post_id`,
@@ -50,6 +64,7 @@ router.get("/posts", async (req, res) => {
       media: mediaMap[p.id] || [],
       reactions: reactionMap[p.id] || {},
       comment_count: commentMap[p.id] || 0,
+      user_reaction: userReactionMap[p.id] || null,
     }));
     res.json(out);
   } catch (err) {
@@ -149,14 +164,54 @@ router.post("/posts/:id/reactions", async (req, res) => {
     const { user_id, type } = req.body as any; // type like 'heart', 'like', 'smile'
     if (!type) return res.status(400).json({ error: "Missing reaction type" });
     const uid = req.user.id || user_id || null;
+    // upsert to ensure one reaction per user per post
     await query(
-      "INSERT INTO post_reactions(post_id, user_id, type) VALUES ($1,$2,$3)",
+      `INSERT INTO post_reactions(post_id, user_id, type) VALUES ($1,$2,$3)
+       ON CONFLICT (post_id, user_id) DO UPDATE SET type = EXCLUDED.type, created_at = now()`,
       [id, uid, type],
     );
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to add reaction" });
+  }
+});
+
+// PUT /api/posts/:id - edit a post (author only)
+router.put("/posts/:id", async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    const { id } = req.params;
+    const { body, title } = req.body as any;
+    const p = await query("SELECT author_id, metadata FROM posts WHERE id = $1", [id]);
+    const post = p.rows[0];
+    if (!post) return res.status(404).json({ error: "Not found" });
+    if (post.author_id !== req.user.id) return res.status(403).json({ error: "Forbidden" });
+    const metadata = post.metadata || {};
+    metadata.edited = true;
+    metadata.edited_at = new Date().toISOString();
+    await query("UPDATE posts SET body = $1, title = $2, metadata = $3, updated_at = now() WHERE id = $4", [body || null, title || null, JSON.stringify(metadata), id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to edit post" });
+  }
+});
+
+// DELETE /api/posts/:id - delete post (author only)
+router.delete("/posts/:id", async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    const { id } = req.params;
+    const p = await query("SELECT author_id FROM posts WHERE id = $1", [id]);
+    const post = p.rows[0];
+    if (!post) return res.status(404).json({ error: "Not found" });
+    if (post.author_id !== req.user.id) return res.status(403).json({ error: "Forbidden" });
+    await query("DELETE FROM posts WHERE id = $1", [id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete post" });
   }
 });
 
