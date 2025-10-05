@@ -35,10 +35,12 @@ async function writeAvail(a: Record<string, string[]>) {
 async function readBookings(date?: string): Promise<Booking[]> {
   try {
     const q = date ? `?date=${date}` : "";
-    const res = await fetch(`/api/admin/bookings${q}`);
-    if (!res.ok) return [];
-    return res.json();
+    const api = (await import("@/lib/api")).apiFetch;
+    const rows = await api(`/api/admin/bookings${q}`);
+    if (!rows) return [];
+    return Array.isArray(rows) ? rows : (rows.rows || []);
   } catch (e) {
+    console.error("readBookings error", e);
     return [];
   }
 }
