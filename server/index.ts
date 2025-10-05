@@ -48,5 +48,8 @@ export function createServer() {
   import bookingsRoutes from "./routes/bookings";
   app.use("/api/admin", bookingsRoutes);
 
+  import auditRoutes from "./routes/audit";
+  app.use("/api/admin", auditRoutes);
+
   return app;
 }
