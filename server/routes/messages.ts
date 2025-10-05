@@ -71,7 +71,7 @@ router.post("/messages", async (req, res) => {
       if (msg.recipient_id) {
         await query(
           "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
-          [msg.recipient_id, msg.sender_id, 'message', JSON.stringify({ messageId: msg.id })],
+          [msg.recipient_id, msg.sender_id, 'message', JSON.stringify({ messageId: msg.id, snippet: (msg.content || '').slice(0,200) })],
         );
       }
     } catch (err) {
