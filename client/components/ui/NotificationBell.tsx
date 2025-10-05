@@ -104,7 +104,12 @@ export default function NotificationBell() {
                 </div>
                 <div className="flex-1 text-sm">
                   <div className="font-medium">
-                    {n.actor_name || (n.actor_id ? "Someone" : "System")}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); if (n.actor_id) navigate(`/chats?user=${n.actor_id}`); }}
+                      className="text-left text-sm font-medium text-foreground/90"
+                    >
+                      {n.actor_name || (n.actor_id ? "Someone" : "System")}
+                    </button>
                     {n.type === 'post:edited_by_admin' && <span className="ml-2 text-xs text-destructive">edited by admin</span>}
                     {n.type === 'post:deleted_by_admin' && <span className="ml-2 text-xs text-destructive">deleted by admin</span>}
                   </div>
