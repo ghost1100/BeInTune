@@ -411,8 +411,8 @@ export default function DiscussionFeed({ className }: { className?: string }) {
               {/* edit / delete controls for original poster */}
               {user &&
                 (post.author_id === user.id ||
-                  (post.metadata &&
-                    (post.metadata as any).author_name === user.name)) && (
+                  (post.metadata && (post.metadata as any).author_name === user.name) ||
+                  user.role === "admin") && (
                   <div className="ml-auto flex items-center gap-2 border-dashed border rounded px-2 py-1">
                     <button
                       type="button"
