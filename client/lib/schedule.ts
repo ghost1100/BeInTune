@@ -16,16 +16,14 @@ const BK_KEY = "inTuneBookings";
 async function readAvail(date?: string): Promise<Record<string, string[]>> {
   try {
     const d = date || new Date().toISOString().slice(0, 10);
-    const res = await fetch(`/api/admin/slots?date=${d}`);
-    if (!res.ok) return {};
-    const rows = await res.json();
-    // transform into map
+    const api = (await import("@/lib/api")).apiFetch;
+    const rows = await api(`/api/admin/slots?date=${d}`);
     const map: Record<string, string[]> = {};
-    map[d] = rows
-      .filter((r: any) => r.is_available)
-      .map((r: any) => r.slot_time);
+    if (!rows || !Array.isArray(rows)) return map;
+    map[d] = rows.filter((r: any) => r.is_available).map((r: any) => r.slot_time);
     return map;
   } catch (e) {
+    console.error("readAvail error", e);
     return {};
   }
 }
