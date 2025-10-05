@@ -98,11 +98,22 @@ export async function toggleAvailability(date: string, time: string) {
   try {
     const api = (await import("@/lib/api")).apiFetch;
     const rows = await api(`/api/admin/slots?date=${date}`);
-    const existing = Array.isArray(rows) ? rows.find((r: any) => r.slot_time === time) : null;
+    const list = Array.isArray(rows)
+      ? rows
+      : rows && Array.isArray((rows as any).rows)
+        ? (rows as any).rows
+        : [];
+    const existing = list.find(
+      (r: any) => normalizeTime(r.slot_time || r.slotTime || r.time) === time,
+    );
     if (existing) {
       await api(`/api/admin/slots/${existing.id}`, { method: "DELETE" });
     } else {
-      await api(`/api/admin/slots`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slot_date: date, slot_time: time }) });
+      await api(`/api/admin/slots`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slot_date: date, slot_time: time }),
+      });
     }
   } catch (e) {
     console.error(e);
