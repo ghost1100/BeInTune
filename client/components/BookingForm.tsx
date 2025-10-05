@@ -104,9 +104,11 @@ export default function BookingForm() {
         <div className="flex items-center gap-2">
           <input
             type="date"
+            name="bookingDate"
             className="h-10 rounded-md border px-3"
             value={date}
             onChange={(e) => setDate(e.target.value)}
+            autoComplete="off"
           />
           <button
             type="button"
