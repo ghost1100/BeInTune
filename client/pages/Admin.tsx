@@ -789,7 +789,12 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                   <div key={s} className="flex items-center gap-2">
                     <div
                       onClick={() => {
-                        if (booked) return;
+                        if (booked) {
+                          if (window.confirm(`Cancel booking at ${s}?`)) {
+                            removeBk(booked.id);
+                          }
+                          return;
+                        }
                         if (available) {
                           setSelectedSlot(s);
                           setShowStudentModal(true);
@@ -843,7 +848,12 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
               <div key={s} className="">
                 <button
                   onClick={() => {
-                    if (booked) return;
+                    if (booked) {
+                      if (window.confirm(`Cancel booking at ${s}?`)) {
+                        removeBk(booked.id);
+                      }
+                      return;
+                    }
                     if (available) {
                       setSelectedSlot(s);
                       setShowStudentModal(true);
@@ -854,7 +864,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                   className={`w-full h-10 rounded-md text-sm ${booked ? "bg-destructive text-destructive-foreground" : available ? "bg-primary text-primary-foreground" : "bg-card text-foreground/80 border"}`}
                   title={
                     booked
-                      ? `Booked by ${booked?.student_name || booked?.student_email || booked?.name || booked?.email || "student"}`
+                      ? `Click to cancel booking for ${booked?.student_name || booked?.student_email || booked?.name || booked?.email || "student"}`
                       : available
                         ? "Available - click to book"
                         : meta && meta.is_available === false
