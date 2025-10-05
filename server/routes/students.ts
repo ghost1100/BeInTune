@@ -128,7 +128,12 @@ router.delete("/students/:id", async (req, res) => {
   if (sRes.rows.length === 0)
     return res.status(404).json({ error: "Student not found" });
   const s = sRes.rows[0];
-  await query("DELETE FROM users WHERE id = $1", [s.user_id]);
+  try {
+    await query("DELETE FROM users WHERE id = $1", [s.user_id]);
+  } catch (err: any) {
+    console.error("Failed to delete student", err);
+    return res.status(500).json({ error: "Unable to delete student" });
+  }
   res.json({ ok: true });
 });
 
