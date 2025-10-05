@@ -18,9 +18,10 @@ router.get("/messages", async (req, res) => {
     // attempt decrypting content if stored encrypted JSON
     rows = rows.map((m: any) => {
       try {
-        const parsed = typeof m.content === 'string' ? JSON.parse(m.content) : m.content;
+        const parsed =
+          typeof m.content === "string" ? JSON.parse(m.content) : m.content;
         const dec = decryptText(parsed);
-        if (dec !== null && typeof dec === 'string') {
+        if (dec !== null && typeof dec === "string") {
           m.content = dec;
         }
       } catch (e) {

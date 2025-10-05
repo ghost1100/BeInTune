@@ -66,11 +66,15 @@ export function createServer() {
   app.use("/api", notificationsRoutes);
 
   // Background cleanup: permanently remove expired messages every hour
-  const cleanupIntervalMs = Number(process.env.CLEANUP_INTERVAL_MS || String(1000 * 60 * 60));
+  const cleanupIntervalMs = Number(
+    process.env.CLEANUP_INTERVAL_MS || String(1000 * 60 * 60),
+  );
   const cleanupJob = async () => {
     try {
-      await (await import("./db")).query(
-        "DELETE FROM messages WHERE expire_at IS NOT NULL AND expire_at <= now() AND (saved_by IS NULL OR jsonb_array_length(saved_by)=0)"
+      await (
+        await import("./db")
+      ).query(
+        "DELETE FROM messages WHERE expire_at IS NOT NULL AND expire_at <= now() AND (saved_by IS NULL OR jsonb_array_length(saved_by)=0)",
       );
       console.log("Expired messages cleanup completed");
     } catch (err) {

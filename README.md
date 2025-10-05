@@ -119,6 +119,7 @@ Recent additions in this codebase
 - DB migration: server/db/migrations/002_group_chats.sql adds `students.band`, `rooms`, and `room_members`.
 
 Please review these changes and confirm whether you want me to:
+
 - Run the group-chat sync automatically on startup
 - Enforce encryption strictly (fail if MESSAGE_ENCRYPTION_KEY not set)
 - Add the cleanup job to run more frequently or to soft-delete first instead of permanent delete

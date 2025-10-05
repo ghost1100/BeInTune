@@ -19,7 +19,8 @@ router.post("/login", async (req, res) => {
 
   // Search by email (via index) or username (case-insensitive)
   const { digest, decryptText } = await import("../lib/crypto");
-  const idx = identifier && identifier.includes("@") ? digest(identifier) : null;
+  const idx =
+    identifier && identifier.includes("@") ? digest(identifier) : null;
   let userRes;
   if (idx) {
     userRes = await query(
@@ -38,7 +39,10 @@ router.post("/login", async (req, res) => {
   // if email_encrypted present, decrypt before returning
   if (!user.email && user.email_encrypted) {
     try {
-      const parsed = typeof user.email_encrypted === 'string' ? JSON.parse(user.email_encrypted) : user.email_encrypted;
+      const parsed =
+        typeof user.email_encrypted === "string"
+          ? JSON.parse(user.email_encrypted)
+          : user.email_encrypted;
       const dec = decryptText(parsed);
       if (dec) user.email = dec;
     } catch (e) {
@@ -85,7 +89,7 @@ router.get("/me", async (req, res) => {
     const jwt = (await import("jsonwebtoken")).default;
     const SECRET = process.env.JWT_SECRET || "changeme123";
     const decoded: any = jwt.verify(token, SECRET);
-    const { decryptText } = await import('../lib/crypto');
+    const { decryptText } = await import("../lib/crypto");
     const userRes = await query(
       "SELECT id, email, email_encrypted, username, role FROM users WHERE id = $1",
       [decoded.sub],
@@ -94,7 +98,10 @@ router.get("/me", async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
     if (!user.email && user.email_encrypted) {
       try {
-        const parsed = typeof user.email_encrypted === 'string' ? JSON.parse(user.email_encrypted) : user.email_encrypted;
+        const parsed =
+          typeof user.email_encrypted === "string"
+            ? JSON.parse(user.email_encrypted)
+            : user.email_encrypted;
         const dec = decryptText(parsed);
         if (dec) user.email = dec;
       } catch (e) {}
@@ -126,11 +133,17 @@ router.post("/send-reset", async (req, res) => {
   const { email } = req.body as { email?: string };
   if (!email) return res.status(400).json({ error: "Missing email" });
 
-  const { digest, decryptText } = await import('../lib/crypto');
+  const { digest, decryptText } = await import("../lib/crypto");
   const idx = digest(email);
-  let userRes = await query("SELECT id, email, email_encrypted FROM users WHERE email_index = $1", [idx]);
+  let userRes = await query(
+    "SELECT id, email, email_encrypted FROM users WHERE email_index = $1",
+    [idx],
+  );
   if (!userRes.rows.length) {
-    userRes = await query("SELECT id, email, email_encrypted FROM users WHERE email = $1", [email]);
+    userRes = await query(
+      "SELECT id, email, email_encrypted FROM users WHERE email = $1",
+      [email],
+    );
   }
   const user = userRes.rows[0];
   // Always return success to avoid leaking existence
@@ -140,7 +153,10 @@ router.post("/send-reset", async (req, res) => {
   let sendTo = user.email;
   if (!sendTo && user.email_encrypted) {
     try {
-      const parsed = typeof user.email_encrypted === 'string' ? JSON.parse(user.email_encrypted) : user.email_encrypted;
+      const parsed =
+        typeof user.email_encrypted === "string"
+          ? JSON.parse(user.email_encrypted)
+          : user.email_encrypted;
       const dec = decryptText(parsed);
       if (dec) sendTo = dec;
     } catch (e) {}

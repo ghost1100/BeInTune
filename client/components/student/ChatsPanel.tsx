@@ -86,10 +86,12 @@ export default function ChatsPanel({ className }: { className?: string }) {
 
   async function loadRooms() {
     try {
-      const resp = await (await import("@/lib/api")).apiFetch('/api/admin/rooms');
+      const resp = await (
+        await import("@/lib/api")
+      ).apiFetch("/api/admin/rooms");
       setRooms(Array.isArray(resp) ? resp : []);
     } catch (e) {
-      console.error('Failed to load rooms', e);
+      console.error("Failed to load rooms", e);
       setRooms([]);
     }
   }
@@ -155,16 +157,19 @@ export default function ChatsPanel({ className }: { className?: string }) {
     if (!selected || !user) return [];
     const currentUser = user.id;
     // room chat
-    if (selected.id && (selected.name && !selected.user_id)) {
+    if (selected.id && selected.name && !selected.user_id) {
       // selected is a room-like object
       const roomId = selected.id;
       return messages.filter((message) => message.room_id === roomId);
     }
-    const otherUser = selected.user_id || selected.id || selected.student_id || "";
+    const otherUser =
+      selected.user_id || selected.id || selected.student_id || "";
     return messages.filter((message) => {
       return (
-        (message.sender_id === currentUser && message.recipient_id === otherUser) ||
-        (message.sender_id === otherUser && message.recipient_id === currentUser)
+        (message.sender_id === currentUser &&
+          message.recipient_id === otherUser) ||
+        (message.sender_id === otherUser &&
+          message.recipient_id === currentUser)
       );
     });
   }
@@ -173,11 +178,12 @@ export default function ChatsPanel({ className }: { className?: string }) {
     if (!text || !selected) return;
     try {
       const payload: any = { content: text };
-      if (selected && selected.id && (selected.name && !selected.user_id)) {
+      if (selected && selected.id && selected.name && !selected.user_id) {
         // room
         payload.room_id = selected.id;
       } else {
-        payload.recipient_id = selected.user_id || selected.id || selected.student_id;
+        payload.recipient_id =
+          selected.user_id || selected.id || selected.student_id;
       }
       await (
         await import("@/lib/api")
@@ -251,19 +257,25 @@ export default function ChatsPanel({ className }: { className?: string }) {
           <div className="mt-3 max-h-[60vh] space-y-2 overflow-auto">
             {rooms.length > 0 && (
               <div className="mb-2">
-                <div className="text-xs text-foreground/60 mb-1">Group chats</div>
+                <div className="text-xs text-foreground/60 mb-1">
+                  Group chats
+                </div>
                 {rooms.map((r) => (
                   <button
                     key={r.id}
                     onClick={() => setSelected(r)}
                     className={cn(
                       "w-full rounded border p-2 text-left text-sm transition-colors flex items-center justify-between",
-                      selected && selected.id === r.id ? "bg-muted" : "hover:bg-muted/70",
+                      selected && selected.id === r.id
+                        ? "bg-muted"
+                        : "hover:bg-muted/70",
                     )}
                   >
                     <div>
                       <div className="font-medium">{r.name}</div>
-                      <div className="text-xs text-foreground/70">{r.members} members</div>
+                      <div className="text-xs text-foreground/70">
+                        {r.members} members
+                      </div>
                     </div>
                     <div className="text-xs text-primary">Group</div>
                   </button>
@@ -291,8 +303,12 @@ export default function ChatsPanel({ className }: { className?: string }) {
                   )}
                 >
                   <div>
-                    <div className="font-medium">{student.name || student.email}</div>
-                    <div className="text-xs text-foreground/70">{student.email}</div>
+                    <div className="font-medium">
+                      {student.name || student.email}
+                    </div>
+                    <div className="text-xs text-foreground/70">
+                      {student.email}
+                    </div>
                   </div>
                   {isAdmin && (
                     <div className="text-xs text-primary">Pinned</div>

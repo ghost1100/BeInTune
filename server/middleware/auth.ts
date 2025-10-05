@@ -23,8 +23,11 @@ export const authMiddleware: RequestHandler = async (req: any, res, next) => {
     if (user) {
       if (!user.email && user.email_encrypted) {
         try {
-          const { decryptText } = await import('../lib/crypto');
-          const parsed = typeof user.email_encrypted === 'string' ? JSON.parse(user.email_encrypted) : user.email_encrypted;
+          const { decryptText } = await import("../lib/crypto");
+          const parsed =
+            typeof user.email_encrypted === "string"
+              ? JSON.parse(user.email_encrypted)
+              : user.email_encrypted;
           const dec = decryptText(parsed);
           if (dec) user.email = dec;
         } catch (e) {}
