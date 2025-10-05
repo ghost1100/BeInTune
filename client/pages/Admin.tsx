@@ -2160,7 +2160,7 @@ function StudentsManager() {
 
         <input
           className="h-10 rounded-md border px-3"
-          placeholder="Emergency contacts"
+          placeholder="Emergency contact (required)"
           value={form.emergencyContacts || ""}
           onChange={(e) =>
             setForm((f) => ({ ...f, emergencyContacts: e.target.value }))
