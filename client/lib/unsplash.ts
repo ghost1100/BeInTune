@@ -1,5 +1,4 @@
-export const UNSPLASH_ACCESS_KEY = "wkFGKy8LrJ88e3o_19coGCWKQTYHMdGAeLJagrb6Ooc";
-export const UNSPLASH_ACCESS_KEY = "IsGYdlrxOWoNplyTXSJHMA1Nllg8qT16kGBVns6Vvic";
+export const UNSPLASH_ACCESS_KEY = (process.env.UNSPLASH_ACCESS_KEY as string) || "IsGYdlrxOWoNplyTXSJHMA1Nllg8qT16kGBVns6Vvic";
 
 export async function getRandomImage(query = "music teacher") {
   try {
