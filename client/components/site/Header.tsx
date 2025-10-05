@@ -34,7 +34,7 @@ export function Header() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Link to="/admin/login" className="hidden sm:block">
-            <Button variant="ghost">Admin</Button>
+            <Button variant="ghost">Login</Button>
           </Link>
           <Link to="/contact" className="hidden sm:block">
             <Button variant="ghost">Contact</Button>
