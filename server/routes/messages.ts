@@ -74,11 +74,16 @@ router.post("/messages", async (req, res) => {
     const expireAt = save
       ? null
       : new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString();
+    // encrypt content if encryption key available
+    const enc = encryptText(content);
+    const contentToStore = enc.encrypted ? JSON.stringify(enc) : content;
     const ins = await query(
       "INSERT INTO messages(sender_id, recipient_id, content, expire_at) VALUES ($1,$2,$3,$4) RETURNING *",
-      [sid, recipient_id || null, content, expireAt],
+      [sid, recipient_id || null, contentToStore, expireAt],
     );
     const msg = ins.rows[0];
+    // if we stored encrypted content, replace content in msg with plaintext for response
+    if (enc.encrypted) msg.content = content;
     // broadcast to websocket clients
     try {
       req.app.locals.broadcast?.("message:new", msg);
