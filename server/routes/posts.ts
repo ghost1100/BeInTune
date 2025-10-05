@@ -123,7 +123,7 @@ router.get("/posts/:id/comments", async (req, res) => {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const { id } = req.params;
     const c = await query(
-      "SELECT c.*, u.name as author_name FROM comments c LEFT JOIN users u ON c.author_id = u.id WHERE c.post_id = $1 ORDER BY c.created_at ASC",
+      "SELECT c.*, u.name as author_name, u.role as author_role FROM comments c LEFT JOIN users u ON c.author_id = u.id WHERE c.post_id = $1 ORDER BY c.created_at ASC",
       [id],
     );
     res.json(c.rows);
