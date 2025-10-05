@@ -51,5 +51,9 @@ export function createServer() {
   import auditRoutes from "./routes/audit";
   app.use("/api/admin", auditRoutes);
 
+  // Public posts/discussion routes
+  import postsRoutes from "./routes/posts";
+  app.use("/api", postsRoutes);
+
   return app;
 }
