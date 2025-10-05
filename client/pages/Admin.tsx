@@ -567,7 +567,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
 
   const bookings = getBookings(date);
   const avail = getAvailability(date);
-  const [students, setStudentsState] = useState(getStudents());
+  const [students, setStudentsState] = useState<any[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null,
@@ -575,8 +575,15 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const refreshStudents = () => setStudentsState(getStudents());
-  const filteredStudents = students.filter((s) => {
+  const refreshStudents = async () => {
+    try {
+      const s = await studentsAPI.list();
+      setStudentsState(Array.isArray(s) ? s : []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  const filteredStudents = students.filter((s: any) => {
     if (!searchTerm) return true;
     const q = searchTerm.toLowerCase();
     return `${s.name || ""} ${s.email || ""} ${s.phone || ""}`
@@ -585,7 +592,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
   });
 
   useEffect(() => {
-    refreshStudents();
+    (async () => {
+      await refreshStudents();
+    })();
   }, []);
 
   const createBookingForStudent = () => {
