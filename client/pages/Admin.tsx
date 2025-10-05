@@ -1995,6 +1995,7 @@ function StudentsManager() {
         {students.map((s) => {
           const studentId = s.student_id || s.id;
           const userId = s.user_id || s.userId || s.id;
+          const email = s.email;
           return (
             <div
               key={studentId || userId}
