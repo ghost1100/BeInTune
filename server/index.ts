@@ -1,12 +1,14 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { handleDemo } from "./routes/demo";
 import authRoutes from "./routes/auth";
 import adminRoutes from "./routes/admin";
 import uploadRoutes from "./routes/upload";
 import newsletterRoutes from "./routes/newsletters";
 import { ensureDbSetup } from "./db/setup";
+import { authMiddleware } from "./middleware/auth";
 
 // Ensure DB schema and seed admin on startup
 await ensureDbSetup();
