@@ -32,6 +32,11 @@ router.post("/slots", async (req, res) => {
     req.body as any;
   if (!slot_date || !slot_time)
     return res.status(400).json({ error: "Missing slot_date or slot_time" });
+  if (!isWithinBusinessHours(slot_time)) {
+    return res.status(400).json({
+      error: "Slots must be between 08:00 and 17:00 in 30-minute increments",
+    });
+  }
   const ins = await query(
     "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
     [teacher_id || null, slot_date, slot_time, duration_minutes || 30],
