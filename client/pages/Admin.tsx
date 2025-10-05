@@ -1688,6 +1688,186 @@ function StudentsManager() {
   }, [students, searchQuery]);
   const hasSearch = searchQuery.trim().length > 0;
 
+  const studentOptions = useMemo(
+    () =>
+      students
+        .map((s) => {
+          const value = s.student_id || s.id || "";
+          if (!value) return null;
+          return {
+            value,
+            label: s.name || s.email || value,
+          };
+        })
+        .filter(
+          (option): option is { value: string; label: string } =>
+            option !== null,
+        ),
+    [students],
+  );
+
+  useEffect(() => {
+    if (!resourceModalOpen || studentOptions.length === 0) return;
+    setResourceStudentId((current) => {
+      if (current && studentOptions.some((option) => option.value === current)) {
+        return current;
+      }
+      return studentOptions[0].value;
+    });
+  }, [resourceModalOpen, studentOptions]);
+
+  const clearResourceSelection = useCallback(() => {
+    setResourceFiles([]);
+    if (resourceInputRef.current) {
+      resourceInputRef.current.value = "";
+    }
+  }, []);
+
+  const openResourceModal = useCallback(() => {
+    if (!students.length) {
+      toast({
+        title: "No students available",
+        description: "Add a student before uploading resources.",
+        variant: "destructive",
+      });
+      return;
+    }
+    clearResourceSelection();
+    setResourceModalOpen(true);
+  }, [students, toast, clearResourceSelection]);
+
+  const closeResourceModal = useCallback(() => {
+    if (resourceUploading) return;
+    clearResourceSelection();
+    setResourceModalOpen(false);
+  }, [clearResourceSelection, resourceUploading]);
+
+  const addResourceFiles = useCallback(
+    (incoming: FileList | File[]) => {
+      const list = Array.from(incoming ?? []);
+      if (!list.length) return;
+      const accepted: File[] = [];
+      const rejected: string[] = [];
+      list.forEach((file) => {
+        if (isResourceFileAllowed(file)) {
+          accepted.push(file);
+        } else {
+          rejected.push(file.name);
+        }
+      });
+      if (rejected.length) {
+        toast({
+          title: "Unsupported files skipped",
+          description: rejected.join(", "),
+          variant: "destructive",
+        });
+      }
+      if (accepted.length) {
+        setResourceFiles((prev) => {
+          const map = new Map(prev.map((file) => [resourceFileKey(file), file]));
+          accepted.forEach((file) => {
+            map.set(resourceFileKey(file), file);
+          });
+          return Array.from(map.values());
+        });
+      }
+    },
+    [toast],
+  );
+
+  const handleResourceDrop = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      if (event.dataTransfer?.files?.length) {
+        addResourceFiles(event.dataTransfer.files);
+      }
+    },
+    [addResourceFiles],
+  );
+
+  const handleResourceSelect = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files?.length) {
+        addResourceFiles(event.target.files);
+      }
+      if (resourceInputRef.current) {
+        resourceInputRef.current.value = "";
+      }
+    },
+    [addResourceFiles],
+  );
+
+  const removeResourceFile = useCallback((key: string) => {
+    setResourceFiles((prev) =>
+      prev.filter((file) => resourceFileKey(file) !== key),
+    );
+  }, []);
+
+  const uploadSelectedResources = useCallback(async () => {
+    if (!resourceStudentId) {
+      toast({
+        title: "Select a student",
+        description: "Choose who should receive the resources.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (resourceFiles.length === 0) {
+      toast({
+        title: "Add files",
+        description: "Drag and drop or select files to share.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      setResourceUploading(true);
+      const { apiFetch } = await import("@/lib/api");
+      const uploaded: { id: string; url: string; mime: string }[] = [];
+      for (const file of resourceFiles) {
+        const base64 = await fileToBase64(file);
+        const uploadResponse = await apiFetch("/api/admin/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: file.name, data: base64 }),
+        });
+        if (!uploadResponse || typeof uploadResponse !== "object") {
+          throw new Error("Upload failed");
+        }
+        uploaded.push({
+          id: (uploadResponse as any).id,
+          url: (uploadResponse as any).url,
+          mime: file.type || "application/octet-stream",
+        });
+      }
+      await apiFetch(`/api/admin/learning/${resourceStudentId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Learning resources",
+          description: "",
+          media: uploaded,
+        }),
+      });
+      toast({
+        title: "Resources uploaded",
+        description: `${resourceFiles.length} file${
+          resourceFiles.length > 1 ? "s" : ""
+        } shared with the student.`,
+      });
+      clearResourceSelection();
+      setResourceModalOpen(false);
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error?.message || "Unable to upload resources.",
+        variant: "destructive",
+      });
+    } finally {
+      setResourceUploading(false);
+    }
+  }, [resourceFiles, resourceStudentId, toast, clearResourceSelection]);
+
   const toggleStudentDetails = (id: string | undefined | null) => {
     if (!id) return;
     setExpandedStudentIds((prev) => ({
