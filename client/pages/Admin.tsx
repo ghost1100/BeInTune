@@ -549,6 +549,15 @@ export default function Admin() {
             </div>
           )}
 
+          {activeTab === "security" && (
+            <div className="rounded-lg border p-4">
+              <h2 className="font-semibold">Security</h2>
+              <div className="mt-4">
+                <SecurityPanel />
+              </div>
+            </div>
+          )}
+
           {activeTab === "schedule" && (
             <div className="rounded-lg border p-4">
               <h2 className="font-semibold">Schedule & Bookings</h2>
