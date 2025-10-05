@@ -141,7 +141,7 @@ export default function Admin() {
   };
 
   const [activeTab, setActiveTab] = useState<
-    "teachers" | "site" | "schedule" | "theme" | "reports"
+    "teachers" | "site" | "schedule" | "students" | "theme" | "reports"
   >("teachers");
 
   return (
@@ -193,6 +193,14 @@ export default function Admin() {
             className={`px-4 py-2 rounded-md ${activeTab === "theme" ? "bg-card shadow" : "bg-muted"} text-foreground`}
           >
             Theme
+          </button>
+          <button
+            onClick={() => setActiveTab("students")}
+            role="tab"
+            aria-selected={activeTab === "students"}
+            className={`px-4 py-2 rounded-md ${activeTab === "students" ? "bg-card shadow" : "bg-muted"} text-foreground`}
+          >
+            Students
           </button>
           <button
             onClick={() => setActiveTab("reports")}
@@ -477,6 +485,19 @@ export default function Admin() {
               <h2 className="font-semibold">Theme</h2>
               <div className="mt-4">
                 <ThemeManager />
+              </div>
+            </div>
+          )}
+
+          {activeTab === "students" && (
+            <div className="rounded-lg border p-4">
+              <h2 className="font-semibold">Students</h2>
+              <div className="mt-4">
+                <StudentsManager />
+              </div>
+
+              <div className="mt-6">
+                <StudentPasswordControls />
               </div>
             </div>
           )}
