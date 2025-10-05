@@ -466,6 +466,13 @@ export default function Admin() {
                   >
                     Reset
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewsletter(true)}
+                    className="px-4 py-2 rounded-md bg-primary text-primary-foreground"
+                  >
+                    Compose newsletter
+                  </button>
                 </div>
               </div>
             </div>
