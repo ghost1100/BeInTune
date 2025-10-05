@@ -2755,6 +2755,30 @@ function StudentsManager() {
                 >
                   Upload material
                 </Button>
+                <Button
+                  type="button"
+                  onClick={async () => {
+                    const id = studentId || "";
+                    setViewResourcesStudentId(id);
+                    setViewResourcesOpen(true);
+                    setViewLoading(true);
+                    try {
+                      const { apiFetch } = await import("@/lib/api");
+                      const data = await apiFetch(`/api/admin/learning/${id}`);
+                      setViewResourcesData(Array.isArray(data) ? data : (data && (data as any).rows) || []);
+                    } catch (e) {
+                      console.error(e);
+                      toast({ title: "Failed to load resources", variant: "destructive" });
+                    } finally {
+                      setViewLoading(false);
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full whitespace-normal sm:w-auto"
+                >
+                  View resources
+                </Button>
               </div>
             </div>
           );
