@@ -16,7 +16,7 @@ import ThemeHomePreview from "@/components/admin/ThemeHomePreview";
 import useTheme from "@/hooks/useTheme";
 import SecurityPanel from "@/components/admin/SecurityPanel";
 import NewsletterComposer from "@/components/admin/NewsletterComposer";
-import StudentPasswordControls from "@/components/admin/StudentPasswordControls";
+import { useToast } from "@/hooks/use-toast";
 
 type Teacher = {
   id: string;
