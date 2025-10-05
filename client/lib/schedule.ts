@@ -140,7 +140,30 @@ export async function addBooking(
 ): Promise<Booking | null> {
   try {
     const api = (await import("@/lib/api")).apiFetch;
-    const res = await api(`/api/admin/bookings`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(booking) });
+    const slots = await api(`/api/admin/slots?date=${booking.date}`);
+    const list = Array.isArray(slots)
+      ? slots
+      : slots && Array.isArray((slots as any).rows)
+        ? (slots as any).rows
+        : [];
+    const match = list.find((s: any) => {
+      const time = normalizeTime(s.slot_time || s.slotTime || s.time);
+      const available = s.is_available !== false;
+      return available && time === booking.time;
+    });
+    if (!match || !match.id) {
+      return null;
+    }
+    const payload = {
+      slot_id: match.id,
+      student_id: booking.studentId || (booking as any).student_id || null,
+      lesson_type: booking.lessonType || (booking as any).lesson_type || null,
+    };
+    const res = await api(`/api/admin/bookings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
     return res as any;
   } catch (e) {
     console.error(e);
