@@ -2465,6 +2465,7 @@ function StudentsManager() {
         </Button>
       </div>
       {resourceModal}
+      {viewResourcesModal}
       <form onSubmit={save} className="grid gap-2">
         <input
           className="h-10 rounded-md border px-3"
@@ -2722,7 +2723,7 @@ function StudentsManager() {
                   <span className="font-medium">
                     {s.name}
                     {s.age ? ` • ${s.age}` : ""}
-                    {s.isElderly ? " • Elderly" : ""}
+                    {s.isElderly ? " �� Elderly" : ""}
                   </span>
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 transition-transform ${
