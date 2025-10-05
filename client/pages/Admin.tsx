@@ -682,6 +682,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
       <div className="flex items-center gap-2">
         <input
           type="date"
+          name="scheduleDate"
           className="rounded-md border px-3 h-10"
           value={date}
           onChange={(e) => setDate(e.target.value)}
