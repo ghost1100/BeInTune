@@ -1682,9 +1682,10 @@ function StudentsManager() {
     try {
       await studentsAPI.remove(id);
       await refresh();
+      toast({ title: "Removed", description: "Student deleted" });
     } catch (e) {
       console.error(e);
-      alert("Unable to remove student");
+      toast({ title: "Error", description: "Unable to remove student" });
     }
   };
 
