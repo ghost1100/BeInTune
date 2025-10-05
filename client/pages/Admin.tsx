@@ -772,10 +772,10 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
 
       <div className="mt-4">
         <h4 className="font-semibold">Bookings on {date}</h4>
-        {bookings.length === 0 && (
+        {bookingsState.length === 0 && (
           <div className="text-foreground/70">No bookings</div>
         )}
-        {bookings.map((b) => (
+        {bookingsState.map((b) => (
           <div
             key={b.id}
             className="flex items-center justify-between gap-2 rounded-md border p-2 mt-2"
