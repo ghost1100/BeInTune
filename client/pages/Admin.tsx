@@ -708,6 +708,24 @@ export default function Admin() {
             </div>
           )}
 
+          {activeTab === "discussion" && (
+            <div className="rounded-lg border p-4">
+              <h2 className="font-semibold">Discussion</h2>
+              <div className="mt-4">
+                <DiscussionFeed />
+              </div>
+            </div>
+          )}
+
+          {activeTab === "chats" && (
+            <div className="rounded-lg border p-4">
+              <h2 className="font-semibold">Chats</h2>
+              <div className="mt-4">
+                <ChatsPanel />
+              </div>
+            </div>
+          )}
+
           {activeTab === "security" && (
             <div className="rounded-lg border p-4">
               <h2 className="font-semibold">Security</h2>
