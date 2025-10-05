@@ -13,30 +13,38 @@ export type Booking = {
 const AV_KEY = 'inTuneAvailability';
 const BK_KEY = 'inTuneBookings';
 
-function readAvail(): Record<string, string[]> {
+async function readAvail(date?: string): Promise<Record<string, string[]>> {
   try {
-    const raw = localStorage.getItem(AV_KEY);
-    return raw ? JSON.parse(raw) : {};
+    const d = date || new Date().toISOString().slice(0,10);
+    const res = await fetch(`/api/admin/slots?date=${d}`);
+    if (!res.ok) return {};
+    const rows = await res.json();
+    // transform into map
+    const map: Record<string, string[]> = {};
+    map[d] = rows.filter((r:any)=>r.is_available).map((r:any)=>r.slot_time);
+    return map;
   } catch (e) {
     return {};
   }
 }
 
-function writeAvail(a: Record<string, string[]>) {
-  localStorage.setItem(AV_KEY, JSON.stringify(a));
+async function writeAvail(a: Record<string, string[]>) {
+  // Not implemented server-side as batch; caller should use slots API to create/delete slots.
 }
 
-function readBookings(): Booking[] {
+async function readBookings(date?: string): Promise<Booking[]> {
   try {
-    const raw = localStorage.getItem(BK_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const q = date ? `?date=${date}` : "";
+    const res = await fetch(`/api/admin/bookings${q}`);
+    if (!res.ok) return [];
+    return res.json();
   } catch (e) {
     return [];
   }
 }
 
-function writeBookings(b: Booking[]) {
-  localStorage.setItem(BK_KEY, JSON.stringify(b));
+async function writeBookings(b: Booking[]) {
+  // Not used
 }
 
 export function getSlotsForDay(date: string, from = 8, to = 20): string[] {
