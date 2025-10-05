@@ -21,12 +21,37 @@ export default function Dashboard() {
         const res = await (await import("@/lib/api")).apiFetch(`/api/admin/bookings`);
         const rows = Array.isArray(res) ? res : res && (res as any).rows ? (res as any).rows : [];
         const mine = user ? rows.filter((b: any) => b.student_user_id === user.id) : [];
+        // helper to normalize date/time
+        function toTimestamp(item: any) {
+          try {
+            // normalize date-only string YYYY-MM-DD
+            let dateOnly: string | null = null;
+            if (!item || !item.date) return Number.POSITIVE_INFINITY;
+            if (typeof item.date === "string") {
+              dateOnly = item.date.split("T")[0];
+            } else if (item.date instanceof Date) {
+              dateOnly = item.date.toISOString().slice(0, 10);
+            } else {
+              dateOnly = String(item.date);
+            }
+            // normalize time to HH:MM:SS (strip zone)
+            const time = item.time ? String(item.time).split("+")[0] : "00:00:00";
+            // ensure time has seconds
+            const timeParts = time.split(":");
+            let timeNorm = time;
+            if (timeParts.length === 2) timeNorm = `${timeParts[0]}:${timeParts[1]}:00`;
+
+            const iso = `${dateOnly}T${timeNorm}`;
+            const ts = new Date(iso).getTime();
+            if (Number.isNaN(ts)) return Number.POSITIVE_INFINITY;
+            return ts;
+          } catch (e) {
+            return Number.POSITIVE_INFINITY;
+          }
+        }
+
         // sort by date/time
-        mine.sort((a: any, b: any) => {
-          const da = new Date(`${a.date}T${a.time}`).getTime();
-          const db = new Date(`${b.date}T${b.time}`).getTime();
-          return da - db;
-        });
+        mine.sort((a: any, b: any) => toTimestamp(a) - toTimestamp(b));
         setBookings(mine);
       } catch (err) {
         console.error("Failed to load bookings", err);
