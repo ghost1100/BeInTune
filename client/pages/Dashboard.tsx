@@ -15,8 +15,8 @@ export default function Dashboard() {
   if (!user) return <Navigate to="/admin/login" replace />;
   if (user.role !== "student") return <Navigate to="/admin" replace />;
 
-  const displayName = user.username || user.name || user.email;
   const navigate = useNavigate();
+  const displayName = user.username || user.name || user.email;
 
   const logout = async () => {
     try {
