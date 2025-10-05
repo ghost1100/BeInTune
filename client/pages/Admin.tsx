@@ -733,6 +733,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null,
   );
+  const [isCancelling, setIsCancelling] = useState<string | null>(null);
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -771,6 +772,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
     }
     setSelectedSlot(null);
     setSelectedStudentId(null);
+    setShowStudentModal(false);
     setRefresh((r) => r + 1);
   };
 
@@ -822,9 +824,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     <div
                       onClick={() => {
                         if (booked) {
-                          if (window.confirm(`Cancel booking at ${s}?`)) {
-                            removeBk(booked.id);
-                          }
+                          setIsCancelling(booked.id);
+                          removeBk(booked.id).finally(() => setIsCancelling(null));
                           return;
                         }
                         if (available) {
@@ -850,16 +851,31 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                       </div>
                     </div>
                     <div>
-                      {!booked && available && (
+                      {booked ? (
                         <button
+                          type="button"
                           onClick={() => {
-                            setSelectedSlot(s);
-                            setShowStudentModal(true);
+                            setIsCancelling(booked.id);
+                            removeBk(booked.id).finally(() => setIsCancelling(null));
                           }}
                           className="px-3 py-1 rounded-md border"
+                          disabled={isCancelling === booked.id}
                         >
-                          Add
+                          {isCancelling === booked.id ? "Cancelling..." : "Unbook"}
                         </button>
+                      ) : (
+                        available && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedSlot(s);
+                              setShowStudentModal(true);
+                            }}
+                            className="px-3 py-1 rounded-md border"
+                          >
+                            Add
+                          </button>
+                        )
                       )}
                     </div>
                   </div>
@@ -879,11 +895,11 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
             return (
               <div key={s} className="">
                 <button
+                  type="button"
                   onClick={() => {
                     if (booked) {
-                      if (window.confirm(`Cancel booking at ${s}?`)) {
-                        removeBk(booked.id);
-                      }
+                      setIsCancelling(booked.id);
+                      removeBk(booked.id).finally(() => setIsCancelling(null));
                       return;
                     }
                     if (available) {
@@ -896,29 +912,45 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                   className={`w-full h-10 rounded-md text-sm ${booked ? "bg-destructive text-destructive-foreground" : available ? "bg-primary text-primary-foreground" : "bg-card text-foreground/80 border"}`}
                   title={
                     booked
-                      ? `Click to cancel booking for ${booked?.student_name || booked?.student_email || booked?.name || booked?.email || "student"}`
+                      ? `Tap to cancel booking for ${booked?.student_name || booked?.student_email || booked?.name || booked?.email || "student"}`
                       : available
-                        ? "Available - click to book"
+                        ? "Available - tap to book"
                         : meta && meta.is_available === false
-                          ? "Unavailable - toggle to re-open"
-                          : "Available - click to add"
+                          ? "Unavailable - tap to re-open"
+                          : "Available - tap to add"
                   }
                 >
-                  {s}
+                  {isCancelling === (booked?.id || "") && booked ? "..." : s}
                 </button>
-                {available && !booked && (
+                {booked ? (
                   <div className="mt-1">
                     <button
+                      type="button"
                       onClick={() => {
-                        setSelectedSlot(s);
-                        setShowStudentModal(true);
+                        setIsCancelling(booked.id);
+                        removeBk(booked.id).finally(() => setIsCancelling(null));
                       }}
+                      className="text-sm rounded-md border px-2 py-1"
+                      disabled={isCancelling === booked.id}
+                    >
+                      {isCancelling === booked.id ? "Cancelling..." : "Unbook"}
+                    </button>
+                  </div>
+                ) : (
+                  available && (
+                    <div className="mt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedSlot(s);
+                          setShowStudentModal(true);
+                        }}
                       className="text-sm rounded-md border px-2 py-1"
                     >
                       Add
                     </button>
                   </div>
-                )}
+                ))}
               </div>
             );
           })}
@@ -999,37 +1031,39 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                 {filteredStudents.length === 0 && (
                   <div className="text-foreground/70">No students found.</div>
                 )}
-                {filteredStudents.map((s) => (
-                  <div
-                    key={s.id}
-                    className={`p-2 rounded-md border flex items-center justify-between ${selectedStudentId === s.id ? "bg-card" : ""}`}
-                  >
-                    <div>
-                      <div className="font-medium">
-                        {s.name} {s.age ? `• ${s.age}` : ""}
+                {filteredStudents.map((s) => {
+                  const studentId = s.student_id || s.id;
+                  const isSelected = selectedStudentId === studentId;
+                  return (
+                    <button
+                      type="button"
+                      key={studentId}
+                      onClick={() => setSelectedStudentId(studentId)}
+                      className={`w-full p-2 rounded-md border text-left flex items-center justify-between ${isSelected ? "bg-primary/10 border-primary" : ""}`}
+                    >
+                      <div>
+                        <div className="font-medium">
+                          {s.name || "Unnamed"} {s.age ? `• ${s.age}` : ""}
+                        </div>
+                        <div className="text-sm text-foreground/70">
+                          {s.email} {s.phone && `• ${s.phone}`}
+                        </div>
                       </div>
-                      <div className="text-sm text-foreground/70">
-                        {s.email} {s.phone && `• ${s.phone}`}
+                      <div className={`text-xs px-2 py-1 rounded-md ${isSelected ? "bg-primary text-primary-foreground" : "border"}`}>
+                        {isSelected ? "Selected" : "Tap"}
                       </div>
-                    </div>
-                    <div>
-                      <button
-                        onClick={() => setSelectedStudentId(s.id)}
-                        className="px-3 py-1 rounded-md border mr-2"
-                      >
-                        Select
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
               <div className="flex gap-2 mt-3">
                 <button
+                  type="button"
                   onClick={() => {
                     createBookingForStudent();
-                    setShowStudentModal(false);
                   }}
-                  className="px-4 py-2 rounded-md bg-primary text-primary-foreground"
+                  className="px-4 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-60"
+                  disabled={!selectedStudentId}
                 >
                   Create booking
                 </button>
