@@ -36,6 +36,7 @@ function fileToBase64(file: File) {
 }
 
 import useAuth from "@/hooks/use-auth";
+import Lightbox from "@/components/ui/Lightbox";
 
 export default function DiscussionFeed({ className }: { className?: string }) {
   const [posts, setPosts] = useState<DiscussionPost[]>([]);
@@ -46,6 +47,8 @@ export default function DiscussionFeed({ className }: { className?: string }) {
   const { user } = useAuth();
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState("");
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [lightboxMime, setLightboxMime] = useState<string | null>(null);
 
   useEffect(() => {
     loadPosts();
