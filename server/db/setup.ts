@@ -74,6 +74,22 @@ export async function ensureDbSetup() {
       type text,
       created_at timestamptz NOT NULL DEFAULT now()
     )`);
+    // Ensure unique reaction per user per post
+    await query(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_post_reactions_unique ON post_reactions(post_id, user_id);",
+    );
+
+    // Message reactions (per-message reactions)
+    await query(`CREATE TABLE IF NOT EXISTS message_reactions (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      message_id uuid REFERENCES messages(id) ON DELETE CASCADE,
+      user_id uuid REFERENCES users(id) ON DELETE SET NULL,
+      type text,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )`);
+    await query(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_message_reactions_unique ON message_reactions(message_id, user_id);",
+    );
 
     await query(`CREATE TABLE IF NOT EXISTS learning_resources (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
