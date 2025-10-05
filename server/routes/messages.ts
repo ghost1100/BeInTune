@@ -6,6 +6,7 @@ const router = express.Router();
 // GET /api/admin/messages
 router.get("/messages", async (req, res) => {
   try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const limit = parseInt(String(req.query.limit || "50"), 10);
     const r = await query(
       "SELECT * FROM messages ORDER BY created_at DESC LIMIT $1",
@@ -21,11 +22,13 @@ router.get("/messages", async (req, res) => {
 // POST /api/admin/messages
 router.post("/messages", async (req, res) => {
   try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const { sender_id, content, recipient_id } = req.body as any;
     if (!content) return res.status(400).json({ error: "Missing content" });
+    const sid = req.user.id || sender_id || null;
     const ins = await query(
       "INSERT INTO messages(sender_id, recipient_id, content) VALUES ($1,$2,$3) RETURNING *",
-      [sender_id || null, recipient_id || null, content],
+      [sid, recipient_id || null, content],
     );
     res.json({ ok: true, message: ins.rows[0] });
   } catch (err) {
