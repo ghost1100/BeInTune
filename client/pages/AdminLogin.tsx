@@ -48,9 +48,8 @@ export default function AdminLogin() {
         localStorage.setItem("inTuneAdmin", JSON.stringify(user));
         navigate("/admin");
       } else {
-        // student or other role
         localStorage.setItem("inTuneStudent", JSON.stringify(user));
-        navigate("/");
+        navigate("/dashboard");
       }
     } catch (err: any) {
       setErr(err?.message || "Login failed");
