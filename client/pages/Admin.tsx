@@ -1559,6 +1559,61 @@ function ReportPanel() {
   );
 }
 
+const RESOURCE_ALLOWED_EXTENSIONS = new Set([
+  "pdf",
+  "zip",
+  "doc",
+  "docx",
+  "txt",
+  "rtf",
+  "mp4",
+  "mov",
+  "avi",
+  "mkv",
+  "ppt",
+  "pptx",
+  "xls",
+  "xlsx",
+]);
+
+const RESOURCE_ALLOWED_MIME_TYPES = new Set([
+  "application/pdf",
+  "application/zip",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/plain",
+]);
+
+const RESOURCE_ALLOWED_MIME_PREFIXES = ["video/"];
+
+const resourceFileKey = (file: File) =>
+  `${file.name}-${file.size}-${file.lastModified}`;
+
+function isResourceFileAllowed(file: File) {
+  if (RESOURCE_ALLOWED_MIME_TYPES.has(file.type)) return true;
+  if (RESOURCE_ALLOWED_MIME_PREFIXES.some((prefix) => file.type.startsWith(prefix)))
+    return true;
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  return ext ? RESOURCE_ALLOWED_EXTENSIONS.has(ext) : false;
+}
+
+function fileToBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const [, base64] = result.split(",");
+      resolve(base64 || result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function StudentsManager() {
   const { toast } = useToast();
   const instrumentsList = [
