@@ -23,7 +23,21 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between">
         <Logo />
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          {nav.map((item) => (
+          {publicNav.map((item) => (
+            <NavLink
+              key={item.href}
+              to={item.href}
+              className={({ isActive }) =>
+                `transition-colors hover:text-foreground/80 ${
+                  isActive ? "text-foreground" : "text-foreground/60"
+                }`
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+          {/* protected links */}
+          {user && protectedNav.map((item) => (
             <NavLink
               key={item.href}
               to={item.href}
