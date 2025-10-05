@@ -32,13 +32,32 @@ router.post("/login", async (req, res) => {
     : false;
   if (!match) return res.status(401).json({ error: "Invalid credentials" });
 
-  // Do not issue tokens here; caller can implement sessions/JWT. Return basic user info.
-  res.json({
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    role: user.role,
-  });
+  // issue JWT
+  const jwt = (await import("jsonwebtoken")).default;
+  const SECRET = process.env.JWT_SECRET || "changeme123";
+  const token = jwt.sign({ sub: user.id, role: user.role }, SECRET, { expiresIn: "7d" });
+
+  // set httpOnly cookie
+  res.cookie("token", token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+  res.json({ id: user.id, email: user.email, username: user.username, role: user.role });
+});
+
+// GET /api/auth/me
+router.get("/me", async (req, res) => {
+  const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "No token" });
+  try {
+    const jwt = (await import("jsonwebtoken")).default;
+    const SECRET = process.env.JWT_SECRET || "changeme123";
+    const decoded: any = jwt.verify(token, SECRET);
+    const userRes = await query("SELECT id, email, username, role FROM users WHERE id = $1", [decoded.sub]);
+    const user = userRes.rows[0];
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user);
+  } catch (err) {
+    res.status(401).json({ error: "Invalid token" });
+  }
 });
 
 // POST /api/auth/send-reset
