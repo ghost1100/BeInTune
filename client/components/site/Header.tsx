@@ -1,4 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Logo } from "./Logo";
 import ThemeToggle from "./ThemeToggle";
