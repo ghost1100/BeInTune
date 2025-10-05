@@ -82,6 +82,46 @@ export default function ChatsPanel({ className }: { className?: string }) {
     }
   }
 
+  // load admin users so we can pin them above student list
+  async function loadAdmins() {
+    try {
+      const resp = await (
+        await import("@/lib/api")
+      ).apiFetch("/api/admin/students/admins");
+      const list = Array.isArray(resp) ? resp : [];
+      if (list.length) {
+        // prepare a synthetic StudentRecord for admin
+        const admin = {
+          id: list[0].user_id || list[0].id,
+          user_id: list[0].user_id || list[0].id,
+          name: list[0].name || "Admin",
+          email: list[0].email || "admin@local",
+          isAdmin: true,
+        } as any as StudentRecord & { isAdmin?: boolean };
+        setStudents((prev) => {
+          // ensure admin is first and not duplicated
+          const filtered = prev.filter((p) => p.user_id !== admin.user_id && p.id !== admin.id);
+          return [admin as any, ...filtered];
+        });
+      }
+    } catch (err) {
+      console.error("Failed to load admins", err);
+    }
+  }
+
+  async function toggleSaveMessage(messageId: string, saved: boolean) {
+    try {
+      if (saved) {
+        await (await import("@/lib/api")).apiFetch(`/api/admin/messages/${messageId}/save`, { method: "POST" });
+      } else {
+        await (await import("@/lib/api")).apiFetch(`/api/admin/messages/${messageId}/save`, { method: "DELETE" });
+      }
+      setTimeout(() => loadMessages(), 200);
+    } catch (err) {
+      console.error("Failed to toggle save", err);
+    }
+  }
+
   function filteredStudents() {
     if (!query) return students;
     return students.filter((student) =>
