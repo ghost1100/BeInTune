@@ -7,29 +7,37 @@ export default function Chats() {
   const [text, setText] = useState("");
   const { toast } = useToast();
 
+  async function load() {
+    try {
+      const j = await (await import("@/lib/api")).apiFetch(
+        "/api/admin/messages?limit=50"
+      );
+      const arr = Array.isArray(j) ? j : (j && (j as any).rows ? (j as any).rows : []);
+      setMessages(arr);
+    } catch (e) {
+      console.error(e);
+      setMessages([]);
+    }
+  }
+
   useEffect(() => {
-    (async () => {
-      try {
-        const j = await (await import('@/lib/api')).apiFetch('/api/admin/messages?limit=50');
-        setMessages((j as any).rows || (j as any) || []);
-      } catch (e) {
-        console.error(e);
-      }
-    })();
+    load();
   }, []);
 
   async function send() {
     if (!text) return;
     try {
-      const r = await (await import('@/lib/api')).apiFetch('/api/admin/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const r = await (await import("@/lib/api")).apiFetch("/api/admin/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: text }),
       });
-      setText('');
-      toast({ title: 'Sent' });
+      setText("");
+      toast({ title: "Sent" });
+      // reload messages
+      load();
     } catch (err: any) {
-      toast({ title: 'Error', description: err?.message || 'Failed' });
+      toast({ title: "Error", description: err?.message || "Failed" });
     }
   }
 
@@ -38,7 +46,7 @@ export default function Chats() {
       <h2 className="text-xl font-semibold">Chats</h2>
       <div className="mt-4 bg-card p-4 rounded">
         <div className="space-y-2 max-h-96 overflow-auto">
-          {messages.map((m) => (
+          {(Array.isArray(messages) ? messages : []).map((m) => (
             <div key={m.id} className="p-2 border rounded">
               <div className="font-medium">{m.sender_id || "User"}</div>
               <div className="text-sm text-foreground/70">{m.content}</div>
