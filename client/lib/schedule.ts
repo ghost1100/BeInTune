@@ -19,7 +19,15 @@ async function readAvail(date?: string): Promise<Record<string, string[]>> {
     const api = (await import("@/lib/api")).apiFetch;
     const rows = await api(`/api/admin/slots?date=${d}`);
     const map: Record<string, string[]> = {};
-    if (!rows || !Array.isArray(rows)) return map;
+    if (!rows || !Array.isArray(rows)) {
+      // if no slots defined in DB, assume all slots are available
+      map[d] = getSlotsForDay(d);
+      return map;
+    }
+    if (rows.length === 0) {
+      map[d] = getSlotsForDay(d);
+      return map;
+    }
     map[d] = rows.filter((r: any) => r.is_available).map((r: any) => r.slot_time);
     return map;
   } catch (e) {
