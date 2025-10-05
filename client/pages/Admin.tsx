@@ -1,4 +1,4 @@
-import { useEffect, useState, FormEvent, DragEvent, ChangeEvent } from "react";
+import { useEffect, useMemo, useState, FormEvent, DragEvent, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { getRandomImage } from "@/lib/unsplash";
 import {
@@ -17,6 +17,7 @@ import useTheme from "@/hooks/useTheme";
 import SecurityPanel from "@/components/admin/SecurityPanel";
 import NewsletterComposer from "@/components/admin/NewsletterComposer";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 type Teacher = {
   id: string;
@@ -1584,6 +1585,34 @@ function StudentsManager() {
     instrumentsList[0],
   );
   const [passwordLoading, setPasswordLoading] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const filteredStudents = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return students;
+    return students.filter((s) => {
+      const instruments = Array.isArray(s.instruments)
+        ? (s.instruments as string[])
+        : [];
+      const values = [
+        s.name,
+        s.email,
+        s.phone,
+        s.bandName,
+        s.parentGuardianName,
+        s.parentGuardianEmail,
+        s.parentGuardianPhone,
+        s.parent_name,
+        s.parent_email,
+        ...instruments,
+      ];
+      return values.some(
+        (value) =>
+          typeof value === "string" &&
+          value.toLowerCase().includes(query),
+      );
+    });
+  }, [students, searchQuery]);
+  const hasSearch = searchQuery.trim().length > 0;
 
   const refresh = async () => {
     try {
@@ -1963,12 +1992,17 @@ function StudentsManager() {
           </>
         )}
 
-        <div className="flex gap-2 flex-wrap">
-          <button className="px-4 py-2 rounded-md bg-primary text-primary-foreground">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            type="submit"
+            className="w-full sm:w-auto"
+          >
             {editing ? "Save" : "Add"}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="outline"
+            className="w-full sm:w-auto"
             onClick={() => {
               setForm({
                 name: "",
@@ -1989,25 +2023,46 @@ function StudentsManager() {
               });
               setEditing(null);
             }}
-            className="px-4 py-2 rounded-md border"
           >
             Clear
-          </button>
+          </Button>
         </div>
       </form>
+
+      <div className="mt-4">
+        <label
+          htmlFor="studentSearch"
+          className="mb-1 block text-sm font-medium text-foreground/80"
+        >
+          Search students
+        </label>
+        <input
+          id="studentSearch"
+          type="search"
+          placeholder="Search by name, email, instrument..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="h-10 w-full rounded-md border px-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
 
       <div className="mt-4 grid gap-2">
         {students.length === 0 && (
           <div className="text-foreground/70">No students yet.</div>
         )}
-        {students.map((s) => {
+        {students.length > 0 && filteredStudents.length === 0 && hasSearch && (
+          <div className="rounded-md border border-dashed p-4 text-sm text-foreground/70">
+            No students match &quot;{searchQuery.trim()}&quot;.
+          </div>
+        )}
+        {filteredStudents.map((s) => {
           const studentId = s.student_id || s.id;
           const userId = s.user_id || s.userId || s.id;
           const email = s.email;
           return (
             <div
               key={studentId || userId}
-              className="flex items-center justify-between rounded-md border p-2"
+              className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <div className="font-medium">
@@ -2048,22 +2103,26 @@ function StudentsManager() {
                   {s.marketing_consent || s.marketingConsent ? "Yes" : "No"}
                 </div>
               </div>
-              <div className="flex gap-2 flex-wrap">
-                <button
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+                <Button
                   type="button"
                   onClick={() => edit(s)}
-                  className="px-2 py-1 rounded-md border"
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto whitespace-normal"
                 >
                   Edit
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => remove(studentId)}
-                  className="px-2 py-1 rounded-md border"
+                  variant="destructive"
+                  size="sm"
+                  className="w-full sm:w-auto whitespace-normal"
                 >
                   Remove
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() =>
                     setPasswordForUser(
@@ -2072,35 +2131,41 @@ function StudentsManager() {
                       "Random password applied",
                     )
                   }
-                  className="px-2 py-1 rounded-md border"
+                  variant="secondary"
+                  size="sm"
+                  className="w-full sm:w-auto whitespace-normal"
                   disabled={passwordLoading === userId}
                 >
                   {passwordLoading === userId
                     ? "Working..."
                     : "Randomize password"}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => {
                     const pw = window.prompt("Enter new password", "");
                     if (pw)
                       setPasswordForUser(userId, pw, "Password updated");
                   }}
-                  className="px-2 py-1 rounded-md border"
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto whitespace-normal"
                   disabled={passwordLoading === userId}
                 >
                   Set password
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => sendReset(userId, email)}
-                  className="px-2 py-1 rounded-md border"
+                  variant="secondary"
+                  size="sm"
+                  className="w-full sm:w-auto whitespace-normal"
                   disabled={passwordLoading === (userId || email)}
                 >
                   {passwordLoading === (userId || email)
                     ? "Sending..."
                     : "Send reset"}
-                </button>
+                </Button>
               </div>
             </div>
           );
