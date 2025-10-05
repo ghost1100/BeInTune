@@ -2090,11 +2090,11 @@ function StudentsManager() {
               </button>
               <button
                 type="button"
-                onClick={() => sendReset(email)}
+                onClick={() => sendReset(userId, email)}
                 className="px-2 py-1 rounded-md border"
-                disabled={passwordLoading === email}
+                disabled={passwordLoading === (userId || email)}
               >
-                {passwordLoading === email ? "Sending..." : "Send reset"}
+                {passwordLoading === (userId || email) ? "Sending..." : "Send reset"}
               </button>
             </div>
             </div>
