@@ -67,7 +67,7 @@ export default function ThemeHomePreview({
       <section className="hero-bg py-12">
         <div className="container mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div
-            className="lg:col-span-7 text-white max-w-2xl"
+            className="lg:col-span-7 text-foreground max-w-2xl"
             style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}
           >
             <div className="inline-flex items-center gap-3 rounded-full bg-white/10 px-3 py-1 text-sm">
@@ -76,7 +76,7 @@ export default function ThemeHomePreview({
             <h1 className="mt-6 text-2xl md:text-3xl font-extrabold leading-tight">
               {content.heroHeading}
             </h1>
-            <p className="mt-4 text-base text-white/90">
+            <p className="mt-4 text-base text-foreground/90">
               {content.heroSubheading}
             </p>
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
