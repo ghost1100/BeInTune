@@ -6,6 +6,10 @@ import authRoutes from "./routes/auth";
 import adminRoutes from "./routes/admin";
 import uploadRoutes from "./routes/upload";
 import newsletterRoutes from "./routes/newsletters";
+import { ensureDbSetup } from "./db/setup";
+
+// Ensure DB schema and seed admin on startup
+await ensureDbSetup();
 
 export function createServer() {
   const app = express();
