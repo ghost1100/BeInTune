@@ -1,5 +1,6 @@
 import express from "express";
 import { query } from "../db";
+import { encryptText, decryptText } from "../lib/crypto";
 
 const router = express.Router();
 
