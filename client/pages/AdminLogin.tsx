@@ -81,20 +81,9 @@ export default function AdminLogin() {
             type="password"
           />
           {err && <div className="text-sm text-red-600 mt-2">{err}</div>}
-          <div className="mt-4 flex justify-between">
+          <div className="mt-4 flex justify-end">
             <button className="h-10 px-4 rounded-md bg-primary text-primary-foreground">
               Sign in
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIdentifier("Darryle");
-                setPassword("123654intune");
-                setErr("");
-              }}
-              className="h-10 px-4 rounded-md border"
-            >
-              Fill test
             </button>
           </div>
         </form>
