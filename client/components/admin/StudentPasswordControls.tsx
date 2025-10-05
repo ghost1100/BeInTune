@@ -30,7 +30,11 @@ export default function StudentPasswordControls() {
     })();
   }, []);
 
-  const setPasswordForUser = async (userId: string, password: string) => {
+  const setPasswordForUser = async (userId: string | undefined, password: string) => {
+    if (!userId) {
+      toast({ title: "Error", description: "Missing user id" });
+      return;
+    }
     setLoadingId(userId);
     try {
       const res = await fetch(`/api/admin/users/${userId}/set-password`, {
@@ -38,7 +42,15 @@ export default function StudentPasswordControls() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
-      if (!res.ok) throw new Error("Failed to set password");
+      if (!res.ok) {
+        let body: any = null;
+        try {
+          body = await res.json();
+        } catch (e) {
+          /* ignore */
+        }
+        throw new Error(body?.error || body?.message || "Failed to set password");
+      }
       toast({
         title: "Password set",
         description: "Password updated successfully.",
@@ -61,7 +73,15 @@ export default function StudentPasswordControls() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      if (!res.ok) throw new Error("Failed to send reset email");
+      if (!res.ok) {
+        let body: any = null;
+        try {
+          body = await res.json();
+        } catch (e) {
+          /* ignore */
+        }
+        throw new Error(body?.error || body?.message || "Failed to send reset email");
+      }
       toast({
         title: "Reset sent",
         description: `Password reset email sent to ${email}`,
@@ -85,46 +105,52 @@ export default function StudentPasswordControls() {
         {students.length === 0 && (
           <div className="text-foreground/70">No students yet.</div>
         )}
-        {students.map((s: any) => (
-          <div
-            key={s.student_id}
-            className="flex items-center justify-between gap-2 p-2 rounded-md border"
-          >
-            <div>
-              <div className="font-medium">{s.name || s.email}</div>
-              <div className="text-sm text-foreground/70">{s.email}</div>
+        {students.map((s: any) => {
+          const userId = s.user_id || s.userId || s.id;
+          const studentId = s.student_id || s.studentId || s.id;
+          return (
+            <div
+              key={studentId}
+              className="flex items-center justify-between gap-2 p-2 rounded-md border"
+            >
+              <div>
+                <div className="font-medium">{s.name || s.email}</div>
+                <div className="text-sm text-foreground/70">{s.email}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    const pw = randomPassword();
+                    setPasswordForUser(userId, pw);
+                  }}
+                  variant="outline"
+                  disabled={loadingId === userId}
+                >
+                  Randomize
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    const pw = prompt("Enter new password for user", "");
+                    if (pw) setPasswordForUser(userId, pw);
+                  }}
+                  variant="ghost"
+                  disabled={loadingId === userId}
+                >
+                  Set
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => sendReset(s.email)}
+                  variant="destructive"
+                >
+                  Send reset
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={() => {
-                  const pw = randomPassword();
-                  setPasswordForUser(s.user_id, pw);
-                }}
-                variant="outline"
-              >
-                Randomize
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  const pw = prompt("Enter new password for user", "");
-                  if (pw) setPasswordForUser(s.user_id, pw);
-                }}
-                variant="ghost"
-              >
-                Set
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => sendReset(s.email)}
-                variant="destructive"
-              >
-                Send reset
-              </Button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
