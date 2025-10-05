@@ -8,6 +8,7 @@ import ChatsPanel from "@/components/student/ChatsPanel";
 import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [tab, setTab] = useState("learning");
 
@@ -15,7 +16,6 @@ export default function Dashboard() {
   if (!user) return <Navigate to="/admin/login" replace />;
   if (user.role !== "student") return <Navigate to="/admin" replace />;
 
-  const navigate = useNavigate();
   const displayName = user.username || user.name || user.email;
 
   const logout = async () => {
