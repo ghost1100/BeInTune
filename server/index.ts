@@ -33,5 +33,11 @@ export function createServer() {
   app.use("/api/admin", uploadRoutes);
   app.use("/api/admin", newsletterRoutes);
 
+  // Admin entities: teachers & students
+  import studentsRoutes from "./routes/students";
+  import teachersRoutes from "./routes/teachers";
+  app.use("/api/admin", studentsRoutes);
+  app.use("/api/admin", teachersRoutes);
+
   return app;
 }
