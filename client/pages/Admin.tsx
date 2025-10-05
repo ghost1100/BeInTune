@@ -689,8 +689,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
             <div className="text-sm font-medium mb-2">Availability</div>
             <div className="space-y-2">
               {slots.map((s) => {
-                const booked = bookings.find((b) => b.time === s);
-                const available = avail.includes(s);
+                const booked = bookingsState.find((b) => b.time === s);
+                const available = availState.includes(s);
                 return (
                   <div key={s} className="flex items-center gap-2">
                     <div
