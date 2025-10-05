@@ -10,12 +10,7 @@ import {
   removeBooking,
   isSlotBooked,
 } from "@/lib/schedule";
-import {
-  getStudents,
-  addStudent as addStudentToStore,
-  updateStudent as updateStudentInStore,
-  removeStudent as removeStudentFromStore,
-} from "@/lib/students";
+import studentsAPI from "@/lib/students";
 import ThemeHomePreview from "@/components/admin/ThemeHomePreview";
 import useTheme from "@/hooks/useTheme";
 import NewsletterComposer from "@/components/admin/NewsletterComposer";
@@ -1250,21 +1245,27 @@ function ThemeManager() {
 
 function ReportPanel() {
   const today = new Date().toISOString().slice(0, 10);
-  const [studentsCount, setStudentsCount] = useState(
-    () => getStudents().length,
-  );
-  const [bookingsToday, setBookingsToday] = useState(
-    () => getBookings(today).length,
-  );
+  const [studentsCount, setStudentsCount] = useState(0);
+  const [bookingsToday, setBookingsToday] = useState(() => getBookings(today).length);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setStudentsCount(getStudents().length);
-      setBookingsToday(
-        getBookings(new Date().toISOString().slice(0, 10)).length,
-      );
-    }, 2000);
-    return () => clearInterval(id);
+    let mounted = true;
+    async function refreshCounts() {
+      try {
+        const s = await studentsAPI.list();
+        if (!mounted) return;
+        setStudentsCount(Array.isArray(s) ? s.length : 0);
+        setBookingsToday(getBookings(new Date().toISOString().slice(0, 10)).length);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    refreshCounts();
+    const id = setInterval(refreshCounts, 5000);
+    return () => {
+      mounted = false;
+      clearInterval(id);
+    };
   }, []);
 
   return (
@@ -1297,7 +1298,7 @@ function StudentsManager() {
     "Ukulele",
     "Flute",
   ];
-  const [students, setStudents] = useState(getStudents());
+  const [students, setStudents] = useState<any[]>([]);
   const [form, setForm] = useState<Partial<any>>({
     name: "",
     age: 16,
@@ -1320,9 +1321,16 @@ function StudentsManager() {
     instrumentsList[0],
   );
 
-  const refresh = () => setStudents(getStudents());
+  const refresh = async () => {
+    try {
+      const s = await studentsAPI.list();
+      setStudents(Array.isArray(s) ? s : []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-  const save = (e?: FormEvent) => {
+  const save = async (e?: FormEvent) => {
     if (e) e.preventDefault();
     if (!form.name) {
       alert("Name is required");
@@ -1337,7 +1345,7 @@ function StudentsManager() {
       age: form.age,
       isElderly: !!form.isElderly,
       medications: form.medications || "",
-      marketingConsent: !!form.marketingConsent,
+      marketing_consent: !!form.marketingConsent,
       allergies: form.allergies || "",
       instruments: form.instruments || [],
       bandName: form.bandName || "",
@@ -1349,40 +1357,45 @@ function StudentsManager() {
       parentGuardianEmail: form.parentGuardianEmail || "",
       parentGuardianPhone: form.parentGuardianPhone || "",
     };
-    if (editing) {
-      updateStudentInStore(editing, payload);
-    } else {
-      addStudentToStore(payload);
+    try {
+      if (editing) {
+        await studentsAPI.update(editing, payload);
+      } else {
+        await studentsAPI.create({ ...payload, tempPassword: payload.email });
+      }
+      setForm({
+        name: "",
+        age: 16,
+        isElderly: false,
+        medications: "",
+        marketingConsent: false,
+        allergies: "",
+        instruments: [],
+        bandName: "",
+        email: "",
+        phone: "",
+        address: "",
+        emergencyContacts: "",
+        parentGuardianName: "",
+        parentGuardianEmail: "",
+        parentGuardianPhone: "",
+      });
+      setEditing(null);
+      await refresh();
+    } catch (err) {
+      console.error(err);
+      alert("Unable to save student");
     }
-    setForm({
-      name: "",
-      age: 16,
-      isElderly: false,
-      medications: "",
-      marketingConsent: false,
-      allergies: "",
-      instruments: [],
-      bandName: "",
-      email: "",
-      phone: "",
-      address: "",
-      emergencyContacts: "",
-      parentGuardianName: "",
-      parentGuardianEmail: "",
-      parentGuardianPhone: "",
-    });
-    setEditing(null);
-    refresh();
   };
 
   const edit = (s: any) => {
-    setEditing(s.id);
+    setEditing(s.student_id);
     setForm({
       name: s.name,
       age: s.age || 16,
       isElderly: !!s.isElderly,
       medications: s.medications || "",
-      marketingConsent: !!s.marketingConsent,
+      marketingConsent: !!s.marketing_consent,
       allergies: s.allergies || "",
       instruments: s.instruments || [],
       bandName: s.bandName || "",
@@ -1390,14 +1403,19 @@ function StudentsManager() {
       phone: s.phone,
       address: s.address,
       emergencyContacts: s.emergencyContacts,
-      parentGuardianName: s.parentGuardianName,
-      parentGuardianEmail: s.parentGuardianEmail,
+      parentGuardianName: s.parent_name,
+      parentGuardianEmail: s.parent_email,
       parentGuardianPhone: s.parentGuardianPhone,
     });
   };
-  const remove = (id: string) => {
-    removeStudentFromStore(id);
-    refresh();
+  const remove = async (id: string) => {
+    try {
+      await studentsAPI.remove(id);
+      await refresh();
+    } catch (e) {
+      console.error(e);
+      alert("Unable to remove student");
+    }
   };
 
   const addInstrument = () => {
