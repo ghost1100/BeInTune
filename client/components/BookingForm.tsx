@@ -66,22 +66,28 @@ export default function BookingForm() {
     <div>
       <form onSubmit={submit} className="mt-4 grid gap-3">
         <input
+          name="fullName"
           className="h-10 rounded-md border px-3"
           placeholder="Full name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          autoComplete="name"
         />
         <input
+          name="email"
           className="h-10 rounded-md border px-3"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
         />
         <input
+          name="phone"
           className="h-10 rounded-md border px-3"
           placeholder="Phone"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
+          autoComplete="tel"
         />
         <select
           className="h-10 rounded-md border px-3"
