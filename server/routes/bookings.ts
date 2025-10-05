@@ -36,17 +36,34 @@ router.delete("/slots/:id", async (req, res) => {
 // GET /api/admin/bookings?date=YYYY-MM-DD
 router.get("/bookings", async (req, res) => {
   const date = req.query.date ? String(req.query.date) : null;
-  let q;
-  if (date)
-    q = await query(
-      "SELECT b.*, s.user_id as student_user_id, u.email as student_email, u.name as student_name FROM bookings b LEFT JOIN students s ON b.student_id = s.id LEFT JOIN users u ON s.user_id = u.id WHERE b.created_at::date = $1 ORDER BY b.created_at DESC",
-      [date],
-    );
-  else
-    q = await query(
-      "SELECT b.*, s.user_id as student_user_id, u.email as student_email, u.name as student_name FROM bookings b LEFT JOIN students s ON b.student_id = s.id LEFT JOIN users u ON s.user_id = u.id ORDER BY b.created_at DESC",
-    );
-  res.json(q.rows);
+  try {
+    let q;
+    if (date) {
+      q = await query(
+        `SELECT b.id, b.lesson_type, b.created_at, s.user_id as student_user_id, u.email as student_email, u.name as student_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
+         FROM bookings b
+         LEFT JOIN slots sl ON b.slot_id = sl.id
+         LEFT JOIN students s ON b.student_id = s.id
+         LEFT JOIN users u ON s.user_id = u.id
+         WHERE sl.slot_date = $1
+         ORDER BY sl.slot_time ASC`,
+        [date],
+      );
+    } else {
+      q = await query(
+        `SELECT b.id, b.lesson_type, b.created_at, s.user_id as student_user_id, u.email as student_email, u.name as student_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
+         FROM bookings b
+         LEFT JOIN slots sl ON b.slot_id = sl.id
+         LEFT JOIN students s ON b.student_id = s.id
+         LEFT JOIN users u ON s.user_id = u.id
+         ORDER BY sl.slot_date DESC, sl.slot_time ASC`
+      );
+    }
+    res.json(q.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load bookings' });
+  }
 });
 
 // POST /api/admin/bookings - create booking
