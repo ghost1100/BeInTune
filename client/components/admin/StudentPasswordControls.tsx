@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getStudents } from "@/lib/students";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
