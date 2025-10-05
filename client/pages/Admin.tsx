@@ -1549,6 +1549,7 @@ function ReportPanel() {
 }
 
 function StudentsManager() {
+  const { toast } = useToast();
   const instrumentsList = [
     "Guitar",
     "Piano",
