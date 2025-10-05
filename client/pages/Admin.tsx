@@ -834,6 +834,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
       ) : (
         <div className="mt-4 grid grid-cols-4 gap-2">
           {slots.map((s) => {
+            const meta = slotMeta.find(
+              (m) => normalizeTime(m.slot_time || m.slotTime || m.time) === s,
+            );
             const booked = bookingsState.find((b) => b.time === s);
             const available = availState.includes(s);
             return (
@@ -851,10 +854,12 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                   className={`w-full h-10 rounded-md text-sm ${booked ? "bg-destructive text-destructive-foreground" : available ? "bg-primary text-primary-foreground" : "bg-card text-foreground/80 border"}`}
                   title={
                     booked
-                      ? `Booked by ${booked?.name}`
+                      ? `Booked by ${booked?.student_name || booked?.student_email || booked?.name || booked?.email || "student"}`
                       : available
                         ? "Available - click to book"
-                        : "Not available - click to add"
+                        : meta && meta.is_available === false
+                          ? "Unavailable - toggle to re-open"
+                          : "Available - click to add"
                   }
                 >
                   {s}
