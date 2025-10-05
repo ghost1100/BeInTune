@@ -30,7 +30,10 @@ export default function StudentPasswordControls() {
     })();
   }, []);
 
-  const setPasswordForUser = async (userId: string | undefined, password: string) => {
+  const setPasswordForUser = async (
+    userId: string | undefined,
+    password: string,
+  ) => {
     if (!userId) {
       toast({ title: "Error", description: "Missing user id" });
       return;
@@ -49,7 +52,9 @@ export default function StudentPasswordControls() {
         } catch (e) {
           /* ignore */
         }
-        throw new Error(body?.error || body?.message || "Failed to set password");
+        throw new Error(
+          body?.error || body?.message || "Failed to set password",
+        );
       }
       toast({
         title: "Password set",
@@ -80,7 +85,9 @@ export default function StudentPasswordControls() {
         } catch (e) {
           /* ignore */
         }
-        throw new Error(body?.error || body?.message || "Failed to send reset email");
+        throw new Error(
+          body?.error || body?.message || "Failed to send reset email",
+        );
       }
       toast({
         title: "Reset sent",

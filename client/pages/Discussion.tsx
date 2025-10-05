@@ -47,7 +47,10 @@ export default function Discussion() {
         const j = await p.json();
         setAttachments((a) => [...a, { id: j.id, url: j.url, mime: f.type }]);
       } catch (err: any) {
-        toast({ title: "Upload error", description: err?.message || "Upload failed" });
+        toast({
+          title: "Upload error",
+          description: err?.message || "Upload failed",
+        });
       }
     }
   }
@@ -58,7 +61,10 @@ export default function Discussion() {
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body, attachments: attachments.map((a) => a.id) }),
+        body: JSON.stringify({
+          body,
+          attachments: attachments.map((a) => a.id),
+        }),
       });
       if (!res.ok) throw new Error("Failed to create post");
       setBody("");
@@ -102,8 +108,15 @@ export default function Discussion() {
         {attachments.length > 0 && (
           <div className="mt-2 flex gap-2 flex-wrap">
             {attachments.map((a) => (
-              <div key={a.id} className="w-24 h-24 overflow-hidden rounded border">
-                <img src={a.url} alt="attachment" className="w-full h-full object-cover" />
+              <div
+                key={a.id}
+                className="w-24 h-24 overflow-hidden rounded border"
+              >
+                <img
+                  src={a.url}
+                  alt="attachment"
+                  className="w-full h-full object-cover"
+                />
               </div>
             ))}
           </div>
@@ -114,25 +127,46 @@ export default function Discussion() {
         {posts.map((p) => (
           <div key={p.id} className="bg-card p-4 rounded">
             <div className="flex items-start gap-3">
-              <div className="font-semibold">{(p.metadata && p.metadata.author_name) || p.author_name || 'Anonymous'}</div>
-              <div className="text-sm text-foreground/70">{new Date(p.created_at).toLocaleString()}</div>
+              <div className="font-semibold">
+                {(p.metadata && p.metadata.author_name) ||
+                  p.author_name ||
+                  "Anonymous"}
+              </div>
+              <div className="text-sm text-foreground/70">
+                {new Date(p.created_at).toLocaleString()}
+              </div>
             </div>
             <div className="mt-2">{p.body}</div>
             {p.media && p.media.length > 0 && (
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {p.media.map((m: any) => (
-                  <div key={m.id} className="w-full h-40 overflow-hidden rounded">
+                  <div
+                    key={m.id}
+                    className="w-full h-40 overflow-hidden rounded"
+                  >
                     {m.mime && m.mime.startsWith("video") ? (
-                      <video src={m.url} controls className="w-full h-full object-cover" />
+                      <video
+                        src={m.url}
+                        controls
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
-                      <img src={m.url} alt="media" className="w-full h-full object-cover" />
+                      <img
+                        src={m.url}
+                        alt="media"
+                        className="w-full h-full object-cover"
+                      />
                     )}
                   </div>
                 ))}
               </div>
             )}
             <div className="mt-2 flex items-center gap-3 text-sm text-foreground/70">
-              <div>{Object.entries(p.reactions || {}).map(([k,v])=>`${k}: ${v}`).join(' • ')}</div>
+              <div>
+                {Object.entries(p.reactions || {})
+                  .map(([k, v]) => `${k}: ${v}`)
+                  .join(" • ")}
+              </div>
               <div>{p.comment_count} comments</div>
             </div>
           </div>

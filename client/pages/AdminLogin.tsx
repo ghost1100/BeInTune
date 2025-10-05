@@ -11,7 +11,13 @@ export default function AdminLogin() {
 
   useEffect(() => {
     (async () => {
-      const queries = ["nature", "guitar", "musical instruments", "acoustic guitar", "piano"];
+      const queries = [
+        "nature",
+        "guitar",
+        "musical instruments",
+        "acoustic guitar",
+        "piano",
+      ];
       // try several queries until we get an image
       let u: string | null = null;
       for (let q of queries) {
@@ -28,7 +34,7 @@ export default function AdminLogin() {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
-        credentials: 'include',
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier, password }),
       });

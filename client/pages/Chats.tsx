@@ -43,13 +43,17 @@ export default function Chats() {
         <div className="space-y-2 max-h-96 overflow-auto">
           {messages.map((m) => (
             <div key={m.id} className="p-2 border rounded">
-              <div className="font-medium">{m.sender_id || 'User'}</div>
+              <div className="font-medium">{m.sender_id || "User"}</div>
               <div className="text-sm text-foreground/70">{m.content}</div>
             </div>
           ))}
         </div>
         <div className="mt-2 flex gap-2">
-          <input className="flex-1 p-2 rounded border" value={text} onChange={(e)=>setText(e.target.value)} />
+          <input
+            className="flex-1 p-2 rounded border"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
           <Button onClick={send}>Send</Button>
         </div>
       </div>

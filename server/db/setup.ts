@@ -10,7 +10,11 @@ export async function ensureDbSetup() {
     const exists = check.rows[0] && check.rows[0].reg;
     if (!exists) {
       try {
-        const migrationsPath = path.join(__dirname, "migrations", "001_init.sql");
+        const migrationsPath = path.join(
+          __dirname,
+          "migrations",
+          "001_init.sql",
+        );
         const sql = await fs.readFile(migrationsPath, "utf-8");
         await query(sql);
         console.log("Applied initial DB migrations");

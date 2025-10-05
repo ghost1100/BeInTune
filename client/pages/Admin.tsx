@@ -171,7 +171,13 @@ export default function Admin() {
   };
 
   const [activeTab, setActiveTab] = useState<
-    "teachers" | "site" | "schedule" | "students" | "theme" | "reports" | "security"
+    | "teachers"
+    | "site"
+    | "schedule"
+    | "students"
+    | "theme"
+    | "reports"
+    | "security"
   >("teachers");
 
   return (

@@ -24,7 +24,9 @@ export default function BookingForm() {
     const all = getSlotsForDay(date, 8, 17);
     const avail = await getAvailability(date);
     const bookingsRes = await getBookings(date);
-    const bookings = Array.isArray(bookingsRes) ? bookingsRes.map((b:any) => b.time) : [];
+    const bookings = Array.isArray(bookingsRes)
+      ? bookingsRes.map((b: any) => b.time)
+      : [];
     const free = (avail || []).filter((t) => !bookings.includes(t));
     setSlots(all);
     setAvailableSlots(free);
@@ -132,8 +134,10 @@ export default function BookingForm() {
             Enquire
           </Button>
           <a href={`tel:${getSiteContent().phone}`} className="inline-block">
-          <Button size="lg" variant="ghost">Call</Button>
-        </a>
+            <Button size="lg" variant="ghost">
+              Call
+            </Button>
+          </a>
         </div>
         {message && (
           <div className="text-sm mt-2 text-foreground/70">{message}</div>

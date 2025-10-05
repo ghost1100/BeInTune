@@ -5,7 +5,7 @@
 - The DB migration server/db/migrations/001_init.sql has been applied to Neon (confirmed).
 - Server dependencies have been added to package.json: pg, bcrypt, @sendgrid/mail, sharp.
 
-The server now includes scaffolded routes for authentication, admin user management, media uploads, and newsletter sending. See server/routes/* for implementations.
+The server now includes scaffolded routes for authentication, admin user management, media uploads, and newsletter sending. See server/routes/\* for implementations.
 
 ### Newsletter input checklist
 
@@ -32,6 +32,7 @@ Notes:
 ### Booking & Schedule
 
 Implemented:
+
 - Migrated slots and bookings to the database with server routes:
   - GET /api/admin/slots?date=YYYY-MM-DD
   - POST /api/admin/slots
@@ -43,26 +44,30 @@ Implemented:
 - "Find slots" on the booking form now lists available admin/teacher slots between 08:00 and 17:00 that are not already booked by students.
 - "Call" buttons (Booking form, Theme preview and other places) now use tel: links to open the user's dialer immediately.
 
-
 Not yet implemented / follow-ups:
+
 - Move booking availability caching / slot bulk updates to a server-side batch API (currently toggle creates/deletes individual slots).
 - Add server-side validation to prevent race conditions when multiple users try to book the same slot at the same time (use transactions/locking).
 
 ### Login background images & Unsplash cache
 
 Implemented:
+
 - Login background now requests images using queries for nature and musical instruments (guitar, piano, etc.).
 - A local cache/backups mechanism is added so previously-fetched images (and a curated backup set) are used if the Unsplash API fails or rate limits are reached. The cache is stored in localStorage under key `unsplash_cache_v1`.
 
 Notes:
+
 - Add environment variable VITE_UNSPLASH_ACCESS_KEY to increase quota; the code falls back to backup images if the API limit is reached.
 
 ### Security & Auth
 
 Implemented:
+
 - JWT issuance on successful login, with token set as an HTTP-only cookie. Auth middleware decodes the token and attaches the user to requests.
 
 Not yet implemented / recommended:
+
 - Implement token refresh/rotation and proper logout endpoint to revoke cookies.
 - Harden JWT secret management in production (set JWT_SECRET env var and store in secret manager).
 
@@ -73,10 +78,11 @@ Not yet implemented / recommended:
 - Add admin UI pages for slot bulk import/export and a calendar view for bookings.
 
 If you want, I can now:
+
 - Implement server-side booking transaction checks to prevent double-booking.
 - Add session refresh endpoints and a logout route.
 - Seed demo students/teachers for easier testing.
-This README summarizes all theme-related fixes, the new preview UX, the central theme API, and recommended next steps.
+  This README summarizes all theme-related fixes, the new preview UX, the central theme API, and recommended next steps.
 
 ---
 
@@ -270,9 +276,9 @@ Note: Neon and Netlify are already connected for this project.
 
 This project will add two important features:
 
-1) Sending transactional and scheduled emails using a dedicated Gmail account with an App Password (for admin notifications, booking confirmations and lesson reminders).
+1. Sending transactional and scheduled emails using a dedicated Gmail account with an App Password (for admin notifications, booking confirmations and lesson reminders).
 
-2) Linking the admin's Google Calendar to the app so the admin can manage schedule slots and so the system can create recurring weekly lessons and calendar events automatically.
+2. Linking the admin's Google Calendar to the app so the admin can manage schedule slots and so the system can create recurring weekly lessons and calendar events automatically.
 
 Overview of approach
 
@@ -292,6 +298,7 @@ Gmail App Password (how to set up)
   - GMAIL_APP_PASSWORD (the 16-character app password)
 
 Notes:
+
 - App Passwords work for sending via SMTP but are not OAuth tokens for Calendar APIs. For Calendar integration you'll need OAuth client credentials or a service account (see below).
 - The repo currently includes SendGrid env vars; we will add conditional support so either provider can be used.
 
@@ -300,13 +307,15 @@ Google Calendar API (how to set up)
 Two common options for server integration:
 
 A) OAuth 2.0 (recommended for single admin account)
+
 - Create a Google Cloud Project at https://console.cloud.google.com/
 - Enable the Google Calendar API.
 - Configure OAuth consent screen (internal or external depending on account).
-- Create OAuth 2.0 Client ID (type: Web application) and add redirect URI(s) for your app (e.g., https://your-deploy/_oauth/google/callback).
+- Create OAuth 2.0 Client ID (type: Web application) and add redirect URI(s) for your app (e.g., https://your-deploy/\_oauth/google/callback).
 - Use the client ID/secret to perform the OAuth flow and obtain access_token + refresh_token for the admin account. Persist the refresh_token in the server (encrypted) so the server can refresh access tokens without user interaction.
 
 B) Service account (possible if using a G Suite / Google Workspace domain and domain-wide delegation)
+
 - Create a service account and enable domain-wide delegation. Share the admin calendar with the service account or impersonate the admin user.
 - Use a service account when the integration is between servers and there is no interactive admin consent flow.
 
@@ -326,15 +335,18 @@ Required environment variables (suggested)
 Implementation plan (high level)
 
 1. Backend: Mail provider abstraction
+
 - Add an abstraction layer to send mail (provider: sendgrid or smtp). Use existing SendGrid implementation; add SMTP transport using Nodemailer for Gmail app password usage.
 - Make provider configurable via environment variable MAIL_PROVIDER (values: sendgrid|smtp).
 
 2. Backend: Google Calendar connector
+
 - Add server endpoints to start OAuth flow (/api/admin/google/connect) and to receive the callback (/api/admin/google/callback).
 - Persist refresh_token and admin calendar id/email in DB (encrypted or in secret store) and mark calendar connection status in admin settings.
 - Add helper to create, update, delete calendar events and attach event IDs to DB booking/lesson records.
 
 3. Recurring weekly lessons
+
 - Add DB table/columns for recurring rules (e.g., lessons: id, teacher_id, day_of_week, start_time, duration_minutes, recurrence_end_date, student_ids[], google_event_id[])
 - On creation of a recurring lesson, create recurring events on Google Calendar (either as a recurring event or create individual events for a known horizon, e.g., next 6 months) and store event IDs.
 - Add a scheduled background job (cron or serverless scheduled function) that:
@@ -342,10 +354,12 @@ Implementation plan (high level)
   - Sends reminder emails to participants (e.g., 24 hours before lesson)
 
 4. Notifications & emails
+
 - Send booking confirmations, lesson reminders and admin notifications via configured mail provider.
 - Provide templates for email (HTML and plain-text) and allow scheduling.
 
 5. Admin UI
+
 - Add an Admin → Integrations page with buttons to:
   - "Connect Google Calendar" (starts OAuth)
   - "Disconnect" (revoke tokens)
@@ -367,7 +381,7 @@ Suggested environment variables to add to Netlify/hosting
 - GMAIL_APP_PASSWORD=xxxxxxxxxxxxxxxx
 - GOOGLE_CLIENT_ID=...
 - GOOGLE_CLIENT_SECRET=...
-- GOOGLE_OAUTH_REDIRECT_URI=https://your-deploy/_oauth/google/callback
+- GOOGLE_OAUTH_REDIRECT_URI=https://your-deploy/\_oauth/google/callback
 - GOOGLE_CALENDAR_ADMIN_EMAIL=admin@your-domain.com
 - GOOGLE_SERVICE_ACCOUNT_KEY (when using service account)
 
@@ -396,6 +410,7 @@ Concrete next actions I will take if you want me to proceed
 - Add Admin UI for connecting calendar and creating recurring lessons.
 
 If you want me to start implementing these, reply with `implement-mail-and-calendar` and I will:
+
 1. Add SMTP support and provider abstraction.
 2. Scaffold OAuth endpoints and DB changes for recurring lessons.
 3. Wire a simple Admin Integrations UI to start the OAuth flow.
