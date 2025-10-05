@@ -2040,19 +2040,54 @@ function StudentsManager() {
                 </div>
               </div>
               <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => edit(s)}
-                  className="px-2 py-1 rounded-md border"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => remove(studentId)}
-                  className="px-2 py-1 rounded-md border"
-                >
-                  Remove
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => edit(s)}
+                className="px-2 py-1 rounded-md border"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => remove(studentId)}
+                className="px-2 py-1 rounded-md border"
+              >
+                Remove
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setPasswordForUser(
+                    userId,
+                    randomPassword(),
+                    "Random password applied",
+                  )
+                }
+                className="px-2 py-1 rounded-md border"
+                disabled={passwordLoading === userId}
+              >
+                {passwordLoading === userId ? "Working..." : "Randomize password"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const pw = window.prompt("Enter new password", "");
+                  if (pw) setPasswordForUser(userId, pw, "Password updated");
+                }}
+                className="px-2 py-1 rounded-md border"
+                disabled={passwordLoading === userId}
+              >
+                Set password
+              </button>
+              <button
+                type="button"
+                onClick={() => sendReset(email)}
+                className="px-2 py-1 rounded-md border"
+                disabled={passwordLoading === email}
+              >
+                {passwordLoading === email ? "Sending..." : "Send reset"}
+              </button>
+            </div>
             </div>
           );
         })}
