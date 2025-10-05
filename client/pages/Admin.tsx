@@ -768,14 +768,20 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
               <div key={s} className="">
                 <button
                   onClick={() => {
-                    if (!booked) toggle(s);
+                    if (booked) return;
+                    if (available) {
+                      setSelectedSlot(s);
+                      setShowStudentModal(true);
+                    } else {
+                      toggle(s);
+                    }
                   }}
                   className={`w-full h-10 rounded-md text-sm ${booked ? "bg-destructive text-destructive-foreground" : available ? "bg-primary text-primary-foreground" : "bg-card text-foreground/80 border"}`}
                   title={
                     booked
                       ? `Booked by ${booked?.name}`
                       : available
-                        ? "Available - click to remove"
+                        ? "Available - click to book"
                         : "Not available - click to add"
                   }
                 >
