@@ -383,6 +383,7 @@ export default function Admin() {
               <h2 className="font-semibold">Site content</h2>
               <div className="mt-4 space-y-2">
                 <input
+                  name="siteTitle"
                   className="w-full h-10 rounded-md border px-3"
                   placeholder="Site title"
                   value={(siteContent && siteContent.siteTitle) || ""}
