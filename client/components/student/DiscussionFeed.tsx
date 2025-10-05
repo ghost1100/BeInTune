@@ -140,15 +140,22 @@ export default function DiscussionFeed({ className }: { className?: string }) {
     }
   }
 
-  async function addReaction(postId: string, reaction: string) {
+  async function handleReaction(postId: string, reaction: string, current?: string | null) {
     try {
-      await (
-        await import("@/lib/api")
-      ).apiFetch(`/api/posts/${postId}/reactions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: reaction }),
-      });
+      if (current === reaction) {
+        // remove
+        await (await import("@/lib/api")).apiFetch(`/api/posts/${postId}/reactions`, {
+          method: "DELETE",
+        });
+      } else {
+        await (
+          await import("@/lib/api")
+        ).apiFetch(`/api/posts/${postId}/reactions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: reaction }),
+        });
+      }
       loadPosts();
     } catch (error) {
       console.error(error);
