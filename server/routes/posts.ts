@@ -328,7 +328,7 @@ router.put("/posts/:id", async (req, res) => {
         if (postAuthor && postAuthor !== req.user.id) {
           await query(
             "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
-            [postAuthor, req.user.id, 'post:edited_by_admin', JSON.stringify({ postId: id })],
+            [postAuthor, req.user.id, 'post:edited_by_admin', JSON.stringify({ postId: id, snippet: (body || '').slice(0,200) })],
           );
         }
       }
