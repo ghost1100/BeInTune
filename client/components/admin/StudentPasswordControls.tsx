@@ -14,27 +14,36 @@ function randomPassword(len = 12) {
 }
 
 export default function StudentPasswordControls() {
-  const [students, setStudents] = useState(() => getStudents());
+  const [students, setStudents] = useState<any[]>([]);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    setStudents(getStudents());
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/students');
+        if (!res.ok) return setStudents([]);
+        const data = await res.json();
+        setStudents(data);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
   }, []);
 
   const setPasswordForUser = async (userId: string, password: string) => {
     setLoadingId(userId);
     try {
       const res = await fetch(`/api/admin/users/${userId}/set-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
       });
-      if (!res.ok) throw new Error("Failed to set password");
-      toast({ title: "Password set", description: "Password updated successfully." });
+      if (!res.ok) throw new Error('Failed to set password');
+      toast({ title: 'Password set', description: 'Password updated successfully.' });
     } catch (err: any) {
       console.error(err);
-      toast({ title: "Error", description: err?.message || "Unable to set password." });
+      toast({ title: 'Error', description: err?.message || 'Unable to set password.' });
     } finally {
       setLoadingId(null);
     }
@@ -43,14 +52,14 @@ export default function StudentPasswordControls() {
   const sendReset = async (email: string) => {
     try {
       const res = await fetch(`/api/auth/send-reset`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      if (!res.ok) throw new Error("Failed to send reset email");
-      toast({ title: "Reset sent", description: `Password reset email sent to ${email}` });
+      if (!res.ok) throw new Error('Failed to send reset email');
+      toast({ title: 'Reset sent', description: `Password reset email sent to ${email}` });
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Unable to send reset email." });
+      toast({ title: 'Error', description: err?.message || 'Unable to send reset email.' });
     }
   };
 
@@ -62,7 +71,7 @@ export default function StudentPasswordControls() {
       <div className="mt-3 space-y-2">
         {students.length === 0 && <div className="text-foreground/70">No students yet.</div>}
         {students.map((s: any) => (
-          <div key={s.id} className="flex items-center justify-between gap-2 p-2 rounded-md border">
+          <div key={s.student_id} className="flex items-center justify-between gap-2 p-2 rounded-md border">
             <div>
               <div className="font-medium">{s.name || s.email}</div>
               <div className="text-sm text-foreground/70">{s.email}</div>
@@ -72,7 +81,7 @@ export default function StudentPasswordControls() {
                 size="sm"
                 onClick={() => {
                   const pw = randomPassword();
-                  setPasswordForUser(s.userId || s.id, pw);
+                  setPasswordForUser(s.user_id, pw);
                 }}
                 variant="outline"
               >
@@ -81,8 +90,8 @@ export default function StudentPasswordControls() {
               <Button
                 size="sm"
                 onClick={() => {
-                  const pw = prompt("Enter new password for user", "");
-                  if (pw) setPasswordForUser(s.userId || s.id, pw);
+                  const pw = prompt('Enter new password for user', '');
+                  if (pw) setPasswordForUser(s.user_id, pw);
                 }}
                 variant="ghost"
               >
