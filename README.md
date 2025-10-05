@@ -149,17 +149,21 @@ Notes & caveats:
 
 Next recommended steps (priority):
 
-1) Full repo sweep & review (optional)
+1. Full repo sweep & review (optional)
+
 - I can run a final automated repository-wide sweep that finds `bg-white`, `bg-gray-*`, `text-black`, and other hard-coded utilities and propose replacements. This is safe to run but may require a short visual review afterwards.
 
-2) Convert remaining components to `useTheme()` (hook)
+2. Convert remaining components to `useTheme()` (hook)
+
 - I wired core admin/theme areas and the main ThemeToggle, but we should convert any remaining components that directly read or write theme tokens to use the hook for consistency.
 
-3) Tests & accessibility
+3. Tests & accessibility
+
 - Add unit/integration tests for theme preview/confirm/cancel flows and localStorage persistence.
 - Run an accessibility contrast audit (axe/Lighthouse) and adjust token HSL values.
 
-4) Student features & booking improvements (requires backend/auth)
+4. Student features & booking improvements (requires backend/auth)
+
 - The discussion forum, Instagram-like posts, chats (ephemeral messages), and improved booking flow you described require authenticated users, a database, file uploads, and real-time features. I recommend connecting a backend integration (Supabase preferred) to implement:
   - Email/password sign up for students (hashed passwords, reset flows)
   - Role-based access control (admin/content-manager/student) and ability for admin to revoke forum access or mark content as 16+
@@ -168,6 +172,7 @@ Next recommended steps (priority):
   - Booking slots sync (availability in DB) and notifications for teachers/admin
 
 Integrations I recommend (available MCP servers):
+
 - Supabase: database, auth, real-time (recommended for forum/chat and auth). Click [Connect to Supabase](#open-mcp-popover).
 - Neon: alternative Postgres option (already available in the project list).
 - Netlify: deployment/hosting (already connected).
@@ -217,35 +222,43 @@ Security features required (overview)
 
 Concrete steps to complete (high level)
 
-1) Connect required MCPs
+1. Connect required MCPs
+
 - Connect Supabase (recommended for auth, DB, realtime), Neon (Postgres) and Netlify (hosting) via the MCP popover: Click [Open MCP popover](#open-mcp-popover) and connect the providers (Supabase, Neon, Netlify). If you specifically want Neon for Postgres, we can use Neon for DB and Supabase just for Auth/Realtime, or choose Supabase for both to simplify integration.
 - Also consider connecting: Builder.io (CMS), Sentry (monitoring), Semgrep (security scanning), Notion (docs), Linear (tickets) and Zapier (automation) via the same popover.
 
-2) Provision DB & auth
+2. Provision DB & auth
+
 - Create DB schema (users, roles, posts, comments, media, chats, messages, bookings, slots, audit_logs).
 - Set up authentication (email/password, email verification). Use Supabase Auth or build an auth microservice that stores hashed passwords in Neon/Postgres.
 - Implement RBAC: store roles in the users table and check server-side on every API call.
 
-3) Storage & media
+3. Storage & media
+
 - Create a storage bucket for media (user posts). Enforce server-side checks for file types and sizes. Use signed URLs for uploads/downloads and set read rules per post visibility.
 
-4) Ephemeral chat implementation
+4. Ephemeral chat implementation
+
 - Design message table with fields: id, senderId, recipientId/roomId, content (encrypted if needed), createdAt, expireAt, savedBy (array), editedAt, deletedAt.
 - Use realtime (Supabase Realtime or websockets) for live delivery. Create a background job (serverless cron or worker) that deletes expired messages.
 
-5) Booking & scheduling sync
+5. Booking & scheduling sync
+
 - Move bookings/availability into DB. Implement server-side booking creation with optimistic locking to prevent double-booking.
 - Notify teachers/admins via email or webhook when a slot is booked.
 
-6) Deploy & secure
+6. Deploy & secure
+
 - Configure Netlify deploy and set environment variables (DB URL, API keys) in Netlify's dashboard.
 - Enable HTTPS and HSTS. Configure Cloudflare or Netlify Edge rules for WAF if needed.
 - Add CI checks: lint, typecheck, tests, security scans.
 
-7) Monitoring & audits
+7. Monitoring & audits
+
 - Integrate Sentry and Semgrep. Enable audit logging for admin actions and content moderation.
 
 MCP integrations (reminder)
+
 - Supabase (recommended for auth, DB, realtime)
 - Neon
 - Netlify
