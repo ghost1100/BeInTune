@@ -180,7 +180,10 @@ export default function Admin() {
   const logout = async () => {
     try {
       // tell server to clear httpOnly cookie
-      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
     } catch (e) {
       console.error("Logout request failed", e);
     }
@@ -196,21 +199,28 @@ export default function Admin() {
       // clear Cache Storage
       if (typeof window !== "undefined" && (window as any).caches) {
         const keys = await (window as any).caches.keys();
-        await Promise.all(keys.map((k: string) => (window as any).caches.delete(k)));
+        await Promise.all(
+          keys.map((k: string) => (window as any).caches.delete(k)),
+        );
       }
 
       // clear non-httpOnly cookies
       if (typeof document !== "undefined") {
         document.cookie.split(";").forEach((cookie) => {
           const eqPos = cookie.indexOf("=");
-          const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+          const name =
+            eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
           // expire cookie for root path
           document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
         });
       }
 
       // unregister service workers
-      if (typeof navigator !== "undefined" && navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.serviceWorker &&
+        navigator.serviceWorker.getRegistrations
+      ) {
         const regs = await navigator.serviceWorker.getRegistrations();
         await Promise.all(regs.map((r) => r.unregister()));
       }
