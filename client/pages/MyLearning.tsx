@@ -49,30 +49,28 @@ export default function MyLearning() {
     try {
       const uploaded: any[] = [];
       for (const f of Array.from(files)) {
-        const reader = await fileToBase64(f);
-        const p = await fetch("/api/admin/upload", {
+        const b64 = await fileToBase64(f);
+        const p = await (await import("@/lib/api")).apiFetch("/api/admin/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: f.name, data: reader }),
+          body: JSON.stringify({ filename: f.name, data: b64 }),
         });
-        if (!p.ok) throw new Error("Upload failed");
-        const j = await p.json();
-        uploaded.push({ id: j.id, url: j.url, mime: f.type });
+        if (!p || typeof p === "string") throw new Error("Upload failed");
+        uploaded.push({ id: (p as any).id, url: (p as any).url, mime: f.type });
       }
       // create a learning resource record
-      const res = await fetch(`/api/admin/learning/${selected}`, {
+      const r = await (await import("@/lib/api")).apiFetch(`/api/admin/learning/${selected}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: "Resources",
-          description: "",
-          media: uploaded,
-        }),
+        body: JSON.stringify({ title: "Resources", description: "", media: uploaded }),
       });
-      if (!res.ok) throw new Error("Failed to create resource");
-      toast({ title: "Uploaded" });
-      const j = await res.json();
-      setResources(j);
+      const arr = Array.isArray(r) ? r : (r && (r as any).rows ? (r as any).rows : []);
+      if (!arr.length) {
+        toast({ title: "Uploaded" });
+      } else {
+        toast({ title: "Uploaded" });
+      }
+      setResources(arr as any[]);
     } catch (err: any) {
       toast({ title: "Error", description: err?.message || "Upload failed" });
     }
