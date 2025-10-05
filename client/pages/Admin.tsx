@@ -1707,6 +1707,7 @@ function StudentsManager() {
   const [resourceModalOpen, setResourceModalOpen] = useState(false);
   const [resourceFiles, setResourceFiles] = useState<File[]>([]);
   const [resourceStudentId, setResourceStudentId] = useState<string>("");
+  const [resourceFolderName, setResourceFolderName] = useState<string>("");
   const resourceInputRef = useRef<HTMLInputElement | null>(null);
   const [resourceUploading, setResourceUploading] = useState(false);
   const [expandedStudentIds, setExpandedStudentIds] = useState<
@@ -1770,10 +1771,17 @@ function StudentsManager() {
       }
       return studentOptions[0].value;
     });
+    // default folder name when opening modal
+    setResourceFolderName(() => {
+      const d = new Date();
+      const datePart = d.toISOString().slice(0, 10);
+      return `${datePart} - `;
+    });
   }, [resourceModalOpen, studentOptions]);
 
   const clearResourceSelection = useCallback(() => {
     setResourceFiles([]);
+    setResourceFolderName("");
     if (resourceInputRef.current) {
       resourceInputRef.current.value = "";
     }
@@ -1905,7 +1913,7 @@ function StudentsManager() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: "Learning resources",
+          title: resourceFolderName && resourceFolderName.trim() ? resourceFolderName.trim() : "Learning resources",
           description: "",
           media: uploaded,
         }),
@@ -1959,6 +1967,19 @@ function StudentsManager() {
           </Button>
         </div>
         <div className="mt-4 grid gap-3">
+          <div>
+            <label htmlFor="resourceFolder" className="mb-1 block text-sm font-medium text-foreground">
+              Folder name
+            </label>
+            <input
+              id="resourceFolder"
+              className="h-10 w-full rounded-md border px-3"
+              value={resourceFolderName}
+              onChange={(e) => setResourceFolderName(e.target.value)}
+              placeholder="e.g. 2025-01-01 - Week 1 materials"
+              disabled={resourceUploading}
+            />
+          </div>
           <div>
             <label
               htmlFor="resourceStudent"
