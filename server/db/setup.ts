@@ -6,7 +6,9 @@ export async function ensureDbSetup() {
     // Add username column if missing
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS username text;");
     // Create unique index on username
-    await query("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username);");
+    await query(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username);",
+    );
 
     // Add profile columns to users for teacher metadata
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS name text;");
@@ -22,14 +24,14 @@ export async function ensureDbSetup() {
 
     const res = await query(
       "SELECT id FROM users WHERE username = $1 OR email = $2 LIMIT 1",
-      [adminUsername, adminIdentifier]
+      [adminUsername, adminIdentifier],
     );
 
     if (res.rows.length === 0) {
       const hash = await bcrypt.hash(adminPassword, 10);
       const insert = await query(
         "INSERT INTO users(email, username, password_hash, role, email_verified, name) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
-        [adminIdentifier, adminUsername, hash, "admin", true, adminUsername]
+        [adminIdentifier, adminUsername, hash, "admin", true, adminUsername],
       );
       console.log("Seeded admin user", insert.rows[0].id);
     }

@@ -10,7 +10,8 @@ const router = express.Router();
 // body: { filename, data } where data is base64 image data
 router.post("/upload", async (req, res) => {
   const { filename, data } = req.body as { filename?: string; data?: string };
-  if (!filename || !data) return res.status(400).json({ error: "Missing filename or data" });
+  if (!filename || !data)
+    return res.status(400).json({ error: "Missing filename or data" });
 
   const uploadsDir = path.join(process.cwd(), "public", "uploads");
   try {
@@ -39,7 +40,7 @@ router.post("/upload", async (req, res) => {
     const url = `/uploads/${outFilename}`;
     const result = await query(
       "INSERT INTO media(bucket_key, url, mime, size, uploaded_by) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-      [outFilename, url, metadataFormat(metadata), buffer.length, null]
+      [outFilename, url, metadataFormat(metadata), buffer.length, null],
     );
 
     res.json({ ok: true, url, id: result.rows[0].id });

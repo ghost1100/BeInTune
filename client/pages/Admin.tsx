@@ -527,13 +527,19 @@ export default function Admin() {
       </div>
 
       {showNewsletter && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onMouseDown={(e)=>{ if(e.target === e.currentTarget){ setShowNewsletter(false); } }}>
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowNewsletter(false);
+            }
+          }}
+        >
           <div className="w-full max-w-3xl p-4">
             <NewsletterComposer onClose={() => setShowNewsletter(false)} />
           </div>
         </div>
       )}
-
     </div>
   );
 }

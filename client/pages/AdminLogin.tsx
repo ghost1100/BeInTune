@@ -56,7 +56,9 @@ export default function AdminLogin() {
     >
       <div className="bg-card/95 rounded-lg p-8 shadow-lg w-full max-w-md">
         <h1 className="text-2xl font-bold">Login</h1>
-        <p className="text-sm text-foreground/70 mt-2">Sign in with username or email and password.</p>
+        <p className="text-sm text-foreground/70 mt-2">
+          Sign in with username or email and password.
+        </p>
         <form onSubmit={submit} className="mt-4">
           <input
             value={identifier}
@@ -73,7 +75,9 @@ export default function AdminLogin() {
           />
           {err && <div className="text-sm text-red-600 mt-2">{err}</div>}
           <div className="mt-4 flex justify-between">
-            <button className="h-10 px-4 rounded-md bg-primary text-primary-foreground">Sign in</button>
+            <button className="h-10 px-4 rounded-md bg-primary text-primary-foreground">
+              Sign in
+            </button>
             <button
               type="button"
               onClick={() => {

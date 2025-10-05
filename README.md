@@ -5,7 +5,7 @@
 - The DB migration server/db/migrations/001_init.sql has been applied to Neon (confirmed).
 - Server dependencies have been added to package.json: pg, bcrypt, @sendgrid/mail, sharp.
 
-The server now includes scaffolded routes for authentication, admin user management, media uploads, and newsletter sending. See server/routes/* for implementations.
+The server now includes scaffolded routes for authentication, admin user management, media uploads, and newsletter sending. See server/routes/\* for implementations.
 
 ### Newsletter input checklist
 
@@ -19,6 +19,7 @@ When composing a newsletter (POST /api/admin/newsletters), provide the following
 - scheduled_at (ISO timestamp, optional): when to schedule the send; if omitted the newsletter will be sent immediately
 
 Notes:
+
 - The server accepts attachments as base64 and stores media in public/uploads via the upload endpoint. Attachments will be recorded in the newsletters.attachments JSON column as media ids when uploaded through the media upload API.
 - Keep HTML and plain content size reasonable; for large media include links rather than embedding large files inline.
 
@@ -27,7 +28,6 @@ Notes:
 - Removed the Students tab from the Admin UI. The student password controls are intentionally disabled / removed from the admin interface for now.
 - The top-right "Admin" navigation button has been relabeled to "Login" (links to /admin/login).
 - Admin pages have been simplified to the essential sections (Teachers, Site, Schedule, Theme, Reports). If you want the Students section restored or to re-enable password controls, reply and I will re-add it behind secure admin auth.
-
 
 This README summarizes all theme-related fixes, the new preview UX, the central theme API, and recommended next steps.
 
@@ -319,12 +319,13 @@ Admin UI scaffolding (work started):
 - The Admin page now includes a "Compose newsletter" button (opens a modal composer) and the Students tab includes password controls (randomize, set, send reset).
 
 Next steps to complete the admin UX and backend wiring:
-1) Apply DB migration on Neon (server/db/migrations/001_init.sql).
-2) Implement server APIs for:
+
+1. Apply DB migration on Neon (server/db/migrations/001_init.sql).
+2. Implement server APIs for:
    - POST /api/admin/users/:id/set-password
    - POST /api/auth/send-reset
    - POST /api/admin/newsletters (handle attachments and queue/send via SendGrid)
    - File upload endpoint for media storage
-3) Add server-side password hashing (bcrypt/argon2), email verification, and newsletter send job (using the configured SendGrid API key).
+3. Add server-side password hashing (bcrypt/argon2), email verification, and newsletter send job (using the configured SendGrid API key).
 
 If you want me to continue and scaffold the server APIs and admin routes, reply `migrate` (I will assume DB migration was applied) or `admin-ui` to focus on frontend polish only.
