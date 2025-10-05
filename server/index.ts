@@ -7,6 +7,13 @@ import authRoutes from "./routes/auth";
 import adminRoutes from "./routes/admin";
 import uploadRoutes from "./routes/upload";
 import newsletterRoutes from "./routes/newsletters";
+import studentsRoutes from "./routes/students";
+import teachersRoutes from "./routes/teachers";
+import bookingsRoutes from "./routes/bookings";
+import auditRoutes from "./routes/audit";
+import learningRoutes from "./routes/learning";
+import messagesRoutes from "./routes/messages";
+import postsRoutes from "./routes/posts";
 import { ensureDbSetup } from "./db/setup";
 import { authMiddleware } from "./middleware/auth";
 
@@ -40,25 +47,17 @@ export function createServer() {
   app.use("/api/admin", newsletterRoutes);
 
   // Admin entities: teachers & students
-  import studentsRoutes from "./routes/students";
-  import teachersRoutes from "./routes/teachers";
   app.use("/api/admin", studentsRoutes);
   app.use("/api/admin", teachersRoutes);
 
-  import bookingsRoutes from "./routes/bookings";
   app.use("/api/admin", bookingsRoutes);
-
-  import auditRoutes from "./routes/audit";
   app.use("/api/admin", auditRoutes);
 
   // Learning & messages (admin)
-  import learningRoutes from "./routes/learning";
   app.use("/api/admin", learningRoutes);
-  import messagesRoutes from "./routes/messages";
   app.use("/api/admin", messagesRoutes);
 
   // Public posts/discussion routes
-  import postsRoutes from "./routes/posts";
   app.use("/api", postsRoutes);
 
   return app;
