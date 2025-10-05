@@ -90,6 +90,25 @@ export default function MyLearning() {
     }
   }
 
+  const [upcoming, setUpcoming] = useState<any | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      if (!selected) return;
+      try {
+        const j = await (await import('@/lib/api')).apiFetch('/api/admin/bookings');
+        const list = Array.isArray(j) ? j : (j && (j as any).rows ? (j as any).rows : []);
+        // find next upcoming booking for selected student
+        const next = list
+          .filter((b: any) => (b.student_id === selected) || (b.student_user_id && user && b.student_user_id === user.id))
+          .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
+        setUpcoming(next || null);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  }, [selected, user]);
+
   return (
     <div className="container mx-auto py-8">
       <h2 className="text-xl font-semibold">My Learning (resources)</h2>
