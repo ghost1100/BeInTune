@@ -5,7 +5,7 @@
 - The DB migration server/db/migrations/001_init.sql has been applied to Neon (confirmed).
 - Server dependencies have been added to package.json: pg, bcrypt, @sendgrid/mail, sharp.
 
-The server now includes scaffolded routes for authentication, admin user management, media uploads, and newsletter sending. See server/routes/\* for implementations.
+The server now includes scaffolded routes for authentication, admin user management, media uploads, and newsletter sending. See server/routes/* for implementations.
 
 ### Newsletter input checklist
 
@@ -242,7 +242,7 @@ Next recommended steps (priority):
 
 - The discussion forum, Instagram-like posts, chats (ephemeral messages), and improved booking flow you described require authenticated users, a database, file uploads, and real-time features. I recommend connecting a backend integration (Supabase preferred) to implement:
   - Email/password sign up for students (hashed passwords, reset flows)
-  - Role-based access control (admin/content-manager/student) and ability for admin to revoke forum access or mark content as 16+
+  - Role-based access control (admin, content-manager, student) and ability for admin to revoke forum access or mark content as 16+
   - Posts, comments, likes, media uploads (storage bucket)
   - Chat with ephemeral messages and selective save/restore (use DB with TTL or background job to expire messages after 3 weeks)
   - Booking slots sync (availability in DB) and notifications for teachers/admin
@@ -264,115 +264,148 @@ Integrations I recommend (available MCP servers):
 
 Note: Neon and Netlify are already connected for this project.
 
-Security features required (overview)
+---
 
-- Authentication & identity
-  - Use a secure auth provider (Supabase Auth or custom via Neon + OAuth/JWT). Enforce email verification, rate-limit signups, and require strong passwords (min length, complexity). Enable MFA for admin accounts.
-  - Hash passwords using bcrypt/argon2 on the server; never store plaintext. Use secure password reset tokens with single-use and expiry.
-- Authorization & roles
-  - Role-based access control (admin, content-manager, student). Implement server-side checks for every privileged API.
-  - Ability for admin to revoke forum/post access and to mark content as 16+ (age gating). Ensure frontend hides 16+ content unless check passes.
-- Session & token security
-  - Use short-lived access tokens and refresh tokens with secure, HTTP-only cookies (SameSite=strict) or robust JWT handling. Rotate refresh tokens on use.
-  - Protect against CSRF for stateful requests (use SameSite cookies or CSRF tokens).
-- Data protection
-  - Use TLS everywhere (HTTPS) and enforce HSTS. Encrypt sensitive data at rest where supported by the DB/storage provider.
-  - Principle of least privilege for DB users and storage buckets. Use separate DB roles for read/write/admin operations.
-- Media & uploads
-  - Scan uploaded files for malware, restrict allowed file types, apply size limits, and store in a private bucket with signed URLs for public access.
-  - Use storage rules to limit who can upload and who can read media (e.g., only owners and admins for private posts).
-- Ephemeral messages & retention
-  - Implement TTL-based deletion for ephemeral messages (e.g., store createdAt and expireAt, run a scheduled job to delete older messages after 3 weeks). Allow manual save of messages to bypass TTL when user opts in.
-  - Provide audit logs for moderation and deletions.
-- Moderation & content safety
-  - Implement content moderation flows: user reporting, admin review, and automatic filtering (profanity/NSFW detection). Age-gate content flagged as 16+.
-  - Maintain a content visibility flag (public/private/16+) and enforce it on the server.
-- Network & infra
-  - Rate limiting and IP throttling on public APIs. Use Web Application Firewall (Cloudflare or Netlify/proxy rules) for edge protection.
-  - Monitor and log suspicious activity; integrate Sentry for error monitoring and alerts.
-- CI/CD & secrets
-  - Ensure secrets (API keys, DB credentials) are injected via environment variables and stored in the hosting provider’s secret store (Netlify env vars). Do not commit secrets to git.
-  - Run dependency vulnerability scans (npm audit, Snyk) and static analysis (Semgrep). Add automated tests in CI.
-- Compliance & privacy
-  - Provide data export/deletion paths for GDPR. Collect parental consent for under-16 accounts where required. Document retention policies.
+## New: Gmail & Google Calendar integration (next steps)
 
-Concrete steps to complete (high level)
+This project will add two important features:
 
-1. Connect required MCPs
+1) Sending transactional and scheduled emails using a dedicated Gmail account with an App Password (for admin notifications, booking confirmations and lesson reminders).
 
-- Connect Supabase (recommended for auth, DB, realtime), Neon (Postgres) and Netlify (hosting) via the MCP popover: Click [Open MCP popover](#open-mcp-popover) and connect the providers (Supabase, Neon, Netlify). If you specifically want Neon for Postgres, we can use Neon for DB and Supabase just for Auth/Realtime, or choose Supabase for both to simplify integration.
-- Also consider connecting: Builder.io (CMS), Sentry (monitoring), Semgrep (security scanning), Notion (docs), Linear (tickets) and Zapier (automation) via the same popover.
+2) Linking the admin's Google Calendar to the app so the admin can manage schedule slots and so the system can create recurring weekly lessons and calendar events automatically.
 
-2. Provision DB & auth
+Overview of approach
 
-- Create DB schema (users, roles, posts, comments, media, chats, messages, bookings, slots, audit_logs).
-- Set up authentication (email/password, email verification). Use Supabase Auth or build an auth microservice that stores hashed passwords in Neon/Postgres.
-- Implement RBAC: store roles in the users table and check server-side on every API call.
+- Add server-side support for Gmail SMTP (Nodemailer or existing mail library) that can use either SendGrid (existing) or Gmail SMTP based on environment configuration.
+- Add a secure UI and server endpoints to connect a Google account (OAuth) or to register calendar credentials, and store tokens securely (encrypted or in hosting secret store).
+- Implement recurring lesson logic in the backend: store recurring rules in DB, create and sync Google Calendar events (store event IDs), and generate scheduled reminder emails.
 
-3. Storage & media
+Gmail App Password (how to set up)
 
-- Create a storage bucket for media (user posts). Enforce server-side checks for file types and sizes. Use signed URLs for uploads/downloads and set read rules per post visibility.
+- Create a dedicated Gmail account for the app (recommended: bookings@your-domain or intunemusictuition@gmail.com).
+- Enable 2-Step Verification for that Google account.
+- Create an App Password (Select: Mail → Other (Custom name) → generate) and copy the 16-character password.
+- Store credentials in your hosting/environment secrets (do NOT commit to git):
+  - GMAIL_SMTP_HOST (usually smtp.gmail.com)
+  - GMAIL_SMTP_PORT (587)
+  - GMAIL_USER (the full Gmail address)
+  - GMAIL_APP_PASSWORD (the 16-character app password)
 
-4. Ephemeral chat implementation
+Notes:
+- App Passwords work for sending via SMTP but are not OAuth tokens for Calendar APIs. For Calendar integration you'll need OAuth client credentials or a service account (see below).
+- The repo currently includes SendGrid env vars; we will add conditional support so either provider can be used.
 
-- Design message table with fields: id, senderId, recipientId/roomId, content (encrypted if needed), createdAt, expireAt, savedBy (array), editedAt, deletedAt.
-- Use realtime (Supabase Realtime or websockets) for live delivery. Create a background job (serverless cron or worker) that deletes expired messages.
+Google Calendar API (how to set up)
 
-5. Booking & scheduling sync
+Two common options for server integration:
 
-- Move bookings/availability into DB. Implement server-side booking creation with optimistic locking to prevent double-booking.
-- Notify teachers/admins via email or webhook when a slot is booked.
+A) OAuth 2.0 (recommended for single admin account)
+- Create a Google Cloud Project at https://console.cloud.google.com/
+- Enable the Google Calendar API.
+- Configure OAuth consent screen (internal or external depending on account).
+- Create OAuth 2.0 Client ID (type: Web application) and add redirect URI(s) for your app (e.g., https://your-deploy/_oauth/google/callback).
+- Use the client ID/secret to perform the OAuth flow and obtain access_token + refresh_token for the admin account. Persist the refresh_token in the server (encrypted) so the server can refresh access tokens without user interaction.
 
-6. Deploy & secure
+B) Service account (possible if using a G Suite / Google Workspace domain and domain-wide delegation)
+- Create a service account and enable domain-wide delegation. Share the admin calendar with the service account or impersonate the admin user.
+- Use a service account when the integration is between servers and there is no interactive admin consent flow.
 
-- Configure Netlify deploy and set environment variables (DB URL, API keys) in Netlify's dashboard.
-- Enable HTTPS and HSTS. Configure Cloudflare or Netlify Edge rules for WAF if needed.
-- Add CI checks: lint, typecheck, tests, security scans.
+Which to pick
 
-7. Monitoring & audits
+- If you own the admin Google account and prefer a one-off interactive setup, use OAuth 2.0 and persist the refresh token.
+- If you manage a Google Workspace domain and want server-to-server access, consider a service account.
 
-- Integrate Sentry and Semgrep. Enable audit logging for admin actions and content moderation.
+Required environment variables (suggested)
 
-MCP integrations (reminder)
+- GOOGLE_CLIENT_ID
+- GOOGLE_CLIENT_SECRET
+- GOOGLE_OAUTH_REDIRECT_URI
+- GOOGLE_CALENDAR_ADMIN_EMAIL (admin calendar email to write events to)
+- GOOGLE_SERVICE_ACCOUNT_KEY (if using a service account, store JSON key securely and reference it in hosting secret store)
 
-- Supabase (recommended for auth, DB, realtime)
-- Neon
-- Netlify
-- Builder.io
-- Prisma Postgres
-- Zapier
-- Figma (plugin)
-- Linear
-- Notion
-- Sentry
-- Context7
-- Semgrep
+Implementation plan (high level)
 
-Next actions I can take for you
+1. Backend: Mail provider abstraction
+- Add an abstraction layer to send mail (provider: sendgrid or smtp). Use existing SendGrid implementation; add SMTP transport using Nodemailer for Gmail app password usage.
+- Make provider configurable via environment variable MAIL_PROVIDER (values: sendgrid|smtp).
 
-- Update the hero subtitle color to be white in light mode (done).
-- If you want, I can:
-  - Run a final `sweep` across the repo to replace remaining hard-coded color utilities.
-  - Start wiring auth & DB: to begin I will need you to click [Open MCP popover](#open-mcp-popover) and connect Supabase or Neon (prefer Supabase for auth/realtime). After connection I will create the initial schema and API endpoints.
-  - Create a security checklist and PR template for future releases (CI integration with Semgrep/Snyk/Sentry).
+2. Backend: Google Calendar connector
+- Add server endpoints to start OAuth flow (/api/admin/google/connect) and to receive the callback (/api/admin/google/callback).
+- Persist refresh_token and admin calendar id/email in DB (encrypted or in secret store) and mark calendar connection status in admin settings.
+- Add helper to create, update, delete calendar events and attach event IDs to DB booking/lesson records.
 
-Reply with which task to start next: `sweep`, `hook`, `auth+db`, or `security-pr`.
+3. Recurring weekly lessons
+- Add DB table/columns for recurring rules (e.g., lessons: id, teacher_id, day_of_week, start_time, duration_minutes, recurrence_end_date, student_ids[], google_event_id[])
+- On creation of a recurring lesson, create recurring events on Google Calendar (either as a recurring event or create individual events for a known horizon, e.g., next 6 months) and store event IDs.
+- Add a scheduled background job (cron or serverless scheduled function) that:
+  - Ensures future events exist for each recurring lesson (reconciliation)
+  - Sends reminder emails to participants (e.g., 24 hours before lesson)
 
-Admin UI scaffolding (work started):
+4. Notifications & emails
+- Send booking confirmations, lesson reminders and admin notifications via configured mail provider.
+- Provide templates for email (HTML and plain-text) and allow scheduling.
 
-- I added frontend admin components to manage student passwords and compose newsletters. Files added:
-  - client/components/admin/StudentPasswordControls.tsx
-  - client/components/admin/NewsletterComposer.tsx
-- The Admin page now includes a "Compose newsletter" button (opens a modal composer) and the Students tab includes password controls (randomize, set, send reset).
+5. Admin UI
+- Add an Admin → Integrations page with buttons to:
+  - "Connect Google Calendar" (starts OAuth)
+  - "Disconnect" (revoke tokens)
+  - Show connection status and calendar used
+- Add lesson creation UI that supports recurring rules (weekly on Mon/Wed/etc., time, duration, start/end date).
 
-Next steps to complete the admin UX and backend wiring:
+Security & storage
 
-1. Apply DB migration on Neon (server/db/migrations/001_init.sql).
-2. Implement server APIs for:
-   - POST /api/admin/users/:id/set-password
-   - POST /api/auth/send-reset
-   - POST /api/admin/newsletters (handle attachments and queue/send via SendGrid)
-   - File upload endpoint for media storage
-3. Add server-side password hashing (bcrypt/argon2), email verification, and newsletter send job (using the configured SendGrid API key).
+- Store OAuth refresh tokens and service-account keys in hosting secret store (Netlify env vars or provider secret manager). If persisted in DB, encrypt at rest and restrict DB creds in prod.
+- Use least privilege for calendar writes (only write to a specific admin calendar email).
+- When revoking/disconnecting, delete stored tokens and optionally remove created events (ask admin before deleting historical events).
 
-If you want me to continue and scaffold the server APIs and admin routes, reply `migrate` (I will assume DB migration was applied) or `admin-ui` to focus on frontend polish only.
+Suggested environment variables to add to Netlify/hosting
+
+- MAIL_PROVIDER=sendgrid|smtp
+- GMAIL_SMTP_HOST=smtp.gmail.com
+- GMAIL_SMTP_PORT=587
+- GMAIL_USER=bookings@your-domain.com
+- GMAIL_APP_PASSWORD=xxxxxxxxxxxxxxxx
+- GOOGLE_CLIENT_ID=...
+- GOOGLE_CLIENT_SECRET=...
+- GOOGLE_OAUTH_REDIRECT_URI=https://your-deploy/_oauth/google/callback
+- GOOGLE_CALENDAR_ADMIN_EMAIL=admin@your-domain.com
+- GOOGLE_SERVICE_ACCOUNT_KEY (when using service account)
+
+MCPs and integrations that help this work
+
+- Supabase: database, auth, realtime (recommended for auth, DB and storing tokens securely). Click [Connect to Supabase](#open-mcp-popover).
+- Neon: Postgres (already available and currently used in the project).
+- Netlify: deployment and environment secret storage (already connected).
+- Builder.io: CMS/content management for non-technical edits and email content (optional). Click [Connect to Builder.io](#open-mcp-popover).
+- Prisma Postgres: ORM/schema management if you prefer Prisma on top of Postgres. Click [Connect to Prisma](#open-mcp-popover).
+- Zapier: automation and external triggers (optional). Click [Connect to Zapier](#open-mcp-popover).
+- Figma: design-to-code plugin (useful for UI work). Get plugin at https://www.figma.com/community/plugin/747985167520967365/builder-io-ai-powered-figma-to-code-react-vue-tailwind-more
+- Linear: project management. Click [Connect to Linear](#open-mcp-popover).
+- Notion: documentation and runbooks. Click [Connect to Notion](#open-mcp-popover).
+- Sentry: error monitoring and release tracking. Click [Connect to Sentry](#open-mcp-popover).
+- Context7: docs lookup helper. Click [Open MCP popover](#open-mcp-popover) to connect.
+- Semgrep: security/static analysis. Click [Open MCP popover](#open-mcp-popover) to connect.
+
+Note: Neon and Netlify are already connected for this project.
+
+Concrete next actions I will take if you want me to proceed
+
+- Add SMTP provider support on the server and make MAIL_PROVIDER configurable.
+- Add server routes for Google OAuth connect/callback and store the refresh token encrypted in DB.
+- Add DB schema for recurring lessons and implement server-side logic to create/sync calendar events and send reminder emails.
+- Add Admin UI for connecting calendar and creating recurring lessons.
+
+If you want me to start implementing these, reply with `implement-mail-and-calendar` and I will:
+1. Add SMTP support and provider abstraction.
+2. Scaffold OAuth endpoints and DB changes for recurring lessons.
+3. Wire a simple Admin Integrations UI to start the OAuth flow.
+
+---
+
+## How to revert changes
+
+- Use git to checkout previous commit or use the repository UI to revert the changes if needed.
+
+---
+
+(End of README)
