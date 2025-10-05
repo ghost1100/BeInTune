@@ -1651,6 +1651,11 @@ function StudentsManager() {
   );
   const [passwordLoading, setPasswordLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [resourceModalOpen, setResourceModalOpen] = useState(false);
+  const [resourceFiles, setResourceFiles] = useState<File[]>([]);
+  const [resourceStudentId, setResourceStudentId] = useState<string>("");
+  const resourceInputRef = useRef<HTMLInputElement | null>(null);
+  const [resourceUploading, setResourceUploading] = useState(false);
   const [expandedStudentIds, setExpandedStudentIds] = useState<
     Record<string, boolean>
   >({});
