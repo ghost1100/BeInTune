@@ -10,6 +10,19 @@ export type Booking = {
   lessonType?: string;
 };
 
+function normalizeTime(value: any): string {
+  if (!value && value !== 0) return "";
+  if (typeof value === "string") {
+    const match = value.match(/(\d{2}:\d{2})/);
+    if (match) return match[1];
+    return value;
+  }
+  if (value instanceof Date) {
+    return value.toISOString().slice(11, 16);
+  }
+  return String(value);
+}
+
 const AV_KEY = "inTuneAvailability";
 const BK_KEY = "inTuneBookings";
 
@@ -19,16 +32,18 @@ async function readAvail(date?: string): Promise<Record<string, string[]>> {
     const api = (await import("@/lib/api")).apiFetch;
     const rows = await api(`/api/admin/slots?date=${d}`);
     const map: Record<string, string[]> = {};
-    if (!rows || !Array.isArray(rows)) {
-      // if no slots defined in DB, assume all slots are available
+    const list = Array.isArray(rows)
+      ? rows
+      : rows && Array.isArray((rows as any).rows)
+        ? (rows as any).rows
+        : [];
+    if (list.length === 0) {
       map[d] = getSlotsForDay(d);
       return map;
     }
-    if (rows.length === 0) {
-      map[d] = getSlotsForDay(d);
-      return map;
-    }
-    map[d] = rows.filter((r: any) => r.is_available).map((r: any) => r.slot_time);
+    map[d] = list
+      .filter((r: any) => r.is_available !== false)
+      .map((r: any) => normalizeTime(r.slot_time || r.slotTime || r.time));
     return map;
   } catch (e) {
     console.error("readAvail error", e);
