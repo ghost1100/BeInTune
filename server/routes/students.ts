@@ -28,14 +28,41 @@ router.post("/students", async (req, res) => {
   } = req.body as any;
   if (!email) return res.status(400).json({ error: "Missing email" });
 
-  // create user
-  const pw = tempPassword || Math.random().toString(36).slice(2, 10);
-  const hash = await bcrypt.hash(pw, 10);
-  const userRes = await query(
-    "INSERT INTO users(email, password_hash, role, name, email_verified) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-    [email, hash, "student", name || null, true],
+  const existingUserRes = await query(
+    "SELECT id, role FROM users WHERE lower(email)=lower($1) LIMIT 1",
+    [email],
   );
-  const userId = userRes.rows[0].id;
+
+  let userId: string;
+  let generatedPassword: string | null = null;
+
+  if (existingUserRes.rows.length > 0) {
+    const existing = existingUserRes.rows[0];
+    if (existing.role !== "student") {
+      return res
+        .status(409)
+        .json({ error: "Email already belongs to another account." });
+    }
+    const studentCheck = await query(
+      "SELECT id FROM students WHERE user_id = $1 LIMIT 1",
+      [existing.id],
+    );
+    if (studentCheck.rows.length > 0) {
+      return res
+        .status(409)
+        .json({ error: "A student with this email already exists." });
+    }
+    userId = existing.id;
+  } else {
+    const pw = tempPassword || Math.random().toString(36).slice(2, 10);
+    const hash = await bcrypt.hash(pw, 10);
+    const userRes = await query(
+      "INSERT INTO users(email, password_hash, role, name, email_verified) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+      [email, hash, "student", name || null, true],
+    );
+    userId = userRes.rows[0].id;
+    generatedPassword = pw;
+  }
 
   const studentRes = await query(
     "INSERT INTO students(user_id, name, age, parent_name, parent_email, phone, address, marketing_consent) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
@@ -55,7 +82,7 @@ router.post("/students", async (req, res) => {
     ok: true,
     userId,
     studentId: studentRes.rows[0].id,
-    tempPassword: pw,
+    tempPassword: generatedPassword,
   });
 });
 
