@@ -101,6 +101,17 @@ export async function ensureDbSetup() {
       created_at timestamptz NOT NULL DEFAULT now()
     )`);
 
+    // Notifications table for user alerts
+    await query(`CREATE TABLE IF NOT EXISTS notifications (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid REFERENCES users(id) ON DELETE CASCADE,
+      actor_id uuid REFERENCES users(id) ON DELETE SET NULL,
+      type text NOT NULL,
+      meta jsonb DEFAULT '{}',
+      is_read boolean DEFAULT false,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )`);
+
     await query(`CREATE TABLE IF NOT EXISTS audit_logs (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id uuid REFERENCES users(id) ON DELETE SET NULL,
