@@ -7,33 +7,41 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
   const contentType = res.headers.get("content-type") || "";
   const isJson = contentType.includes("application/json");
 
-  // Try to read body from a clone first to avoid issues with consumed streams
-  let reader: Response = res;
-  if (!res.bodyUsed && typeof res.clone === "function") {
-    try {
-      reader = res.clone();
-    } catch (err) {
-      reader = res;
-    }
-  }
-
-  let raw: string | null = null;
-  try {
-    raw = await reader.text();
-  } catch (err) {
-    if (reader !== res) {
+  // If the response body has already been used, avoid attempting to read it again
+  if (res.bodyUsed) {
+    // body already consumed elsewhere (e.g. by service worker or other consumer)
+    // fall back to empty body to avoid 'body stream already read' errors
+    var raw: string | null = "";
+  } else {
+    // Try to read body from a clone first to avoid issues with consumed streams
+    let reader: Response = res;
+    if (typeof res.clone === "function") {
       try {
-        raw = await res.text();
-      } catch (innerErr) {
-        throw new Error(
-          `Failed to read response from ${typeof input === "string" ? input : "request"}: ${innerErr}`,
-        );
+        reader = res.clone();
+      } catch (err) {
+        reader = res;
       }
-    } else {
-      throw new Error(
-        `Failed to read response from ${typeof input === "string" ? input : "request"}: ${err}`,
-      );
     }
+
+    let rawLocal: string | null = null;
+    try {
+      rawLocal = await reader.text();
+    } catch (err) {
+      // If clone read failed, try original response as a last resort
+      if (reader !== res) {
+        try {
+          rawLocal = await res.text();
+        } catch (innerErr) {
+          // Give up and set empty body
+          rawLocal = "";
+          console.error("Failed to read response body:", innerErr);
+        }
+      } else {
+        rawLocal = "";
+        console.error("Failed to read response body:", err);
+      }
+    }
+    var raw: string | null = rawLocal;
   }
 
   let data: any = null;
