@@ -77,9 +77,10 @@ router.post("/messages", async (req, res) => {
     // encrypt content if encryption key available
     const enc = encryptText(content);
     const contentToStore = enc.encrypted ? JSON.stringify(enc) : content;
+    const roomId = req.body.room_id || null;
     const ins = await query(
-      "INSERT INTO messages(sender_id, recipient_id, content, expire_at) VALUES ($1,$2,$3,$4) RETURNING *",
-      [sid, recipient_id || null, contentToStore, expireAt],
+      "INSERT INTO messages(sender_id, recipient_id, room_id, content, expire_at) VALUES ($1,$2,$3,$4,$5) RETURNING *",
+      [sid, recipient_id || null, roomId, contentToStore, expireAt],
     );
     const msg = ins.rows[0];
     // if we stored encrypted content, replace content in msg with plaintext for response
