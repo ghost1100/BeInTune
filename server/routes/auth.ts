@@ -85,12 +85,20 @@ router.get("/me", async (req, res) => {
     const jwt = (await import("jsonwebtoken")).default;
     const SECRET = process.env.JWT_SECRET || "changeme123";
     const decoded: any = jwt.verify(token, SECRET);
+    const { decryptText } = await import('../lib/crypto');
     const userRes = await query(
-      "SELECT id, email, username, role FROM users WHERE id = $1",
+      "SELECT id, email, email_encrypted, username, role FROM users WHERE id = $1",
       [decoded.sub],
     );
     const user = userRes.rows[0];
     if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user.email && user.email_encrypted) {
+      try {
+        const parsed = typeof user.email_encrypted === 'string' ? JSON.parse(user.email_encrypted) : user.email_encrypted;
+        const dec = decryptText(parsed);
+        if (dec) user.email = dec;
+      } catch (e) {}
+    }
     res.json(user);
   } catch (err) {
     res.status(401).json({ error: "Invalid token" });
