@@ -55,7 +55,7 @@ export default function MyLearningPanel({
   const [upcoming, setUpcoming] = useState<BookingRecord | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     (async () => {
