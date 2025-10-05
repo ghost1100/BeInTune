@@ -17,6 +17,7 @@ export default function MyLearning() {
   const [resources, setResources] = useState<any[]>([]);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
+  const { user, loading } = (await import('@/hooks/use-auth')).default();
 
   useEffect(() => {
     (async () => {
