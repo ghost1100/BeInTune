@@ -1,9 +1,26 @@
 import { query } from "./index";
 import bcrypt from "bcrypt";
+import fs from "fs/promises";
+import path from "path";
 
 export async function ensureDbSetup() {
   try {
-    // Add username column if missing
+    // If users table is missing, run the initial migration SQL
+    const check = await query("SELECT to_regclass('public.users') as reg");
+    const exists = check.rows[0] && check.rows[0].reg;
+    if (!exists) {
+      try {
+        const migrationsPath = path.join(__dirname, "migrations", "001_init.sql");
+        const sql = await fs.readFile(migrationsPath, "utf-8");
+        await query(sql);
+        console.log("Applied initial DB migrations");
+      } catch (e) {
+        console.error("Failed to apply migrations:", e);
+        throw e;
+      }
+    }
+
+    // Add username column if missing (safe after migrations)
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS username text;");
     // Create unique index on username
     await query(
