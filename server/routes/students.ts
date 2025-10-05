@@ -31,6 +31,19 @@ router.get("/students", async (_req, res) => {
   res.json(q.rows);
 });
 
+// GET /api/admin/students/admins - list admin users
+router.get("/students/admins", async (_req, res) => {
+  try {
+    const q = await query(
+      `SELECT id AS user_id, email, name FROM users WHERE role = 'admin' ORDER BY created_at ASC`,
+    );
+    res.json(q.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load admins' });
+  }
+});
+
 // POST /api/admin/students - create student (creates user + student row)
 router.post("/students", async (req, res) => {
   const {
