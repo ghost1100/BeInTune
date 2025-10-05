@@ -2,12 +2,20 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 export default function Teachers() {
-  const teachers = (() => {
-    try {
-      const raw = localStorage.getItem('inTuneTeachers');
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) { return []; }
-  })();
+  const [teachers, setTeachers] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/teachers');
+        if (!res.ok) return;
+        const data = await res.json();
+        setTeachers(data);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  }, []);
 
   return (
     <div className="container mx-auto py-20">
@@ -21,7 +29,7 @@ export default function Teachers() {
           <div className="text-foreground/70">No teachers listed yet. Please ask the site admin to add profiles.</div>
         )}
         {teachers.map((t: any) => (
-          <div key={t.id} className="rounded-lg border overflow-hidden flex">
+          <div key={t.user_id} className="rounded-lg border overflow-hidden flex">
             <img src={t.image || 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&q=60'} alt={t.name} className="w-28 h-28 object-cover" />
             <div className="p-3 flex-1">
               <div className="font-semibold">{t.name}</div>
