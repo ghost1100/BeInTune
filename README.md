@@ -108,3 +108,20 @@ Next steps I can take (pick any):
 Contact & contribution
 
 If you'd like me to add tests or the privacy policy, or to implement specific security measures, tell me which items to prioritise and I will implement them.
+
+Recent additions in this codebase
+
+- Group chats: server-side support for rooms and room_members was added. The server includes an endpoint to sync group chats based on students' `band` field (/api/admin/group-chats/sync) and a listing endpoint (/api/admin/rooms). Admins are automatically added to group rooms and group chats are shown in the Chats UI.
+- Message encryption: message content can be encrypted at rest using AES-256-GCM. Provide an environment variable MESSAGE_ENCRYPTION_KEY (at least 32 characters) to enable encryption; otherwise plaintext is stored (not recommended). See server/lib/crypto.ts.
+- Scheduled cleanup job: a background job runs (default every hour) to permanently delete expired messages that are not saved by any user. Configure CLEANUP_INTERVAL_MS to change the interval.
+- Cookie banner & privacy page: a CookieBanner component and /privacy page were added; the banner persists acceptance in localStorage.
+- E2E tests scaffolding: Playwright config and a basic test were added under e2e/ (requires Playwright to be installed to run).
+- DB migration: server/db/migrations/002_group_chats.sql adds `students.band`, `rooms`, and `room_members`.
+
+Please review these changes and confirm whether you want me to:
+- Run the group-chat sync automatically on startup
+- Enforce encryption strictly (fail if MESSAGE_ENCRYPTION_KEY not set)
+- Add the cleanup job to run more frequently or to soft-delete first instead of permanent delete
+- Add Playwright to devDependencies and run E2E in CI
+
+I'll proceed once you confirm preferences.
