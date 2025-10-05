@@ -298,23 +298,33 @@ export default function DiscussionFeed({ className }: { className?: string }) {
               <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {post.media.map((media) => (
                   <div key={media.id} className="overflow-hidden rounded">
-                    {media.mime?.startsWith("video") ? (
-                      <video
-                        src={media.url}
-                        controls
-                        className="h-40 w-full object-cover"
-                      />
-                    ) : (
-                      <img
-                        src={media.url}
-                        alt="Post attachment"
-                        className="h-40 w-full object-cover"
-                      />
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLightboxSrc(media.url);
+                        setLightboxMime(media.mime || null);
+                      }}
+                      className="w-full h-40 overflow-hidden"
+                    >
+                      {media.mime?.startsWith("video") ? (
+                        <video
+                          src={media.url}
+                          className="h-40 w-full object-cover"
+                          aria-hidden
+                        />
+                      ) : (
+                        <img
+                          src={media.url}
+                          alt="Post attachment"
+                          className="h-40 w-full object-cover"
+                        />
+                      )}
+                    </button>
                   </div>
                 ))}
               </div>
             )}
+            <Lightbox src={lightboxSrc} mime={lightboxMime} onClose={() => { setLightboxSrc(null); setLightboxMime(null); }} />
             <footer className="mt-3 flex flex-wrap items-center gap-3 text-xs text-foreground/70">
               <div className="flex items-center gap-2">
                 {[
