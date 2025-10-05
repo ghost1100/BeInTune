@@ -17,35 +17,42 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
   } catch (e) {
     // ignore storage errors
   }
-  let res: Response;
-  try {
-    res = await fetch(input, opts);
-  } catch (err: any) {
-    // Network or CORS failure — attempt common fallbacks for serverless deployments
-    const attempted: string[] = [];
-    try {
-      if (
-        typeof input === "string" &&
-        input.startsWith("/api/") &&
-        typeof window !== "undefined"
-      ) {
-        // try Netlify functions path
-        const alt1 = `/.netlify/functions/api${input.slice(4)}`;
-        attempted.push(alt1);
-        try {
-          res = await fetch(alt1, opts);
-        } catch (e) {
-          // try absolute origin + api
-          const alt2 = `${window.location.origin}${input}`;
-          attempted.push(alt2);
-          res = await fetch(alt2, opts);
-        }
-      } else {
-        throw err;
+  let res: Response | null = null;
+  const attempted: string[] = [];
+
+  // If this looks like an API path, try several candidate URLs in order to avoid issues
+  // with proxies/service workers/netlify functions rewrites in various environments.
+  if (typeof input === "string" && input.startsWith("/api/") && typeof window !== "undefined") {
+    const candidates = [
+      // prefer absolute origin first
+      `${window.location.origin}${input}`,
+      // netlify functions mapping
+      `/.netlify/functions/api${input.slice(4)}`,
+      // original relative path as last resort
+      input,
+    ];
+
+    for (const url of candidates) {
+      try {
+        attempted.push(url);
+        res = await fetch(url, opts);
+        // if fetch returns, break (even if non-ok)
+        break;
+      } catch (err) {
+        // continue to next candidate
+        res = null;
       }
-    } catch (innerErr: any) {
+    }
+
+    if (!res) {
+      throw new Error(`Network request failed for ${input}. Tried: ${attempted.join(", ")}`);
+    }
+  } else {
+    try {
+      res = await fetch(input, opts);
+    } catch (err: any) {
       throw new Error(
-        `Network request failed for ${typeof input === "string" ? input : "request"}: ${err?.message || err}. Fallback attempts: ${attempted.join(", ")}. Last error: ${innerErr?.message || innerErr}`,
+        `Network request failed for ${typeof input === "string" ? input : "request"}: ${err?.message || err}`,
       );
     }
   }
