@@ -19,7 +19,6 @@ import {
 import ThemeHomePreview from "@/components/admin/ThemeHomePreview";
 import useTheme from "@/hooks/useTheme";
 import NewsletterComposer from "@/components/admin/NewsletterComposer";
-import StudentPasswordControls from "@/components/admin/StudentPasswordControls";
 
 type Teacher = {
   id: string;
@@ -141,7 +140,7 @@ export default function Admin() {
   };
 
   const [activeTab, setActiveTab] = useState<
-    "teachers" | "site" | "schedule" | "students" | "theme" | "reports"
+    "teachers" | "site" | "schedule" | "theme" | "reports"
   >("teachers");
 
   return (
@@ -177,14 +176,6 @@ export default function Admin() {
             className={`px-4 py-2 rounded-md ${activeTab === "site" ? "bg-card shadow" : "bg-muted"} text-foreground`}
           >
             Site
-          </button>
-          <button
-            onClick={() => setActiveTab("students")}
-            role="tab"
-            aria-selected={activeTab === "students"}
-            className={`px-4 py-2 rounded-md ${activeTab === "students" ? "bg-card shadow" : "bg-muted"} text-foreground`}
-          >
-            Students
           </button>
           <button
             onClick={() => setActiveTab("schedule")}
@@ -478,18 +469,7 @@ export default function Admin() {
             </div>
           )}
 
-          {activeTab === "students" && (
-            <div className="rounded-lg border p-4">
-              <h2 className="font-semibold">Students</h2>
-              <div className="mt-4">
-                <StudentsManager />
-              </div>
-
-              <div className="mt-6">
-                <StudentPasswordControls />
-              </div>
-            </div>
-          )}
+          {/* Students section removed: student password controls are non-functional and have been disabled. */}
 
           {activeTab === "theme" && (
             <div className="rounded-lg border p-4">
