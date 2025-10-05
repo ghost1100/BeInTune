@@ -74,17 +74,21 @@ export default function AdminLogin() {
         </p>
         <form onSubmit={submit} className="mt-4">
           <input
+            name="identifier"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             className="w-full h-10 rounded-md border px-3 mb-2"
             placeholder="Username or email"
+            autoComplete="username"
           />
           <input
+            name="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full h-10 rounded-md border px-3"
             placeholder="Password"
             type="password"
+            autoComplete="current-password"
           />
           {err && <div className="text-sm text-red-600 mt-2">{err}</div>}
           <div className="mt-4 flex justify-end">
