@@ -1799,11 +1799,14 @@ function StudentsManager() {
         {students.length === 0 && (
           <div className="text-foreground/70">No students yet.</div>
         )}
-        {students.map((s) => (
-          <div
-            key={s.id}
-            className="flex items-center justify-between rounded-md border p-2"
-          >
+        {students.map((s) => {
+          const studentId = s.student_id || s.id;
+          const userId = s.user_id || s.userId || s.id;
+          return (
+            <div
+              key={studentId || userId}
+              className="flex items-center justify-between rounded-md border p-2"
+            >
             <div>
               <div className="font-medium">
                 {s.name} {s.age ? `• ${s.age}` : ""}{" "}
@@ -1839,7 +1842,7 @@ function StudentsManager() {
                 </div>
               )}
               <div className="text-sm text-foreground/70">
-                Marketing consent: {s.marketingConsent ? "Yes" : "No"}
+                Marketing consent: {s.marketing_consent || s.marketingConsent ? "Yes" : "No"}
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -1850,14 +1853,15 @@ function StudentsManager() {
                 Edit
               </button>
               <button
-                onClick={() => remove(s.id)}
+                onClick={() => remove(studentId)}
                 className="px-2 py-1 rounded-md border"
               >
                 Remove
               </button>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
     </div>
   );
