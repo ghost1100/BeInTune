@@ -46,9 +46,11 @@ export default function AdminLogin() {
       const user = await res.json();
       if (user.role === "admin") {
         localStorage.setItem("inTuneAdmin", JSON.stringify(user));
+        localStorage.removeItem("inTuneStudent");
         navigate("/admin");
       } else {
         localStorage.setItem("inTuneStudent", JSON.stringify(user));
+        localStorage.removeItem("inTuneAdmin");
         navigate("/dashboard");
       }
     } catch (err: any) {
