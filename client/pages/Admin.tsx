@@ -286,7 +286,7 @@ export default function Admin() {
                   </div>
 
                   <div className="flex gap-2 flex-wrap">
-                    <button className="px-4 py-2 rounded-md bg-green-600 text-white">
+                    <button className="px-4 py-2 rounded-md bg-primary text-primary-foreground">
                       {editingId ? "Save" : "Add"}
                     </button>
                     <button
@@ -448,7 +448,7 @@ export default function Admin() {
                 <div className="flex gap-2 mt-2">
                   <button
                     onClick={saveContent}
-                    className="px-4 py-2 rounded-md bg-blue-600 text-white"
+                    className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground"
                   >
                     Save content
                   </button>
@@ -619,7 +619,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                       onClick={() => {
                         if (!booked) toggle(s);
                       }}
-                      className={`w-full rounded-md py-2 px-3 text-sm cursor-pointer ${booked ? "bg-red-600 text-white" : available ? "bg-green-600 text-white" : "bg-card text-foreground/80 border"}`}
+                      className={`w-full rounded-md py-2 px-3 text-sm cursor-pointer ${booked ? "bg-destructive text-destructive-foreground" : available ? "bg-primary text-primary-foreground" : "bg-card text-foreground/80 border"}`}
                     >
                       <div className="flex justify-between">
                         <div>{s}</div>
@@ -662,7 +662,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                   onClick={() => {
                     if (!booked) toggle(s);
                   }}
-                  className={`w-full h-10 rounded-md text-sm ${booked ? "bg-red-600 text-white" : available ? "bg-green-600 text-white" : "bg-card text-foreground/80 border"}`}
+                  className={`w-full h-10 rounded-md text-sm ${booked ? "bg-destructive text-destructive-foreground" : available ? "bg-primary text-primary-foreground" : "bg-card text-foreground/80 border"}`}
                   title={
                     booked
                       ? `Booked by ${booked?.name}`
@@ -791,7 +791,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     createBookingForStudent();
                     setShowStudentModal(false);
                   }}
-                  className="px-4 py-2 rounded-md bg-green-600 text-white"
+                  className="px-4 py-2 rounded-md bg-primary text-primary-foreground"
                 >
                   Create booking
                 </button>
@@ -1135,7 +1135,7 @@ function ThemeManager() {
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={preview}
-            className="px-4 py-2 rounded-md bg-green-600 text-white"
+            className="px-4 py-2 rounded-md bg-primary text-primary-foreground"
           >
             Preview
           </button>
@@ -1196,7 +1196,7 @@ function ThemeManager() {
                 onClick={() => {
                   cancelPreview();
                 }}
-                className="px-4 py-2 rounded-md bg-red-600 text-white"
+                className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground"
               >
                 Cancel
               </button>
@@ -1205,7 +1205,7 @@ function ThemeManager() {
                   setMode(previewMode);
                   confirm();
                 }}
-                className="px-4 py-2 rounded-md bg-green-600 text-white"
+                className="px-4 py-2 rounded-md bg-primary text-primary-foreground"
               >
                 Apply
               </button>
@@ -1568,7 +1568,7 @@ function StudentsManager() {
         )}
 
         <div className="flex gap-2 flex-wrap">
-          <button className="px-4 py-2 rounded-md bg-green-600 text-white">
+          <button className="px-4 py-2 rounded-md bg-primary text-primary-foreground">
             {editing ? "Save" : "Add"}
           </button>
           <button
