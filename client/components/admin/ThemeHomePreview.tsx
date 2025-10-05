@@ -62,9 +62,9 @@ export default function ThemeHomePreview({
           <Button size="sm" variant="outline">
             Book
           </Button>
-          <Button size="sm" variant="default">
-            Call
-          </Button>
+          <a href={`tel:${content.phone}`} className="inline-block">
+            <Button size="sm" variant="default">Call</Button>
+          </a>
         </div>
       </header>
 
