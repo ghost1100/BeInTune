@@ -1,4 +1,5 @@
-export const UNSPLASH_ACCESS_KEY = (process.env.UNSPLASH_ACCESS_KEY as string) || "IsGYdlrxOWoNplyTXSJHMA1Nllg8qT16kGBVns6Vvic";
+const _importMetaKey = typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_UNSPLASH_ACCESS_KEY ? (import.meta as any).env.VITE_UNSPLASH_ACCESS_KEY : undefined;
+export const UNSPLASH_ACCESS_KEY = _importMetaKey || "IsGYdlrxOWoNplyTXSJHMA1Nllg8qT16kGBVns6Vvic";
 
 export async function getRandomImage(query = "music teacher") {
   try {
