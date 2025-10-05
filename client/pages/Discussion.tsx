@@ -36,14 +36,14 @@ export default function Discussion() {
     for (const f of Array.from(files)) {
       try {
         const b64 = await fileToBase64(f);
-        const p = await fetch("/api/admin/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const p = await (await import('@/lib/api')).apiFetch('/api/admin/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename: f.name, data: b64 }),
         });
-        if (!p.ok) throw new Error("Upload failed");
-        const j = await p.json();
-        setAttachments((a) => [...a, { id: j.id, url: j.url, mime: f.type }]);
+        // apiFetch returns parsed JSON or text
+        if (!p || (typeof p === 'string')) throw new Error('Upload failed');
+        setAttachments((a) => [...a, { id: (p as any).id, url: (p as any).url, mime: f.type }]);
       } catch (err: any) {
         toast({
           title: "Upload error",
