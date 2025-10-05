@@ -331,7 +331,7 @@ export default function DiscussionFeed({ className }: { className?: string }) {
                     <button
                       key={type}
                       type="button"
-                      onClick={() => addReaction(post.id, type)}
+                      onClick={() => handleReaction(post.id, type as string, (post as any).user_reaction)}
                       className={`inline-flex items-center gap-1 px-2 py-1 rounded ${active ? "bg-primary/20" : "hover:bg-muted/20"}`}
                     >
                       <span aria-hidden>{icon}</span>
