@@ -50,7 +50,7 @@ export default function AdminLogin() {
           />
           {err && <div className="text-sm text-red-600 mt-2">{err}</div>}
           <div className="mt-4 flex justify-between">
-            <button className="h-10 px-4 rounded-md bg-slate-800 text-white">
+            <button className="h-10 px-4 rounded-md bg-primary text-primary-foreground">
               Sign in
             </button>
             <button
