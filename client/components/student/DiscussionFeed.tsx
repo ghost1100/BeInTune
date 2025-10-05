@@ -504,14 +504,25 @@ function Comments({ postId }: { postId: string }) {
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        {comments.map((comment) => (
-          <div key={comment.id} className="rounded border p-2">
-            <div className="text-xs font-medium text-foreground/70">
-              {comment.author_name || "User"}
+        {comments.map((comment) => {
+          const isAdmin = (comment as any).author_role === "admin";
+          return (
+            <div
+              key={comment.id}
+              className={cn(
+                "rounded p-2",
+                isAdmin
+                  ? "bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary"
+                  : "border"
+              )}
+            >
+              <div className="text-xs font-medium text-foreground/70">
+                {comment.author_name || "User"}
+              </div>
+              <div className="text-sm text-foreground/90">{comment.body}</div>
             </div>
-            <div className="text-sm text-foreground/90">{comment.body}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="flex gap-2">
         <label htmlFor={`comment-${postId}`} className="sr-only">
