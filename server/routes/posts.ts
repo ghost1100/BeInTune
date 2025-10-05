@@ -89,6 +89,12 @@ router.post("/posts", async (req, res) => {
       }
     }
 
+    const created = { id: postId, created_at: insert.rows[0].created_at };
+    try {
+      req.app.locals.broadcast?.("post:new", { id: postId, body, attachments });
+    } catch (e) {
+      console.error("WS broadcast error:", e);
+    }
     res.json({ ok: true, id: postId, created_at: insert.rows[0].created_at });
   } catch (err) {
     console.error(err);
