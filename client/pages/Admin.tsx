@@ -2008,10 +2008,16 @@ function StudentsManager() {
       email: s.email || "",
       phone: minor ? "" : s.phone || "",
       address: s.address || "",
-      emergencyContacts: s.emergencyContacts || "",
+      emergencyContacts:
+        s.emergency_contacts ||
+        s.emergencyContacts ||
+        s.emergency_contact ||
+        "",
       parentGuardianName: s.parent_name || "",
       parentGuardianEmail: s.parent_email || "",
-      parentGuardianPhone: minor ? s.phone || "" : s.parentGuardianPhone || "",
+      parentGuardianPhone: minor
+        ? s.phone || ""
+        : s.parentGuardianPhone || s.parent_phone || "",
     });
   };
   const remove = async (id?: string) => {
