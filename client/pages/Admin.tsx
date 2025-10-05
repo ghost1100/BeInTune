@@ -1016,54 +1016,21 @@ function ThemeManager() {
   };
 
   const preview = () => {
-    // backup current
-    const root = document.documentElement;
-    const backup: any = {
-      primary: getComputedStyle(root).getPropertyValue("--primary"),
-      brand1: getComputedStyle(root).getPropertyValue("--brand-1"),
-      brand2: getComputedStyle(root).getPropertyValue("--brand-2"),
-      secondary: getComputedStyle(root).getPropertyValue("--secondary"),
-    };
-    try {
-      (window as any).__themeModeBackup = root.classList.contains("dark")
-        ? "dark"
-        : "light";
-    } catch {}
-    applyToRoot(primary, primary, brand1, brand2, secondary);
+    const payload = { primary, brand1, brand2, secondary };
+    previewTheme(payload);
     setShowPreview(true);
-    // on cancel we'll revert using backup
-    (window as any).__themeBackup = backup;
   };
 
   const confirm = () => {
     const payload = { primary, brand1, brand2, secondary };
-    localStorage.setItem("inTuneTheme", JSON.stringify(payload));
-    applyToRoot(primary, primary, brand1, brand2, secondary);
+    saveTheme(payload);
     setShowPreview(false);
-    delete (window as any).__themeBackup;
     alert("Theme saved");
   };
 
   const cancelPreview = () => {
-    const root = document.documentElement;
-    const b = (window as any).__themeBackup;
-    if (b) {
-      root.style.setProperty("--primary", b.primary);
-      root.style.setProperty("--brand-1", b.brand1);
-      root.style.setProperty("--brand-2", b.brand2);
-      root.style.setProperty("--secondary", b.secondary);
-    }
-    try {
-      const m = (window as any).__themeModeBackup;
-      if (m === "dark") {
-        root.classList.add("dark");
-      } else {
-        root.classList.remove("dark");
-      }
-    } catch {}
+    restoreTheme();
     setShowPreview(false);
-    delete (window as any).__themeBackup;
-    delete (window as any).__themeModeBackup;
   };
 
   useEffect(() => {
