@@ -132,8 +132,14 @@ export default function MyLearningPanel({ className }: { className?: string }) {
         const arr = Array.isArray(j)
           ? (j as LearningResource[])
           : j && (j as any).rows
-          ? ((j as any).rows as LearningResource[])
-          : [];
+            ? ((j as any).rows as LearningResource[])
+            : [];
+        // ensure newest first
+        arr.sort((a, b) => {
+          const at = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const bt = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return bt - at;
+        });
         setResources(arr);
       } catch (e) {
         console.error(e);
