@@ -133,21 +133,32 @@ export default function Dashboard() {
             <p className="text-sm text-foreground/70 mt-2">No upcoming lessons scheduled.</p>
           ) : (
             <ul className="mt-2 space-y-2">
-              {bookings.map((b) => (
-                <li key={b.id} className="flex items-center justify-between rounded border p-2">
-                  <div>
-                    <div className="font-medium">
-                      {b.student_name || b.student_email}
+              {bookings.map((b) => {
+                // normalize date and time for display and link
+                let dateOnly = null;
+                if (typeof b.date === "string") dateOnly = b.date.split("T")[0];
+                else if (b.date instanceof Date) dateOnly = b.date.toISOString().slice(0,10);
+                else dateOnly = b.date ? String(b.date) : null;
+
+                let time = b.time ? String(b.time).split("+")[0] : "00:00:00";
+                const timeParts = time.split(":");
+                if (timeParts.length === 2) time = `${timeParts[0]}:${timeParts[1]}:00`;
+
+                const display = (dateOnly && time) ? new Date(`${dateOnly}T${time}`).toLocaleString() : "Invalid Date";
+                const linkDate = dateOnly || "";
+
+                return (
+                  <li key={b.id} className="flex items-center justify-between rounded border p-2">
+                    <div>
+                      <div className="font-medium">{b.student_name || b.student_email}</div>
+                      <div className="text-xs text-foreground/70">{display} • {b.lesson_type || "Lesson"}</div>
                     </div>
-                    <div className="text-xs text-foreground/70">
-                      {new Date(`${b.date}T${b.time}`).toLocaleString()} • {b.lesson_type || "Lesson"}
+                    <div>
+                      <a href={`/admin/slots?date=${linkDate}`} className="text-sm text-primary underline">View</a>
                     </div>
-                  </div>
-                  <div>
-                    <a href={`/admin/slots?date=${b.date}`} className="text-sm text-primary underline">View</a>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
