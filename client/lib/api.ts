@@ -1,5 +1,6 @@
 export async function apiFetch(input: RequestInfo, init?: RequestInit) {
-  const res = await fetch(input, init);
+  const opts = Object.assign({ credentials: 'include' } as RequestInit, init || {});
+  const res = await fetch(input, opts);
   const contentType = res.headers.get("content-type") || "";
   const text = await res.text();
   // Try to parse JSON if content-type indicates json
