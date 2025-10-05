@@ -24,13 +24,25 @@ export default function MyLearning() {
     (async () => {
       try {
         const j = await (await import('@/lib/api')).apiFetch('/api/admin/students');
-        setStudents(j as any[] || []);
-        if ((j as any[])?.length) setSelected((j as any[])[0].student_id || (j as any[])[0].id);
+        const list = Array.isArray(j) ? j : (j && (j as any).rows ? (j as any).rows : []);
+        // If current user is a student, filter to only their student record
+        if (user && user.role === 'student') {
+          const mine = list.find((s: any) => s.user_id === user.id);
+          if (mine) {
+            setStudents([mine]);
+            setSelected(mine.student_id || mine.id);
+          } else {
+            setStudents([]);
+          }
+        } else {
+          setStudents(list);
+          if (list.length) setSelected(list[0].student_id || list[0].id);
+        }
       } catch (e) {
         console.error(e);
       }
     })();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!selected) return;
