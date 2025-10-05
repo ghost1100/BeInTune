@@ -59,10 +59,21 @@ router.post("/students", async (req, res) => {
   } = req.body as any;
   if (!email) return res.status(400).json({ error: "Missing email" });
 
+  const { digest } = await import("../lib/crypto");
   const existingUserRes = await query(
-    "SELECT id, role FROM users WHERE lower(email)=lower($1) LIMIT 1",
-    [email],
+    "SELECT id, role FROM users WHERE email_index = $1 LIMIT 1",
+    [digest(email).toString()],
   );
+  // fallback to old behavior for existing rows
+  if (existingUserRes.rows.length === 0) {
+    const fallback = await query(
+      "SELECT id, role FROM users WHERE lower(email)=lower($1) LIMIT 1",
+      [email],
+    );
+    if (fallback.rows.length) {
+      existingUserRes.rows = fallback.rows;
+    }
+  }
 
   let userId: string;
   let generatedPassword: string | null = null;
