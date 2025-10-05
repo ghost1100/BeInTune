@@ -129,17 +129,64 @@ pnpm test
 
 ---
 
-Completed actions: the main sweep and hook integration are done for core areas:
+Completed actions: the sweep and hook integration (stage 1) are done for core areas:
 
-- ThemeManager now uses the central `useTheme()` hook (preview/save/restore).
-- ThemeToggle is wired to `useTheme()` so toggling mode persists and applies globally.
-- Inline boot script applies saved theme + mode before React mounts.
-- A broad sweep replaced many hard-coded light backgrounds/texts in key pages (Admin, Index, AdminLogin, NotFound) with theme-aware tokens.
+- ThemeManager uses the central `useTheme()` hook (preview/save/restore).
+- ThemeToggle and Admin theme UI are wired to `useTheme()` so toggling mode persists and applies globally.
+- Inline boot script applies saved theme + mode before React mounts to avoid FOUC.
+- Automated replacements applied to many hard-coded color utilities across pages and components (Index, Admin, AdminLogin, BookingForm, ThemeHomePreview, and several UI components). Buttons and stateful color patterns (success/warning/destructive/secondary) were mapped to theme tokens (primary, destructive, secondary) where safe.
 
-Remaining suggested tasks you may want me to complete:
+What I changed in this sweep:
 
-- Run a full automated repository-wide sweep for `bg-white`, `bg-gray-*`, `text-black` and replace with tokens where appropriate (I can run this and provide a confirmable diff).
-- Add unit/integration tests for preview/confirm/cancel flows and theme persistence.
-- Accessibility & contrast audit (axe/Lighthouse) and tune HSL values for tokens.
+- Replaced explicit button color classes (bg-green-600, bg-red-600, bg-blue-600) with theme tokens (bg-primary, bg-destructive, bg-secondary) and their corresponding foreground token classes.
+- Replaced several hero/text background usages of `text-white`/`bg-gray-900` with theme-aware tokens (text-foreground / bg-foreground/10) to preserve contrast under both modes.
+- Converted BookingForm selection states to use `bg-primary` / `bg-muted` instead of light-only utilities.
 
-If you'd like me to continue, reply `sweep` to run the full repo sweep, `tests` to add tests, or `audit` to run a contrast audit and suggest token adjustments.
+Notes & caveats:
+
+- I focused on safely replaceable patterns and preserved contextual edge-cases (overlays, subtle tints) to avoid visual regressions. A small manual review of critical screens (hero, admin modals, booking flows) is recommended to polish token choices.
+- Some color usages remain intentionally as CSS-backed overlays (e.g., modal backdrop) — they can be tokenized if you want a fully tokenized system.
+
+Next recommended steps (priority):
+
+1) Full repo sweep & review (optional)
+- I can run a final automated repository-wide sweep that finds `bg-white`, `bg-gray-*`, `text-black`, and other hard-coded utilities and propose replacements. This is safe to run but may require a short visual review afterwards.
+
+2) Convert remaining components to `useTheme()` (hook)
+- I wired core admin/theme areas and the main ThemeToggle, but we should convert any remaining components that directly read or write theme tokens to use the hook for consistency.
+
+3) Tests & accessibility
+- Add unit/integration tests for theme preview/confirm/cancel flows and localStorage persistence.
+- Run an accessibility contrast audit (axe/Lighthouse) and adjust token HSL values.
+
+4) Student features & booking improvements (requires backend/auth)
+- The discussion forum, Instagram-like posts, chats (ephemeral messages), and improved booking flow you described require authenticated users, a database, file uploads, and real-time features. I recommend connecting a backend integration (Supabase preferred) to implement:
+  - Email/password sign up for students (hashed passwords, reset flows)
+  - Role-based access control (admin/content-manager/student) and ability for admin to revoke forum access or mark content as 16+
+  - Posts, comments, likes, media uploads (storage bucket)
+  - Chat with ephemeral messages and selective save/restore (use DB with TTL or background job to expire messages after 3 weeks)
+  - Booking slots sync (availability in DB) and notifications for teachers/admin
+
+Integrations I recommend (available MCP servers):
+- Supabase: database, auth, real-time (recommended for forum/chat and auth). Click [Connect to Supabase](#open-mcp-popover).
+- Neon: alternative Postgres option (already available in the project list).
+- Netlify: deployment/hosting (already connected).
+- Builder.io: CMS/content management for non-code editors. Click [Connect to Builder.io](#open-mcp-popover).
+- Prisma Postgres: ORM/schema management for Postgres-backed workflows. Click [Connect to Prisma](#open-mcp-popover).
+- Zapier: automation and external integrations (optional). Click [Connect to Zapier](#open-mcp-popover).
+- Figma: design-to-code plugin (useful for converting mockups). Get plugin at https://www.figma.com/community/plugin/747985167520967365/builder-io-ai-powered-figma-to-code-react-vue-tailwind-more
+- Linear: project management/ticket sync. Click [Connect to Linear](#open-mcp-popover).
+- Notion: documentation and knowledge-base sync. Click [Connect to Notion](#open-mcp-popover).
+- Sentry: error monitoring and release tracking. Click [Connect to Sentry](#open-mcp-popover).
+- Context7: documentation lookup helper. Click [Open MCP popover](#open-mcp-popover) to connect.
+- Semgrep: security/static analysis. Click [Open MCP popover](#open-mcp-popover) to connect.
+
+Note: Neon and Netlify are already connected for this project.
+
+If you'd like me to proceed, reply with one of the following commands:
+- `sweep` — run the final automated repo-wide sweep and apply safe replacements.
+- `hook` — convert remaining files/components to use `useTheme()` where applicable.
+- `auth+db` — start implementing student auth, roles, forum, posts & ephemeral chat (I will request a Supabase connection).
+- `tests` — add tests for theme flows and persistence.
+
+If you want me to start implementing the student/forum/chat/booking features now, I'll begin by creating a todo plan and asking you to connect Supabase via the MCP popover.
