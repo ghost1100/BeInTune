@@ -54,7 +54,7 @@
     --brand-1: 200 100% 41%;
     --brand-2: 200 70% 71%;
 
-    --hero-image: url('https://static.wixstatic.com/media/11062b_67da4c327ae14c4a8fed63e683be364ef000.jpg');
+    --hero-image: url("https://static.wixstatic.com/media/11062b_67da4c327ae14c4a8fed63e683be364ef000.jpg");
   }
 
   .dark {
@@ -88,19 +88,32 @@
 
   body {
     @apply bg-background text-foreground antialiased font-sans;
-    font-family: "Plus Jakarta Sans", Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    font-family:
+      "Plus Jakarta Sans",
+      Inter,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial;
   }
 
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     font-family: "Noticia Text", "Plus Jakarta Sans", serif;
   }
 
   /* Make form controls adapt to theme tokens */
-  input, textarea, select {
+  input,
+  textarea,
+  select {
     @apply bg-input text-foreground border px-3 py-2 placeholder:text-foreground/50;
   }
 
-  input::placeholder, textarea::placeholder {
+  input::placeholder,
+  textarea::placeholder {
     @apply text-foreground/50;
   }
 
@@ -112,11 +125,17 @@
 
 @layer utilities {
   .gradient-brand {
-    background-image: linear-gradient(90deg, hsl(var(--brand-1)) 0%, hsl(var(--brand-2)) 100%);
+    background-image: linear-gradient(
+      90deg,
+      hsl(var(--brand-1)) 0%,
+      hsl(var(--brand-2)) 100%
+    );
   }
 
   .hero-bg {
-    background-image: linear-gradient(rgba(0,0,0,0.36), rgba(0,0,0,0.36)), var(--hero-image);
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0.36)),
+      var(--hero-image);
     background-size: cover;
     background-position: center;
   }
