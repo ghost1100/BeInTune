@@ -144,6 +144,36 @@ router.post("/posts/:id/comments", async (req, res) => {
       "INSERT INTO comments(post_id, author_id, body) VALUES ($1,$2,$3) RETURNING id, created_at",
       [id, authorId, body],
     );
+    // Notify post author (unless commenter is same) and mentioned users
+    try {
+      const postRes = await query("SELECT author_id FROM posts WHERE id = $1", [id]);
+      const postAuthor = postRes.rows[0] && postRes.rows[0].author_id;
+      if (postAuthor && postAuthor !== authorId) {
+        await query(
+          "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
+          [postAuthor, authorId, 'post:comment', JSON.stringify({ postId: id })],
+        );
+      }
+      // mentions
+      const mentionRegex = /@([\w._-]+)/g;
+      let m;
+      while ((m = mentionRegex.exec(body))) {
+        const username = m[1];
+        const u = await query("SELECT id FROM users WHERE username = $1 OR name = $1 LIMIT 1", [username]);
+        if (u.rows[0]) {
+          const uid = u.rows[0].id;
+          if (uid !== authorId) {
+            await query(
+              "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
+              [uid, authorId, 'mention', JSON.stringify({ postId: id })],
+            );
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to create notifications for comment:', err);
+    }
+
     res.json({
       ok: true,
       id: ins.rows[0].id,
