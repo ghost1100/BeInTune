@@ -172,13 +172,19 @@ export default function ChatsPanel({ className }: { className?: string }) {
   async function sendMessage() {
     if (!text || !selected) return;
     try {
-      const recipient = selected.user_id || selected.id || selected.student_id;
+      const payload: any = { content: text };
+      if (selected && selected.id && (selected.name && !selected.user_id)) {
+        // room
+        payload.room_id = selected.id;
+      } else {
+        payload.recipient_id = selected.user_id || selected.id || selected.student_id;
+      }
       await (
         await import("@/lib/api")
       ).apiFetch("/api/admin/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: text, recipient_id: recipient }),
+        body: JSON.stringify(payload),
       });
       setText("");
       toast({ title: "Message sent" });
