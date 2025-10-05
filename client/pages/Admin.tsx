@@ -1721,7 +1721,7 @@ function StudentsManager() {
     if (resourceInputRef.current) {
       resourceInputRef.current.value = "";
     }
-  }, []);
+  }, [resourceInputRef]);
 
   const openResourceModal = useCallback(() => {
     if (!students.length) {
