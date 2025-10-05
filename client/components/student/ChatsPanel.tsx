@@ -27,7 +27,6 @@ export default function ChatsPanel({ className }: { className?: string }) {
   const [selected, setSelected] = useState<StudentRecord | null>(null);
   const [text, setText] = useState("");
   const [query, setQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<StudentRecord[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
 
