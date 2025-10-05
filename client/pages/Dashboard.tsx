@@ -5,6 +5,7 @@ import useAuth from "@/hooks/use-auth";
 import MyLearningPanel from "@/components/student/MyLearningPanel";
 import DiscussionFeed from "@/components/student/DiscussionFeed";
 import ChatsPanel from "@/components/student/ChatsPanel";
+import NotificationBell from "@/components/ui/NotificationBell";
 import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
