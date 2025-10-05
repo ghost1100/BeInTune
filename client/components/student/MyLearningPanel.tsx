@@ -292,74 +292,77 @@ export default function MyLearningPanel({ className }: { className?: string }) {
   }
 
   return (
-    <section className={cn("space-y-6", className)}>
-      <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-semibold">My learning</h2>
-        <p className="text-sm text-foreground/70">
-          Access shared lesson material, upcoming bookings, and practise files.
-        </p>
-      </div>
+    <>
+      <Lightbox src={lightboxSrc} mime={lightboxMime} onClose={() => { setLightboxSrc(null); setLightboxMime(null); }} />
+      <section className={cn("space-y-6", className)}>
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl font-semibold">My learning</h2>
+          <p className="text-sm text-foreground/70">
+            Access shared lesson material, upcoming bookings, and practise files.
+          </p>
+        </div>
 
-      <div className="grid gap-6 lg:grid-cols-[240px,1fr]">
-        <aside className="rounded-lg border bg-card p-4">
-          <h3 className="text-sm font-medium text-foreground/80">Students</h3>
-          {activeStudents()}
-        </aside>
+        <div className="grid gap-6 lg:grid-cols-[240px,1fr]">
+          <aside className="rounded-lg border bg-card p-4">
+            <h3 className="text-sm font-medium text-foreground/80">Students</h3>
+            {activeStudents()}
+          </aside>
 
-        <div className="space-y-4">
-          {upcoming && (
-            <div className="rounded-lg border bg-muted/40 p-4">
-              <h3 className="text-sm font-semibold text-foreground/80">
-                Next lesson
-              </h3>
-              <p className="text-sm text-foreground/70">
-                {upcoming.start_time
-                  ? new Date(upcoming.start_time).toLocaleString()
-                  : upcoming.created_at
-                    ? new Date(upcoming.created_at).toLocaleString()
-                    : "Scheduled details coming soon."}
-              </p>
-              {upcoming.metadata && (
-                <pre className="mt-2 rounded bg-background/80 p-2 text-xs text-foreground/70">
-                  {JSON.stringify(upcoming.metadata, null, 2)}
-                </pre>
-              )}
-            </div>
-          )}
-
-          <div className="rounded-lg border bg-card p-4">
-            {user && user.role === "admin" && (
-              <div className="flex items-center justify-between gap-3">
+          <div className="space-y-4">
+            {upcoming && (
+              <div className="rounded-lg border bg-muted/40 p-4">
+                <h3 className="text-sm font-semibold text-foreground/80">
+                  Next lesson
+                </h3>
                 <p className="text-sm text-foreground/70">
-                  Upload resources to share with the selected student.
+                  {upcoming.start_time
+                    ? new Date(upcoming.start_time).toLocaleString()
+                    : upcoming.created_at
+                      ? new Date(upcoming.created_at).toLocaleString()
+                      : "Scheduled details coming soon."}
                 </p>
-                <div className="flex items-center gap-2">
-                  <input
-                    ref={fileRef}
-                    id="learningResources"
-                    type="file"
-                    name="learningResources"
-                    multiple
-                    className="hidden"
-                    onChange={(event) => uploadResources(event.target.files)}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileRef.current?.click()}
-                  >
-                    Upload
-                  </Button>
-                </div>
+                {upcoming.metadata && (
+                  <pre className="mt-2 rounded bg-background/80 p-2 text-xs text-foreground/70">
+                    {JSON.stringify(upcoming.metadata, null, 2)}
+                  </pre>
+                )}
               </div>
             )}
 
-            <div className={cn(user?.role === "admin" ? "mt-4" : "")}>
-              {resourceCards()}
+            <div className="rounded-lg border bg-card p-4">
+              {user && user.role === "admin" && (
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm text-foreground/70">
+                    Upload resources to share with the selected student.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={fileRef}
+                      id="learningResources"
+                      type="file"
+                      name="learningResources"
+                      multiple
+                      className="hidden"
+                      onChange={(event) => uploadResources(event.target.files)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileRef.current?.click()}
+                    >
+                      Upload
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className={cn(user?.role === "admin" ? "mt-4" : "")}>
+                {resourceCards()}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
