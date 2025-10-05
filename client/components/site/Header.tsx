@@ -38,7 +38,7 @@ export function Header() {
             </NavLink>
           ))}
           {/* protected links */}
-          {user && protectedNav.map((item) => (
+          {!loading && user && protectedNav.map((item) => (
             <NavLink
               key={item.href}
               to={item.href}
