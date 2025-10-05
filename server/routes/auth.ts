@@ -17,13 +17,34 @@ router.post("/login", async (req, res) => {
   if (!identifier || !password)
     return res.status(400).json({ error: "Missing identifier or password" });
 
-  // Search by email or username (case-insensitive)
-  const userRes = await query(
-    "SELECT id, email, username, password_hash, role, is_active FROM users WHERE lower(email) = lower($1) OR lower(username) = lower($1) LIMIT 1",
-    [identifier],
-  );
+  // Search by email (via index) or username (case-insensitive)
+  const { digest, decryptText } = await import("../lib/crypto");
+  const idx = identifier && identifier.includes("@") ? digest(identifier) : null;
+  let userRes;
+  if (idx) {
+    userRes = await query(
+      "SELECT id, email, email_encrypted, username, password_hash, role, is_active FROM users WHERE email_index = $1 OR lower(username) = lower($2) LIMIT 1",
+      [idx, identifier],
+    );
+  }
+  if (!userRes || !userRes.rows || userRes.rows.length === 0) {
+    userRes = await query(
+      "SELECT id, email, email_encrypted, username, password_hash, role, is_active FROM users WHERE lower(email) = lower($1) OR lower(username) = lower($1) LIMIT 1",
+      [identifier],
+    );
+  }
   const user = userRes.rows[0];
   if (!user) return res.status(401).json({ error: "Invalid credentials" });
+  // if email_encrypted present, decrypt before returning
+  if (!user.email && user.email_encrypted) {
+    try {
+      const parsed = typeof user.email_encrypted === 'string' ? JSON.parse(user.email_encrypted) : user.email_encrypted;
+      const dec = decryptText(parsed);
+      if (dec) user.email = dec;
+    } catch (e) {
+      // ignore
+    }
+  }
   if (!user.is_active)
     return res.status(403).json({ error: "Account inactive" });
 
