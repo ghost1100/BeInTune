@@ -28,7 +28,21 @@ router.get("/students", async (_req, res) => {
       WHERE u.role = 'student'
       ORDER BY u.created_at DESC`,
   );
-  res.json(q.rows);
+  const rows = q.rows.map((r: any) => {
+    try {
+      if (r.email) return r;
+      if (r.email_encrypted) {
+        const { decryptText } = require('../lib/crypto');
+        const parsed = typeof r.email_encrypted === 'string' ? JSON.parse(r.email_encrypted) : r.email_encrypted;
+        const dec = decryptText(parsed);
+        r.email = dec || null;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return r;
+  });
+  res.json(rows);
 });
 
 // GET /api/admin/students/admins - list admin users
