@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import DiscussionFeed from "@/components/student/DiscussionFeed";
 import ChatsPanel from "@/components/student/ChatsPanel";
+import NotificationBell from "@/components/ui/NotificationBell";
 
 type Teacher = {
   id: string;
