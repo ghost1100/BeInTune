@@ -154,7 +154,7 @@ export default function Dashboard() {
                       <div className="text-xs text-foreground/70">{display} • {b.lesson_type || "Lesson"}</div>
                     </div>
                     <div>
-                      <a href={`/admin/slots?date=${linkDate}`} className="text-sm text-primary underline">View</a>
+                      <span className="text-sm text-foreground/70">Scheduled</span>
                     </div>
                   </li>
                 );
