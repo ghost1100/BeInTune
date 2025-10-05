@@ -1,5 +1,13 @@
 # Project changes (Theme + Dark Mode + Preview)
 
+## Status update: DB migration applied & server deps added
+
+- The DB migration server/db/migrations/001_init.sql has been applied to Neon (confirmed).
+- Server dependencies have been added to package.json: pg, bcrypt, @sendgrid/mail, sharp.
+
+The server now includes scaffolded routes for authentication, admin user management, media uploads, and newsletter sending. See server/routes/* for implementations.
+
+
 This README summarizes all theme-related fixes, the new preview UX, the central theme API, and recommended next steps.
 
 ---

@@ -23,7 +23,11 @@
   "dependencies": {
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "pg": "^8.12.0",
+    "bcrypt": "^5.1.2",
+    "@sendgrid/mail": "^8.2.0",
+    "sharp": "^0.33.4"
   },
   "devDependencies": {
     "@hookform/resolvers": "^5.2.1",
