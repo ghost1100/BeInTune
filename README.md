@@ -41,6 +41,8 @@ Implemented:
   - DELETE /api/admin/bookings/:id
 - Client updated to use the new APIs. The Schedule manager and Booking form now fetch availability and bookings from the server.
 - "Find slots" on the booking form now lists available admin/teacher slots between 08:00 and 17:00 that are not already booked by students.
+- "Call" buttons (Booking form, Theme preview and other places) now use tel: links to open the user's dialer immediately.
+
 
 Not yet implemented / follow-ups:
 - Move booking availability caching / slot bulk updates to a server-side batch API (currently toggle creates/deletes individual slots).
