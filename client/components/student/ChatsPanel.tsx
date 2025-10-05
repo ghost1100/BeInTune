@@ -93,11 +93,14 @@ export default function ChatsPanel({ className }: { className?: string }) {
   function conversationMessages() {
     if (!selected || !user) return [];
     const currentUser = user.id;
-    const otherUser = selected.user_id || selected.id || selected.student_id || "";
+    const otherUser =
+      selected.user_id || selected.id || selected.student_id || "";
     return messages.filter((message) => {
       return (
-        (message.sender_id === currentUser && message.recipient_id === otherUser) ||
-        (message.sender_id === otherUser && message.recipient_id === currentUser)
+        (message.sender_id === currentUser &&
+          message.recipient_id === otherUser) ||
+        (message.sender_id === otherUser &&
+          message.recipient_id === currentUser)
       );
     });
   }
@@ -160,8 +163,12 @@ export default function ChatsPanel({ className }: { className?: string }) {
                       : "hover:bg-muted/70",
                   )}
                 >
-                  <div className="font-medium">{student.name || student.email}</div>
-                  <div className="text-xs text-foreground/70">{student.email}</div>
+                  <div className="font-medium">
+                    {student.name || student.email}
+                  </div>
+                  <div className="text-xs text-foreground/70">
+                    {student.email}
+                  </div>
                 </button>
               );
             })}
@@ -209,7 +216,9 @@ export default function ChatsPanel({ className }: { className?: string }) {
               onChange={(event) => setText(event.target.value)}
               className="flex-1 rounded border p-2 text-sm"
               placeholder={
-                selected ? `Message ${selected.name || selected.email}` : "Select a conversation"
+                selected
+                  ? `Message ${selected.name || selected.email}`
+                  : "Select a conversation"
               }
             />
             <Button onClick={sendMessage} disabled={!selected}>

@@ -1595,7 +1595,11 @@ const resourceFileKey = (file: File) =>
 
 function isResourceFileAllowed(file: File) {
   if (RESOURCE_ALLOWED_MIME_TYPES.has(file.type)) return true;
-  if (RESOURCE_ALLOWED_MIME_PREFIXES.some((prefix) => file.type.startsWith(prefix)))
+  if (
+    RESOURCE_ALLOWED_MIME_PREFIXES.some((prefix) =>
+      file.type.startsWith(prefix),
+    )
+  )
     return true;
   const ext = file.name.split(".").pop()?.toLowerCase();
   return ext ? RESOURCE_ALLOWED_EXTENSIONS.has(ext) : false;
@@ -1709,7 +1713,10 @@ function StudentsManager() {
   useEffect(() => {
     if (!resourceModalOpen || studentOptions.length === 0) return;
     setResourceStudentId((current) => {
-      if (current && studentOptions.some((option) => option.value === current)) {
+      if (
+        current &&
+        studentOptions.some((option) => option.value === current)
+      ) {
         return current;
       }
       return studentOptions[0].value;
@@ -1767,7 +1774,9 @@ function StudentsManager() {
       }
       if (accepted.length) {
         setResourceFiles((prev) => {
-          const map = new Map(prev.map((file) => [resourceFileKey(file), file]));
+          const map = new Map(
+            prev.map((file) => [resourceFileKey(file), file]),
+          );
           accepted.forEach((file) => {
             map.set(resourceFileKey(file), file);
           });

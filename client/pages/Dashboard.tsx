@@ -20,10 +20,13 @@ export default function Dashboard() {
     <div className="bg-muted/40 py-10">
       <div className="container mx-auto space-y-6">
         <header className="flex flex-col gap-1">
-          <p className="text-sm text-foreground/60">Welcome back{displayName ? `, ${displayName}` : ""}</p>
+          <p className="text-sm text-foreground/60">
+            Welcome back{displayName ? `, ${displayName}` : ""}
+          </p>
           <h1 className="text-3xl font-semibold">Student dashboard</h1>
           <p className="text-sm text-foreground/70">
-            Manage your lessons, join discussions, and stay connected with your tutors.
+            Manage your lessons, join discussions, and stay connected with your
+            tutors.
           </p>
         </header>
 

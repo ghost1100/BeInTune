@@ -35,11 +35,7 @@ function fileToBase64(file: File) {
   });
 }
 
-export default function DiscussionFeed({
-  className,
-}: {
-  className?: string;
-}) {
+export default function DiscussionFeed({ className }: { className?: string }) {
   const [posts, setPosts] = useState<DiscussionPost[]>([]);
   const [body, setBody] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -67,9 +63,7 @@ export default function DiscussionFeed({
 
   async function loadPosts() {
     try {
-      const response = await (
-        await import("@/lib/api")
-      ).apiFetch("/api/posts");
+      const response = await (await import("@/lib/api")).apiFetch("/api/posts");
       const list = Array.isArray(response)
         ? (response as DiscussionPost[])
         : response && (response as any).rows
@@ -101,7 +95,11 @@ export default function DiscussionFeed({
         }
         setAttachments((prev) => [
           ...prev,
-          { id: (payload as any).id, url: (payload as any).url, mime: file.type },
+          {
+            id: (payload as any).id,
+            url: (payload as any).url,
+            mime: file.type,
+          },
         ]);
       } catch (err: any) {
         toast({
@@ -157,7 +155,8 @@ export default function DiscussionFeed({
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-semibold">Discussion</h2>
         <p className="text-sm text-foreground/70">
-          Share updates, ask questions, and collaborate with your class community.
+          Share updates, ask questions, and collaborate with your class
+          community.
         </p>
       </div>
 
@@ -182,7 +181,11 @@ export default function DiscussionFeed({
             className="hidden"
             onChange={(event) => handleUpload(event.target.files)}
           />
-          <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileRef.current?.click()}
+          >
             Upload
           </Button>
           <Button size="sm" onClick={submitPost}>
@@ -192,7 +195,10 @@ export default function DiscussionFeed({
         {attachments.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {attachments.map((attachment) => (
-              <div key={attachment.id} className="h-24 w-24 overflow-hidden rounded border">
+              <div
+                key={attachment.id}
+                className="h-24 w-24 overflow-hidden rounded border"
+              >
                 <img
                   src={attachment.url}
                   alt="Attachment preview"
@@ -222,13 +228,19 @@ export default function DiscussionFeed({
                 </time>
               )}
             </header>
-            {post.body && <p className="mt-2 text-sm text-foreground/90">{post.body}</p>}
+            {post.body && (
+              <p className="mt-2 text-sm text-foreground/90">{post.body}</p>
+            )}
             {post.media && post.media.length > 0 && (
               <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {post.media.map((media) => (
                   <div key={media.id} className="overflow-hidden rounded">
                     {media.mime?.startsWith("video") ? (
-                      <video src={media.url} controls className="h-40 w-full object-cover" />
+                      <video
+                        src={media.url}
+                        controls
+                        className="h-40 w-full object-cover"
+                      />
                     ) : (
                       <img
                         src={media.url}

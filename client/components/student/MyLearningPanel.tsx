@@ -44,11 +44,7 @@ function fileToBase64(file: File) {
   });
 }
 
-export default function MyLearningPanel({
-  className,
-}: {
-  className?: string;
-}) {
+export default function MyLearningPanel({ className }: { className?: string }) {
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [resources, setResources] = useState<LearningResource[]>([]);
@@ -79,7 +75,8 @@ export default function MyLearningPanel({
           }
         } else {
           setStudents(list);
-          if (list.length) setSelected(list[0].student_id || list[0].id || null);
+          if (list.length)
+            setSelected(list[0].student_id || list[0].id || null);
         }
       } catch (e) {
         console.error(e);
@@ -340,7 +337,9 @@ export default function MyLearningPanel({
               </div>
             )}
 
-            <div className={cn(user?.role === "admin" ? "mt-4" : "")}>{resourceCards()}</div>
+            <div className={cn(user?.role === "admin" ? "mt-4" : "")}>
+              {resourceCards()}
+            </div>
           </div>
         </div>
       </div>
