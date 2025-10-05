@@ -64,7 +64,8 @@ router.post("/learning/:studentId", async (req, res) => {
 router.delete("/learning/entry/:entryId", async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-    if (req.user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+    if (req.user.role !== "admin")
+      return res.status(403).json({ error: "Forbidden" });
     const { entryId } = req.params;
     await query("DELETE FROM learning_resources WHERE id = $1", [entryId]);
     res.json({ ok: true });
@@ -78,14 +79,27 @@ router.delete("/learning/entry/:entryId", async (req, res) => {
 router.delete("/learning/entry/:entryId/media/:mediaId", async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-    if (req.user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+    if (req.user.role !== "admin")
+      return res.status(403).json({ error: "Forbidden" });
     const { entryId, mediaId } = req.params;
-    const r = await query("SELECT media, student_id FROM learning_resources WHERE id = $1 LIMIT 1", [entryId]);
-    if (!r.rows.length) return res.status(404).json({ error: "Resource entry not found" });
+    const r = await query(
+      "SELECT media, student_id FROM learning_resources WHERE id = $1 LIMIT 1",
+      [entryId],
+    );
+    if (!r.rows.length)
+      return res.status(404).json({ error: "Resource entry not found" });
     const mediaArr = r.rows[0].media || [];
-    const filtered = (Array.isArray(mediaArr) ? mediaArr : []).filter((m: any) => String(m.id) !== String(mediaId) && m.url !== mediaId);
-    await query("UPDATE learning_resources SET media = $1 WHERE id = $2", [JSON.stringify(filtered), entryId]);
-    const rows = await query("SELECT * FROM learning_resources WHERE student_id = $1 ORDER BY created_at DESC", [r.rows[0].student_id]);
+    const filtered = (Array.isArray(mediaArr) ? mediaArr : []).filter(
+      (m: any) => String(m.id) !== String(mediaId) && m.url !== mediaId,
+    );
+    await query("UPDATE learning_resources SET media = $1 WHERE id = $2", [
+      JSON.stringify(filtered),
+      entryId,
+    ]);
+    const rows = await query(
+      "SELECT * FROM learning_resources WHERE student_id = $1 ORDER BY created_at DESC",
+      [r.rows[0].student_id],
+    );
     res.json(rows.rows);
   } catch (err) {
     console.error(err);

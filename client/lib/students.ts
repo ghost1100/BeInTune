@@ -30,7 +30,9 @@ export const API = {
   async remove(id: string) {
     if (!id) throw new Error("Missing student id");
     const { apiFetch } = await import("@/lib/api");
-    const res = await apiFetch(`/api/admin/students/${id}`, { method: "DELETE" });
+    const res = await apiFetch(`/api/admin/students/${id}`, {
+      method: "DELETE",
+    });
     return res;
   },
 };
