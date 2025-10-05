@@ -1724,12 +1724,20 @@ function StudentsManager() {
     }
   };
 
-  const sendReset = async (email: string | undefined) => {
+  const sendReset = async (
+    userId: string | undefined,
+    email: string | undefined,
+  ) => {
     if (!email) {
       toast({ title: "Error", description: "Missing email" });
       return;
     }
-    setPasswordLoading(email);
+    const loadingKey = userId || email;
+    if (!loadingKey) {
+      toast({ title: "Error", description: "Missing user id" });
+      return;
+    }
+    setPasswordLoading(loadingKey);
     try {
       const res = await fetch(`/api/auth/send-reset`, {
         method: "POST",
