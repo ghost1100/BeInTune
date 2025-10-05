@@ -281,3 +281,21 @@ Next actions I can take for you
   - Create a security checklist and PR template for future releases (CI integration with Semgrep/Snyk/Sentry).
 
 Reply with which task to start next: `sweep`, `hook`, `auth+db`, or `security-pr`.
+
+Admin UI scaffolding (work started):
+
+- I added frontend admin components to manage student passwords and compose newsletters. Files added:
+  - client/components/admin/StudentPasswordControls.tsx
+  - client/components/admin/NewsletterComposer.tsx
+- The Admin page now includes a "Compose newsletter" button (opens a modal composer) and the Students tab includes password controls (randomize, set, send reset).
+
+Next steps to complete the admin UX and backend wiring:
+1) Apply DB migration on Neon (server/db/migrations/001_init.sql).
+2) Implement server APIs for:
+   - POST /api/admin/users/:id/set-password
+   - POST /api/auth/send-reset
+   - POST /api/admin/newsletters (handle attachments and queue/send via SendGrid)
+   - File upload endpoint for media storage
+3) Add server-side password hashing (bcrypt/argon2), email verification, and newsletter send job (using the configured SendGrid API key).
+
+If you want me to continue and scaffold the server APIs and admin routes, reply `migrate` (I will assume DB migration was applied) or `admin-ui` to focus on frontend polish only.
