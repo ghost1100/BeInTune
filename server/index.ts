@@ -45,5 +45,8 @@ export function createServer() {
   app.use("/api/admin", studentsRoutes);
   app.use("/api/admin", teachersRoutes);
 
+  import bookingsRoutes from "./routes/bookings";
+  app.use("/api/admin", bookingsRoutes);
+
   return app;
 }
