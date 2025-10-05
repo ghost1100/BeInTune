@@ -257,15 +257,29 @@ export default function MyLearningPanel({ className }: { className?: string }) {
             {resource.media && resource.media.length > 0 && (
               <div className="mt-3 space-y-2">
                 {resource.media.map((media) => (
-                  <a
-                    key={media.id || media.url}
-                    href={media.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block text-sm font-medium text-primary underline"
-                  >
-                    Download {media.mime?.split("/")[1] || "file"}
-                  </a>
+                  <div key={media.id || media.url}>
+                    {media.mime?.startsWith("video") ? (
+                      <button
+                        type="button"
+                        className="block w-full h-40 overflow-hidden rounded"
+                        onClick={() => { setLightboxSrc(media.url); setLightboxMime(media.mime || null); }}
+                      >
+                        <video src={media.url} className="h-40 w-full object-cover" aria-hidden />
+                      </button>
+                    ) : media.mime?.startsWith("image") ? (
+                      <button
+                        type="button"
+                        className="block w-full h-40 overflow-hidden rounded"
+                        onClick={() => { setLightboxSrc(media.url); setLightboxMime(media.mime || null); }}
+                      >
+                        <img src={media.url} alt="resource" className="h-40 w-full object-cover" />
+                      </button>
+                    ) : (
+                      <a href={media.url} target="_blank" rel="noreferrer" className="block text-sm font-medium text-primary underline">
+                        Download {media.mime?.split("/")[1] || "file"}
+                      </a>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
