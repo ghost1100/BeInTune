@@ -4,7 +4,7 @@ import { query } from "../db";
 const router = express.Router();
 
 // GET /api/posts - list recent posts with media, reaction_count, comment_count
-router.get("/posts", async (_req, res) => {
+router.get("/posts", async (req, res) => {
   try {
     const postsRes = await query(
       `SELECT p.*, u.name as author_name, u.email as author_email
