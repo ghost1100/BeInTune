@@ -605,17 +605,21 @@ function ThemeManager(){
 
       {showPreview && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40" onMouseDown={(e)=>{ if(e.target === e.currentTarget) { cancelPreview(); } }}>
-          <div className="bg-card rounded-md p-4 w-[900px] max-w-full">
-            <div className="flex justify-between items-center">
-              <h4 className="font-semibold">Home preview</h4>
-              <button onClick={cancelPreview} className="px-2 py-1 border rounded-md">Close</button>
+          <div className="flex flex-col items-center gap-3">
+            {/* top icon centered */}
+            <div className="p-1 rounded-full bg-card border">
+              <button onClick={()=>{ setPreviewMode(m=> m === 'dark' ? 'light' : 'dark'); }} className="p-2 rounded-full">
+                {previewMode === 'dark' ? <svg className="w-5 h-5 text-foreground" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg> : <svg className="w-5 h-5 text-foreground" viewBox="0 0 24 24" fill="currentColor"><path d="M6.76 4.84l-1.8-1.79L3.17 4.84l1.79 1.79 1.8-1.79zM1 13h3v-2H1v2zm10 9h2v-3h-2v3zM6.76 19.16l1.79-1.79-1.79-1.79-1.8 1.79 1.8 1.79zM20 11v2h3v-2h-3zM17.24 19.16l1.8-1.79 1.79 1.79-1.79 1.79-1.8-1.79zM12 4a8 8 0 100 16 8 8 0 000-16z"/></svg>}
+              </button>
             </div>
-            <div className="mt-4">
-              <ThemeHomePreview mode={previewMode} setMode={setPreviewMode} />
-              <div className="mt-4 flex gap-2 justify-end">
-                <button onClick={()=>{ if(previewMode === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); try{ localStorage.setItem('inTuneThemeMode', previewMode); }catch{}; confirm(); }} className="px-4 py-2 rounded-md bg-green-600 text-white">Apply</button>
-                <button onClick={()=>{ cancelPreview(); }} className="px-4 py-2 rounded-md border">Cancel</button>
-              </div>
+
+            <div className="bg-card rounded-md p-3 w-[380px] max-w-full">
+              <ThemeHomePreview mode={previewMode} setMode={setPreviewMode} compact />
+            </div>
+
+            <div className="w-[380px] max-w-full flex items-center justify-between">
+              <button onClick={()=>{ cancelPreview(); }} className="px-4 py-2 rounded-md bg-red-600 text-white">Cancel</button>
+              <button onClick={()=>{ if(previewMode === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); try{ localStorage.setItem('inTuneThemeMode', previewMode); }catch{}; confirm(); }} className="px-4 py-2 rounded-md bg-green-600 text-white">Apply</button>
             </div>
           </div>
         </div>
