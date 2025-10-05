@@ -18,9 +18,17 @@ export default function Dashboard() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await (await import("@/lib/api")).apiFetch(`/api/admin/bookings`);
-        const rows = Array.isArray(res) ? res : res && (res as any).rows ? (res as any).rows : [];
-        const mine = user ? rows.filter((b: any) => b.student_user_id === user.id) : [];
+        const res = await (
+          await import("@/lib/api")
+        ).apiFetch(`/api/admin/bookings`);
+        const rows = Array.isArray(res)
+          ? res
+          : res && (res as any).rows
+            ? (res as any).rows
+            : [];
+        const mine = user
+          ? rows.filter((b: any) => b.student_user_id === user.id)
+          : [];
         // helper to normalize date/time
         function toTimestamp(item: any) {
           try {
@@ -35,11 +43,14 @@ export default function Dashboard() {
               dateOnly = String(item.date);
             }
             // normalize time to HH:MM:SS (strip zone)
-            const time = item.time ? String(item.time).split("+")[0] : "00:00:00";
+            const time = item.time
+              ? String(item.time).split("+")[0]
+              : "00:00:00";
             // ensure time has seconds
             const timeParts = time.split(":");
             let timeNorm = time;
-            if (timeParts.length === 2) timeNorm = `${timeParts[0]}:${timeParts[1]}:00`;
+            if (timeParts.length === 2)
+              timeNorm = `${timeParts[0]}:${timeParts[1]}:00`;
 
             const iso = `${dateOnly}T${timeNorm}`;
             const ts = new Date(iso).getTime();
@@ -68,7 +79,10 @@ export default function Dashboard() {
 
   const logout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
     } catch (e) {
       console.error("Logout request failed", e);
     }
@@ -82,18 +96,25 @@ export default function Dashboard() {
 
       if (typeof window !== "undefined" && (window as any).caches) {
         const keys = await (window as any).caches.keys();
-        await Promise.all(keys.map((k: string) => (window as any).caches.delete(k)));
+        await Promise.all(
+          keys.map((k: string) => (window as any).caches.delete(k)),
+        );
       }
 
       if (typeof document !== "undefined") {
         document.cookie.split(";").forEach((cookie) => {
           const eqPos = cookie.indexOf("=");
-          const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+          const name =
+            eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
           document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
         });
       }
 
-      if (typeof navigator !== "undefined" && navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.serviceWorker &&
+        navigator.serviceWorker.getRegistrations
+      ) {
         const regs = await navigator.serviceWorker.getRegistrations();
         await Promise.all(regs.map((r) => r.unregister()));
       }
@@ -114,54 +135,72 @@ export default function Dashboard() {
             </p>
             <h1 className="text-3xl font-semibold">Student dashboard</h1>
             <p className="text-sm text-foreground/70">
-              Manage your lessons, join discussions, and stay connected with your
-              tutors.
+              Manage your lessons, join discussions, and stay connected with
+              your tutors.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={logout}>Logout</Button>
+            <Button variant="ghost" onClick={logout}>
+              Logout
+            </Button>
           </div>
         </header>
 
         <Tabs value={tab} onValueChange={setTab} className="space-y-4">
+          {/* Upcoming lessons */}
+          <div className="rounded-lg border bg-card p-4">
+            <h2 className="text-lg font-semibold">Upcoming lessons</h2>
+            {bookings.length === 0 ? (
+              <p className="text-sm text-foreground/70 mt-2">
+                No upcoming lessons scheduled.
+              </p>
+            ) : (
+              <ul className="mt-2 space-y-2">
+                {bookings.map((b) => {
+                  // normalize date and time for display and link
+                  let dateOnly = null;
+                  if (typeof b.date === "string")
+                    dateOnly = b.date.split("T")[0];
+                  else if (b.date instanceof Date)
+                    dateOnly = b.date.toISOString().slice(0, 10);
+                  else dateOnly = b.date ? String(b.date) : null;
 
-        {/* Upcoming lessons */}
-        <div className="rounded-lg border bg-card p-4">
-          <h2 className="text-lg font-semibold">Upcoming lessons</h2>
-          {bookings.length === 0 ? (
-            <p className="text-sm text-foreground/70 mt-2">No upcoming lessons scheduled.</p>
-          ) : (
-            <ul className="mt-2 space-y-2">
-              {bookings.map((b) => {
-                // normalize date and time for display and link
-                let dateOnly = null;
-                if (typeof b.date === "string") dateOnly = b.date.split("T")[0];
-                else if (b.date instanceof Date) dateOnly = b.date.toISOString().slice(0,10);
-                else dateOnly = b.date ? String(b.date) : null;
+                  let time = b.time ? String(b.time).split("+")[0] : "00:00:00";
+                  const timeParts = time.split(":");
+                  if (timeParts.length === 2)
+                    time = `${timeParts[0]}:${timeParts[1]}:00`;
 
-                let time = b.time ? String(b.time).split("+")[0] : "00:00:00";
-                const timeParts = time.split(":");
-                if (timeParts.length === 2) time = `${timeParts[0]}:${timeParts[1]}:00`;
+                  const display =
+                    dateOnly && time
+                      ? new Date(`${dateOnly}T${time}`).toLocaleString()
+                      : "Invalid Date";
+                  const linkDate = dateOnly || "";
 
-                const display = (dateOnly && time) ? new Date(`${dateOnly}T${time}`).toLocaleString() : "Invalid Date";
-                const linkDate = dateOnly || "";
-
-                return (
-                  <li key={b.id} className="flex items-center justify-between rounded border p-2">
-                    <div>
-                      <div className="font-medium">{b.student_name || b.student_email}</div>
-                      <div className="text-xs text-foreground/70">{display} • {b.lesson_type || "Lesson"}</div>
-                    </div>
-                    <div>
-                      <span className="text-sm text-foreground/70">Scheduled</span>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
+                  return (
+                    <li
+                      key={b.id}
+                      className="flex items-center justify-between rounded border p-2"
+                    >
+                      <div>
+                        <div className="font-medium">
+                          {b.student_name || b.student_email}
+                        </div>
+                        <div className="text-xs text-foreground/70">
+                          {display} • {b.lesson_type || "Lesson"}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-sm text-foreground/70">
+                          Scheduled
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
           <TabsList className="w-fit">
             <TabsTrigger value="learning">My learning</TabsTrigger>
             <TabsTrigger value="discussion">Discussion</TabsTrigger>
