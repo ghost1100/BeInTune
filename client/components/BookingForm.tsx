@@ -6,6 +6,7 @@ import {
   addBooking,
   getBookings,
 } from "@/lib/schedule";
+import { getSiteContent } from "@/lib/siteContent";
 
 export default function BookingForm() {
   const [name, setName] = useState("");
