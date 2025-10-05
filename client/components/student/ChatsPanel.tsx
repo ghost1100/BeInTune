@@ -154,14 +154,17 @@ export default function ChatsPanel({ className }: { className?: string }) {
   function conversationMessages() {
     if (!selected || !user) return [];
     const currentUser = user.id;
-    const otherUser =
-      selected.user_id || selected.id || selected.student_id || "";
+    // room chat
+    if (selected.id && (selected.name && !selected.user_id)) {
+      // selected is a room-like object
+      const roomId = selected.id;
+      return messages.filter((message) => message.room_id === roomId);
+    }
+    const otherUser = selected.user_id || selected.id || selected.student_id || "";
     return messages.filter((message) => {
       return (
-        (message.sender_id === currentUser &&
-          message.recipient_id === otherUser) ||
-        (message.sender_id === otherUser &&
-          message.recipient_id === currentUser)
+        (message.sender_id === currentUser && message.recipient_id === otherUser) ||
+        (message.sender_id === otherUser && message.recipient_id === currentUser)
       );
     });
   }
