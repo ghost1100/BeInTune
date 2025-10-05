@@ -4,7 +4,7 @@ import { Logo } from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import useAuth from "@/hooks/use-auth";
 import NotificationBell from "@/components/ui/NotificationBell";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 const publicNav = [
   { href: "/lessons", label: "Lessons" },
