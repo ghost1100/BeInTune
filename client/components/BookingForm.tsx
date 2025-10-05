@@ -57,7 +57,7 @@ export default function BookingForm(){
             <div className="text-sm font-medium mb-2">Available slots</div>
             <div className="grid grid-cols-3 gap-2">
               {availableSlots.map(s=> (
-                <button type="button" key={s} onClick={()=>setSelectedSlot(s)} className={`h-10 rounded-md ${selectedSlot===s? 'bg-primary text-white':'bg-green-50 border'}`}>
+                <button type="button" key={s} onClick={()=>setSelectedSlot(s)} className={`h-10 rounded-md ${selectedSlot===s ? 'bg-primary text-primary-foreground' : 'bg-muted border'}`}>
                   {s}
                 </button>
               ))}
