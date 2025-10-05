@@ -57,6 +57,7 @@ export default function Admin() {
     }
   });
   const navigate = useNavigate();
+  const [showNewsletter, setShowNewsletter] = useState(false);
 
   useEffect(() => {
     const auth = localStorage.getItem("inTuneAdmin");
