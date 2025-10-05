@@ -30,7 +30,7 @@ export default function Index() {
             <h1 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight">
               {content.heroHeading}
             </h1>
-            <p className="mt-4 text-lg text-foreground/90">
+            <p className="mt-4 text-lg text-white/90 dark:text-foreground/90">
               {content.heroSubheading}
             </p>
 
