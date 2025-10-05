@@ -10,18 +10,20 @@ export type Booking = {
   lessonType?: string;
 };
 
-const AV_KEY = 'inTuneAvailability';
-const BK_KEY = 'inTuneBookings';
+const AV_KEY = "inTuneAvailability";
+const BK_KEY = "inTuneBookings";
 
 async function readAvail(date?: string): Promise<Record<string, string[]>> {
   try {
-    const d = date || new Date().toISOString().slice(0,10);
+    const d = date || new Date().toISOString().slice(0, 10);
     const res = await fetch(`/api/admin/slots?date=${d}`);
     if (!res.ok) return {};
     const rows = await res.json();
     // transform into map
     const map: Record<string, string[]> = {};
-    map[d] = rows.filter((r:any)=>r.is_available).map((r:any)=>r.slot_time);
+    map[d] = rows
+      .filter((r: any) => r.is_available)
+      .map((r: any) => r.slot_time);
     return map;
   } catch (e) {
     return {};
@@ -50,8 +52,8 @@ async function writeBookings(b: Booking[]) {
 export function getSlotsForDay(date: string, from = 8, to = 20): string[] {
   const slots: string[] = [];
   for (let h = from; h < to; h++) {
-    slots.push(`${String(h).padStart(2,'0')}:00`);
-    slots.push(`${String(h).padStart(2,'0')}:30`);
+    slots.push(`${String(h).padStart(2, "0")}:00`);
+    slots.push(`${String(h).padStart(2, "0")}:30`);
   }
   return slots;
 }
@@ -66,11 +68,15 @@ export async function toggleAvailability(date: string, time: string) {
     const res = await fetch(`/api/admin/slots?date=${date}`);
     if (!res.ok) return;
     const rows = await res.json();
-    const existing = rows.find((r:any)=>r.slot_time===time);
+    const existing = rows.find((r: any) => r.slot_time === time);
     if (existing) {
-      await fetch(`/api/admin/slots/${existing.id}`, { method: 'DELETE' });
+      await fetch(`/api/admin/slots/${existing.id}`, { method: "DELETE" });
     } else {
-      await fetch(`/api/admin/slots`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slot_date: date, slot_time: time }) });
+      await fetch(`/api/admin/slots`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slot_date: date, slot_time: time }),
+      });
     }
   } catch (e) {
     console.error(e);
@@ -83,7 +89,7 @@ export async function getBookings(date?: string): Promise<Booking[]> {
 
 function getStudentById(id: string) {
   try {
-    const raw = localStorage.getItem('inTuneStudents');
+    const raw = localStorage.getItem("inTuneStudents");
     if (!raw) return null;
     const list = JSON.parse(raw);
     return list.find((s: any) => s.id === id) || null;
@@ -92,9 +98,15 @@ function getStudentById(id: string) {
   }
 }
 
-export async function addBooking(booking: Omit<Booking, 'id'>): Promise<Booking | null> {
+export async function addBooking(
+  booking: Omit<Booking, "id">,
+): Promise<Booking | null> {
   try {
-    const res = await fetch(`/api/admin/bookings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(booking) });
+    const res = await fetch(`/api/admin/bookings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(booking),
+    });
     if (!res.ok) return null;
     return res.json();
   } catch (e) {
@@ -105,7 +117,7 @@ export async function addBooking(booking: Omit<Booking, 'id'>): Promise<Booking 
 
 export async function removeBooking(id: string) {
   try {
-    await fetch(`/api/admin/bookings/${id}`, { method: 'DELETE' });
+    await fetch(`/api/admin/bookings/${id}`, { method: "DELETE" });
   } catch (e) {
     console.error(e);
   }
@@ -117,7 +129,10 @@ export function isSlotBooked(date: string, time: string): boolean {
 }
 
 // Expose helper for other modules
-export { getAvailability as getAvailabilityForDay, toggleAvailability as toggleSlotAvailability };
+export {
+  getAvailability as getAvailabilityForDay,
+  toggleAvailability as toggleSlotAvailability,
+};
 
 export function clearAllSchedule() {
   localStorage.removeItem(AV_KEY);

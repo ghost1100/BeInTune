@@ -28,10 +28,18 @@ type Teacher = {
 
 async function loadTeachersFromDb(): Promise<Teacher[]> {
   try {
-    const res = await fetch('/api/admin/teachers');
+    const res = await fetch("/api/admin/teachers");
     if (!res.ok) return [];
     const data = await res.json();
-    return (data || []).map((r: any) => ({ id: r.user_id, name: r.name, email: r.email, phone: r.phone, years: r.years, about: r.about, image: r.image }));
+    return (data || []).map((r: any) => ({
+      id: r.user_id,
+      name: r.name,
+      email: r.email,
+      phone: r.phone,
+      years: r.years,
+      about: r.about,
+      image: r.image,
+    }));
   } catch (e) {
     console.error(e);
     return [];
@@ -67,7 +75,19 @@ export default function Admin() {
     try {
       if (editingId) {
         // update existing teacher
-        await fetch('/api/admin/teachers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: editingId, email: form.email, name: form.name, phone: form.phone, years: form.years, about: form.about, image: form.image }) });
+        await fetch("/api/admin/teachers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: editingId,
+            email: form.email,
+            name: form.name,
+            phone: form.phone,
+            years: form.years,
+            about: form.about,
+            image: form.image,
+          }),
+        });
         setForm({});
         setEditingId(null);
         const ts = await loadTeachersFromDb();
@@ -75,31 +95,42 @@ export default function Admin() {
         return;
       }
 
-      await fetch('/api/admin/teachers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: form.email, name: form.name, phone: form.phone, years: form.years, about: form.about, image: form.image }) });
+      await fetch("/api/admin/teachers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.email,
+          name: form.name,
+          phone: form.phone,
+          years: form.years,
+          about: form.about,
+          image: form.image,
+        }),
+      });
       setForm({});
       const ts = await loadTeachersFromDb();
       setTeachers(ts);
     } catch (e) {
       console.error(e);
-      alert('Unable to save teacher');
+      alert("Unable to save teacher");
     }
   };
 
   const remove = async (id: string) => {
     try {
-      await fetch(`/api/admin/teachers/${id}`, { method: 'DELETE' });
+      await fetch(`/api/admin/teachers/${id}`, { method: "DELETE" });
       const ts = await loadTeachersFromDb();
       setTeachers(ts);
     } catch (e) {
       console.error(e);
-      alert('Unable to remove teacher');
+      alert("Unable to remove teacher");
     }
   };
 
   const edit = (t: Teacher) => {
     setEditingId(t.id);
     setForm({ ...t });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const pickRandom = async () => {
@@ -1258,7 +1289,9 @@ function ThemeManager() {
 function ReportPanel() {
   const today = new Date().toISOString().slice(0, 10);
   const [studentsCount, setStudentsCount] = useState(0);
-  const [bookingsToday, setBookingsToday] = useState(() => getBookings(today).length);
+  const [bookingsToday, setBookingsToday] = useState(
+    () => getBookings(today).length,
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -1267,7 +1300,9 @@ function ReportPanel() {
         const s = await studentsAPI.list();
         if (!mounted) return;
         setStudentsCount(Array.isArray(s) ? s.length : 0);
-        setBookingsToday(getBookings(new Date().toISOString().slice(0, 10)).length);
+        setBookingsToday(
+          getBookings(new Date().toISOString().slice(0, 10)).length,
+        );
       } catch (e) {
         console.error(e);
       }

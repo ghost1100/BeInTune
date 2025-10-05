@@ -35,12 +35,24 @@ router.post("/login", async (req, res) => {
   // issue JWT
   const jwt = (await import("jsonwebtoken")).default;
   const SECRET = process.env.JWT_SECRET || "changeme123";
-  const token = jwt.sign({ sub: user.id, role: user.role }, SECRET, { expiresIn: "7d" });
+  const token = jwt.sign({ sub: user.id, role: user.role }, SECRET, {
+    expiresIn: "7d",
+  });
 
   // set httpOnly cookie
-  res.cookie("token", token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: 7 * 24 * 60 * 60 * 1000 });
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
 
-  res.json({ id: user.id, email: user.email, username: user.username, role: user.role });
+  res.json({
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    role: user.role,
+  });
 });
 
 // GET /api/auth/me
@@ -51,7 +63,10 @@ router.get("/me", async (req, res) => {
     const jwt = (await import("jsonwebtoken")).default;
     const SECRET = process.env.JWT_SECRET || "changeme123";
     const decoded: any = jwt.verify(token, SECRET);
-    const userRes = await query("SELECT id, email, username, role FROM users WHERE id = $1", [decoded.sub]);
+    const userRes = await query(
+      "SELECT id, email, username, role FROM users WHERE id = $1",
+      [decoded.sub],
+    );
     const user = userRes.rows[0];
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json(user);
