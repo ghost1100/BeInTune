@@ -165,9 +165,11 @@ router.put("/messages/:id", async (req, res) => {
     if (!msg) return res.status(404).json({ error: "Not found" });
     if (msg.sender_id !== req.user.id)
       return res.status(403).json({ error: "Forbidden" });
+    const enc = encryptText(content);
+    const contentToStore = enc.encrypted ? JSON.stringify(enc) : content;
     await query(
       "UPDATE messages SET content = $1, edited_at = now() WHERE id = $2",
-      [content, id],
+      [contentToStore, id],
     );
     res.json({ ok: true });
   } catch (err) {
