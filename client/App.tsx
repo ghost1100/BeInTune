@@ -17,10 +17,8 @@ import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import { Header } from "./components/site/Header";
 import { Footer } from "./components/site/Footer";
-import Discussion from "./pages/Discussion";
-import MyLearning from "./pages/MyLearning";
-import Chats from "./pages/Chats";
 import PrivateRoute from "./components/PrivateRoute";
+import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
 
