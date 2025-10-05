@@ -98,11 +98,16 @@ async function writeBookings(b: Booking[]) {
   // Not used
 }
 
-export function getSlotsForDay(date: string, from = 8, to = 20): string[] {
+export function getSlotsForDay(date: string, from = 8, to = 17): string[] {
   const slots: string[] = [];
-  for (let h = from; h < to; h++) {
-    slots.push(`${String(h).padStart(2, "0")}:00`);
-    slots.push(`${String(h).padStart(2, "0")}:30`);
+  const startMinutes = from * 60;
+  const endMinutes = to * 60;
+  for (let minutes = startMinutes; minutes <= endMinutes; minutes += 30) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    slots.push(
+      `${String(hours).padStart(2, "0")}:${mins === 0 ? "00" : "30"}`,
+    );
   }
   return slots;
 }
