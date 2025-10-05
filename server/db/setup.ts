@@ -73,6 +73,25 @@ export async function ensureDbSetup() {
       created_at timestamptz NOT NULL DEFAULT now()
     )`);
 
+    // Ensure slots and bookings exist (in case migration wasn't applied)
+    await query(`CREATE TABLE IF NOT EXISTS slots (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      teacher_id uuid REFERENCES users(id) ON DELETE SET NULL,
+      slot_date date NOT NULL,
+      slot_time time NOT NULL,
+      duration_minutes int DEFAULT 30,
+      is_available boolean DEFAULT true,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )`);
+
+    await query(`CREATE TABLE IF NOT EXISTS bookings (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      student_id uuid REFERENCES students(id) ON DELETE SET NULL,
+      slot_id uuid REFERENCES slots(id) ON DELETE SET NULL,
+      lesson_type text,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )`);
+
     // Ensure admin user exists with username Darryle
     const adminIdentifier = process.env.ADMIN_EMAIL || "admin@intune.local";
     const adminUsername = process.env.ADMIN_USERNAME || "Darryle";
