@@ -8,9 +8,10 @@ router.get("/messages", async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const limit = parseInt(String(req.query.limit || "50"), 10);
+    // include messages that are not deleted and either not expired OR saved by the current user
     const r = await query(
-      "SELECT * FROM messages WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1",
-      [limit],
+      `SELECT * FROM messages WHERE deleted_at IS NULL AND (expire_at IS NULL OR expire_at > now() OR saved_by @> $2::jsonb) ORDER BY created_at DESC LIMIT $1`,
+      [limit, JSON.stringify([req.user.id])],
     );
     const rows = r.rows;
     const ids = rows.map((m: any) => m.id);
@@ -52,12 +53,14 @@ router.get("/messages", async (req, res) => {
 router.post("/messages", async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-    const { sender_id, content, recipient_id } = req.body as any;
+    const { sender_id, content, recipient_id, save } = req.body as any;
     if (!content) return res.status(400).json({ error: "Missing content" });
     const sid = req.user.id || sender_id || null;
+    // default expire_at to 21 days from now unless explicitly saved
+    const expireAt = save ? null : new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString();
     const ins = await query(
-      "INSERT INTO messages(sender_id, recipient_id, content) VALUES ($1,$2,$3) RETURNING *",
-      [sid, recipient_id || null, content],
+      "INSERT INTO messages(sender_id, recipient_id, content, expire_at) VALUES ($1,$2,$3,$4) RETURNING *",
+      [sid, recipient_id || null, content, expireAt],
     );
     const msg = ins.rows[0];
     // broadcast to websocket clients
@@ -156,6 +159,46 @@ router.delete("/messages/:id/reactions", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to remove message reaction" });
+  }
+});
+
+// endpoints to save/unsave messages for a user
+router.post("/messages/:id/save", async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    const { id } = req.params;
+    // add user id to saved_by jsonb array if not present
+    await query(
+      `UPDATE messages SET saved_by = COALESCE(saved_by, '[]'::jsonb) || $2::jsonb WHERE id = $1 AND (saved_by IS NULL OR NOT (saved_by @> $2::jsonb))`,
+      [id, JSON.stringify([req.user.id])],
+    );
+    // also clear expire_at to prevent auto-deletion for this message
+    await query(`UPDATE messages SET expire_at = NULL WHERE id = $1`, [id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save message" });
+  }
+});
+
+router.delete("/messages/:id/save", async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    const { id } = req.params;
+    // remove user id from saved_by array
+    await query(
+      `UPDATE messages SET saved_by = (CASE WHEN saved_by IS NULL THEN '[]'::jsonb ELSE (SELECT jsonb_agg(x) FROM jsonb_array_elements_text(saved_by) x WHERE x != $2) END) WHERE id = $1`,
+      [id, req.user.id],
+    );
+    // if no saved_by remain, set expire_at to 21 days from now so it will auto delete
+    const cnt = await query("SELECT jsonb_array_length(COALESCE(saved_by,'[]'::jsonb)) as cnt FROM messages WHERE id = $1", [id]);
+    if (cnt.rows[0].cnt === 0) {
+      await query("UPDATE messages SET expire_at = now() + interval '21 days' WHERE id = $1", [id]);
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to unsave message" });
   }
 });
 
