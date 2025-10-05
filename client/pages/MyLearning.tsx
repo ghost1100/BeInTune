@@ -138,13 +138,15 @@ export default function MyLearning() {
                 className="hidden"
                 onChange={(e) => uploadResources(e.target.files)}
               />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fileRef.current?.click()}
-              >
-                Upload resources
-              </Button>
+              {user && user.role === 'admin' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileRef.current?.click()}
+                >
+                  Upload resources
+                </Button>
+              )}
             </div>
             <div className="mt-4 grid grid-cols-3 gap-3">
               {resources.map((r: any) => (
