@@ -34,3 +34,12 @@ export function decryptText(obj: any) {
     return null;
   }
 }
+
+export function digest(value: string) {
+  try {
+    const v = String(value || "").toLowerCase();
+    return crypto.createHash('sha256').update(v).digest('hex');
+  } catch (e) {
+    return null as any;
+  }
+}
