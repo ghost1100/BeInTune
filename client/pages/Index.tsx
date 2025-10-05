@@ -47,7 +47,7 @@ export default function Index() {
               </Link>
             </div>
 
-            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 text-white/90 text-sm">
+            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 text-foreground/90 text-sm">
               <div className="flex items-center gap-2">
                 <Headphones className="size-4" />
                 Guitar
