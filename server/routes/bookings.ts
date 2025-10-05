@@ -3,6 +3,19 @@ import { query } from "../db";
 
 const router = express.Router();
 
+function isWithinBusinessHours(time: string) {
+  if (!time) return false;
+  const match = time.match(/^(\d{2}):(\d{2})$/);
+  if (!match) return false;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return false;
+  const total = hours * 60 + minutes;
+  const start = 8 * 60;
+  const end = 17 * 60;
+  return total >= start && total <= end && minutes % 30 === 0;
+}
+
 // GET /api/admin/slots?date=YYYY-MM-DD
 router.get("/slots", async (req, res) => {
   const date = String(req.query.date || new Date().toISOString().slice(0, 10));
