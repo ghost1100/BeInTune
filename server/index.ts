@@ -17,9 +17,13 @@ export function createServer() {
   const app = express();
 
   // Middleware
-  app.use(cors());
+  app.use(cors({ origin: true, credentials: true }));
+  app.use(cookieParser());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+
+  // attach auth middleware (decodes JWT if present)
+  app.use(authMiddleware);
 
   // Example API routes
   app.get("/api/ping", (_req, res) => {
