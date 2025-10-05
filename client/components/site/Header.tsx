@@ -9,6 +9,9 @@ const nav = [
   { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
+  { href: "/discussion", label: "Discussion" },
+  { href: "/mylearning", label: "My Learning" },
+  { href: "/chats", label: "Chats" },
 ];
 
 export function Header() {
