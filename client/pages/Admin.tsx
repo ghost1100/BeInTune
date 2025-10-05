@@ -637,9 +637,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
     })();
   }, []);
 
-  const createBookingForStudent = () => {
+  const createBookingForStudent = async () => {
     if (!selectedSlot || !selectedStudentId) return;
-    const bk = addBooking({
+    const bk = await addBooking({
       date,
       time: selectedSlot,
       studentId: selectedStudentId,
