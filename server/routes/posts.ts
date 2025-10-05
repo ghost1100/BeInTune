@@ -247,6 +247,13 @@ router.put("/posts/:id", async (req, res) => {
     const metadata = post.metadata || {};
     metadata.edited = true;
     metadata.edited_at = new Date().toISOString();
+    // record who edited the post (role and name) when available
+    try {
+      metadata.edited_by_role = req.user.role || null;
+      metadata.edited_by_name = req.user.name || null;
+    } catch (e) {
+      /* ignore */
+    }
     await query(
       "UPDATE posts SET body = $1, title = $2, metadata = $3, updated_at = now() WHERE id = $4",
       [body || null, title || null, JSON.stringify(metadata), id],
