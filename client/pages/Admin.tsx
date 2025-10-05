@@ -1523,9 +1523,9 @@ function StudentsManager() {
       });
       setEditing(null);
       await refresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Unable to save student");
+      alert(err?.message || "Unable to save student");
     }
   };
 
