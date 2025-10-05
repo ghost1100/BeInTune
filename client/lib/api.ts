@@ -22,7 +22,11 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
 
   // If this looks like an API path, try several candidate URLs in order to avoid issues
   // with proxies/service workers/netlify functions rewrites in various environments.
-  if (typeof input === "string" && input.startsWith("/api/") && typeof window !== "undefined") {
+  if (
+    typeof input === "string" &&
+    input.startsWith("/api/") &&
+    typeof window !== "undefined"
+  ) {
     const candidates = [
       // prefer absolute origin first
       `${window.location.origin}${input}`,
@@ -37,7 +41,11 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
         attempted.push(url);
         console.debug("apiFetch trying:", url, opts);
         res = await fetch(url, opts);
-        console.debug("apiFetch response for", url, res && { ok: res.ok, status: res.status });
+        console.debug(
+          "apiFetch response for",
+          url,
+          res && { ok: res.ok, status: res.status },
+        );
         // if fetch returns, break (even if non-ok)
         break;
       } catch (err: any) {
@@ -49,13 +57,19 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
 
     if (!res) {
       console.error("apiFetch all attempts failed for", input, attempted);
-      throw new Error(`Network request failed for ${input}. Tried: ${attempted.join(", ")}`);
+      throw new Error(
+        `Network request failed for ${input}. Tried: ${attempted.join(", ")}`,
+      );
     }
   } else {
     try {
       console.debug("apiFetch trying:", input, opts);
       res = await fetch(input, opts);
-      console.debug("apiFetch response for", input, res && { ok: res.ok, status: res.status });
+      console.debug(
+        "apiFetch response for",
+        input,
+        res && { ok: res.ok, status: res.status },
+      );
     } catch (err: any) {
       console.error("apiFetch network error for", input, err);
       throw new Error(

@@ -109,7 +109,8 @@ export default function DiscussionFeed({ className }: { className?: string }) {
       try {
         if (file.type.startsWith("video")) {
           const dur = await getVideoDuration(file);
-          if (dur > 180) throw new Error("Video too long. Maximum allowed is 3 minutes.");
+          if (dur > 180)
+            throw new Error("Video too long. Maximum allowed is 3 minutes.");
         }
         const data = await fileToBase64(file);
         const payload = await (
@@ -164,11 +165,17 @@ export default function DiscussionFeed({ className }: { className?: string }) {
     }
   }
 
-  async function handleReaction(postId: string, reaction: string, current?: string | null) {
+  async function handleReaction(
+    postId: string,
+    reaction: string,
+    current?: string | null,
+  ) {
     try {
       if (current === reaction) {
         // remove
-        await (await import("@/lib/api")).apiFetch(`/api/posts/${postId}/reactions`, {
+        await (
+          await import("@/lib/api")
+        ).apiFetch(`/api/posts/${postId}/reactions`, {
           method: "DELETE",
         });
       } else {
@@ -267,8 +274,10 @@ export default function DiscussionFeed({ className }: { className?: string }) {
                   </div>
                 )}
                 {/* edited tag */}
-                {(post.metadata && (post.metadata as any).edited) && (
-                  <div className="text-xs mt-1 text-black dark:text-blue-400">edited</div>
+                {post.metadata && (post.metadata as any).edited && (
+                  <div className="text-xs mt-1 text-black dark:text-blue-400">
+                    edited
+                  </div>
                 )}
               </div>
             </header>
@@ -286,7 +295,9 @@ export default function DiscussionFeed({ className }: { className?: string }) {
                     className="px-3 py-1 rounded bg-primary text-primary-foreground"
                     onClick={async () => {
                       try {
-                        await (await import("@/lib/api")).apiFetch(`/api/posts/${post.id}`, {
+                        await (
+                          await import("@/lib/api")
+                        ).apiFetch(`/api/posts/${post.id}`, {
                           method: "PUT",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ body: editingBody }),
@@ -296,7 +307,10 @@ export default function DiscussionFeed({ className }: { className?: string }) {
                         loadPosts();
                         toast({ title: "Post updated" });
                       } catch (err: any) {
-                        toast({ title: "Unable to update", description: err?.message });
+                        toast({
+                          title: "Unable to update",
+                          description: err?.message,
+                        });
                       }
                     }}
                   >
@@ -348,7 +362,14 @@ export default function DiscussionFeed({ className }: { className?: string }) {
                 ))}
               </div>
             )}
-            <Lightbox src={lightboxSrc} mime={lightboxMime} onClose={() => { setLightboxSrc(null); setLightboxMime(null); }} />
+            <Lightbox
+              src={lightboxSrc}
+              mime={lightboxMime}
+              onClose={() => {
+                setLightboxSrc(null);
+                setLightboxMime(null);
+              }}
+            />
             <footer className="mt-3 flex flex-wrap items-center gap-3 text-xs text-foreground/70">
               <div className="flex items-center gap-2">
                 {[
@@ -359,13 +380,20 @@ export default function DiscussionFeed({ className }: { className?: string }) {
                   ["wow", "😮"],
                   ["sad", "😢"],
                 ].map(([type, icon]) => {
-                  const count = (post.reactions && (post.reactions as any)[type]) || 0;
+                  const count =
+                    (post.reactions && (post.reactions as any)[type]) || 0;
                   const active = post.user_reaction === type;
                   return (
                     <button
                       key={type}
                       type="button"
-                      onClick={() => handleReaction(post.id, type as string, (post as any).user_reaction)}
+                      onClick={() =>
+                        handleReaction(
+                          post.id,
+                          type as string,
+                          (post as any).user_reaction,
+                        )
+                      }
                       className={`inline-flex items-center gap-1 px-2 py-1 rounded ${active ? "bg-primary/20" : "hover:bg-muted/20"}`}
                     >
                       <span aria-hidden>{icon}</span>
@@ -381,36 +409,46 @@ export default function DiscussionFeed({ className }: { className?: string }) {
               </div>
 
               {/* edit / delete controls for original poster */}
-              {user && (post.author_id === user.id || (post.metadata && (post.metadata as any).author_name === user.name)) && (
-                <div className="ml-auto flex items-center gap-2 border-dashed border rounded px-2 py-1">
-                  <button
-                    type="button"
-                    className="text-sm px-2"
-                    onClick={() => {
-                      setEditingPostId(post.id);
-                      setEditingBody(post.body || "");
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="text-sm text-destructive"
-                    onClick={async () => {
-                      if (!confirm("Delete this post?")) return;
-                      try {
-                        await (await import("@/lib/api")).apiFetch(`/api/posts/${post.id}`, { method: "DELETE" });
-                        loadPosts();
-                        toast({ title: "Post deleted" });
-                      } catch (err: any) {
-                        toast({ title: "Unable to delete", description: err?.message });
-                      }
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
+              {user &&
+                (post.author_id === user.id ||
+                  (post.metadata &&
+                    (post.metadata as any).author_name === user.name)) && (
+                  <div className="ml-auto flex items-center gap-2 border-dashed border rounded px-2 py-1">
+                    <button
+                      type="button"
+                      className="text-sm px-2"
+                      onClick={() => {
+                        setEditingPostId(post.id);
+                        setEditingBody(post.body || "");
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="text-sm text-destructive"
+                      onClick={async () => {
+                        if (!confirm("Delete this post?")) return;
+                        try {
+                          await (
+                            await import("@/lib/api")
+                          ).apiFetch(`/api/posts/${post.id}`, {
+                            method: "DELETE",
+                          });
+                          loadPosts();
+                          toast({ title: "Post deleted" });
+                        } catch (err: any) {
+                          toast({
+                            title: "Unable to delete",
+                            description: err?.message,
+                          });
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
             </footer>
             <div className="mt-3">
               <Comments postId={post.id} />

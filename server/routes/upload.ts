@@ -35,8 +35,8 @@ router.post("/upload", async (req, res) => {
     if (videoExts.has(ext.toLowerCase())) {
       // Save video directly without image processing
       await fs.writeFile(outPath, buffer);
-      mime = `video/${ext.replace('.', '')}`;
-      metadata = { format: ext.replace('.', '') };
+      mime = `video/${ext.replace(".", "")}`;
+      metadata = { format: ext.replace(".", "") };
     } else {
       // Use sharp to resize to max width 1600 while preserving aspect
       const img = sharp(buffer).rotate();
@@ -46,7 +46,7 @@ router.post("/upload", async (req, res) => {
       } else {
         await img.toFile(outPath);
       }
-      mime = metadataFormat(metadata) || `image/${ext.replace('.', '')}`;
+      mime = metadataFormat(metadata) || `image/${ext.replace(".", "")}`;
     }
 
     const url = `/uploads/${outFilename}`;

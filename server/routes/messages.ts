@@ -84,11 +84,18 @@ router.post("/messages/:id/reactions", async (req, res) => {
 
     // ensure message exists
     const m = await query("SELECT id FROM messages WHERE id = $1", [id]);
-    if (!m.rows.length) return res.status(404).json({ error: "Message not found" });
+    if (!m.rows.length)
+      return res.status(404).json({ error: "Message not found" });
 
     try {
-      await query("DELETE FROM message_reactions WHERE message_id = $1 AND user_id = $2", [id, uid]);
-      await query("INSERT INTO message_reactions(message_id, user_id, type) VALUES ($1,$2,$3)", [id, uid, type]);
+      await query(
+        "DELETE FROM message_reactions WHERE message_id = $1 AND user_id = $2",
+        [id, uid],
+      );
+      await query(
+        "INSERT INTO message_reactions(message_id, user_id, type) VALUES ($1,$2,$3)",
+        [id, uid, type],
+      );
       res.json({ ok: true });
     } catch (dbErr: any) {
       console.error("DB error adding message reaction:", dbErr);
@@ -112,8 +119,12 @@ router.put("/messages/:id", async (req, res) => {
     const m = await query("SELECT sender_id FROM messages WHERE id = $1", [id]);
     const msg = m.rows[0];
     if (!msg) return res.status(404).json({ error: "Not found" });
-    if (msg.sender_id !== req.user.id) return res.status(403).json({ error: "Forbidden" });
-    await query("UPDATE messages SET content = $1, edited_at = now() WHERE id = $2", [content, id]);
+    if (msg.sender_id !== req.user.id)
+      return res.status(403).json({ error: "Forbidden" });
+    await query(
+      "UPDATE messages SET content = $1, edited_at = now() WHERE id = $2",
+      [content, id],
+    );
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -126,7 +137,10 @@ router.delete("/messages/:id/reactions", async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const { id } = req.params;
-    await query("DELETE FROM message_reactions WHERE message_id = $1 AND user_id = $2", [id, req.user.id]);
+    await query(
+      "DELETE FROM message_reactions WHERE message_id = $1 AND user_id = $2",
+      [id, req.user.id],
+    );
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -142,7 +156,8 @@ router.delete("/messages/:id", async (req, res) => {
     const m = await query("SELECT sender_id FROM messages WHERE id = $1", [id]);
     const msg = m.rows[0];
     if (!msg) return res.status(404).json({ error: "Not found" });
-    if (msg.sender_id !== req.user.id) return res.status(403).json({ error: "Forbidden" });
+    if (msg.sender_id !== req.user.id)
+      return res.status(403).json({ error: "Forbidden" });
     await query("UPDATE messages SET deleted_at = now() WHERE id = $1", [id]);
     res.json({ ok: true });
   } catch (err) {

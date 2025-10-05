@@ -10,7 +10,9 @@ export default function Lightbox({
   onClose: () => void;
 }) {
   if (!src) return null;
-  const isVideo = mime ? mime.startsWith("video") : src.match(/\.(mp4|webm|mov|mkv|avi)$/i);
+  const isVideo = mime
+    ? mime.startsWith("video")
+    : src.match(/\.(mp4|webm|mov|mkv|avi)$/i);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="relative max-w-3xl w-full max-h-[90vh]">
@@ -23,9 +25,17 @@ export default function Lightbox({
         </button>
         <div className="w-full h-full flex items-center justify-center">
           {isVideo ? (
-            <video src={src} controls className="max-h-[90vh] w-full object-contain" />
+            <video
+              src={src}
+              controls
+              className="max-h-[90vh] w-full object-contain"
+            />
           ) : (
-            <img src={src} alt="preview" className="max-h-[90vh] w-full object-contain" />
+            <img
+              src={src}
+              alt="preview"
+              className="max-h-[90vh] w-full object-contain"
+            />
           )}
         </div>
       </div>

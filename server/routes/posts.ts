@@ -167,12 +167,19 @@ router.post("/posts/:id/reactions", async (req, res) => {
 
     // ensure post exists
     const p = await query("SELECT id FROM posts WHERE id = $1", [id]);
-    if (!p.rows.length) return res.status(404).json({ error: "Post not found" });
+    if (!p.rows.length)
+      return res.status(404).json({ error: "Post not found" });
 
     // Replace previous reaction (if any) to ensure only one reaction per user per post
     try {
-      await query("DELETE FROM post_reactions WHERE post_id = $1 AND user_id = $2", [id, uid]);
-      await query("INSERT INTO post_reactions(post_id, user_id, type) VALUES ($1,$2,$3)", [id, uid, type]);
+      await query(
+        "DELETE FROM post_reactions WHERE post_id = $1 AND user_id = $2",
+        [id, uid],
+      );
+      await query(
+        "INSERT INTO post_reactions(post_id, user_id, type) VALUES ($1,$2,$3)",
+        [id, uid, type],
+      );
       res.json({ ok: true });
     } catch (dbErr: any) {
       console.error("DB error adding reaction:", dbErr);
@@ -193,14 +200,21 @@ router.put("/posts/:id", async (req, res) => {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const { id } = req.params;
     const { body, title } = req.body as any;
-    const p = await query("SELECT author_id, metadata FROM posts WHERE id = $1", [id]);
+    const p = await query(
+      "SELECT author_id, metadata FROM posts WHERE id = $1",
+      [id],
+    );
     const post = p.rows[0];
     if (!post) return res.status(404).json({ error: "Not found" });
-    if (post.author_id !== req.user.id) return res.status(403).json({ error: "Forbidden" });
+    if (post.author_id !== req.user.id)
+      return res.status(403).json({ error: "Forbidden" });
     const metadata = post.metadata || {};
     metadata.edited = true;
     metadata.edited_at = new Date().toISOString();
-    await query("UPDATE posts SET body = $1, title = $2, metadata = $3, updated_at = now() WHERE id = $4", [body || null, title || null, JSON.stringify(metadata), id]);
+    await query(
+      "UPDATE posts SET body = $1, title = $2, metadata = $3, updated_at = now() WHERE id = $4",
+      [body || null, title || null, JSON.stringify(metadata), id],
+    );
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -213,7 +227,10 @@ router.delete("/posts/:id/reactions", async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const { id } = req.params;
-    await query("DELETE FROM post_reactions WHERE post_id = $1 AND user_id = $2", [id, req.user.id]);
+    await query(
+      "DELETE FROM post_reactions WHERE post_id = $1 AND user_id = $2",
+      [id, req.user.id],
+    );
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -229,7 +246,8 @@ router.delete("/posts/:id", async (req, res) => {
     const p = await query("SELECT author_id FROM posts WHERE id = $1", [id]);
     const post = p.rows[0];
     if (!post) return res.status(404).json({ error: "Not found" });
-    if (post.author_id !== req.user.id) return res.status(403).json({ error: "Forbidden" });
+    if (post.author_id !== req.user.id)
+      return res.status(403).json({ error: "Forbidden" });
     await query("DELETE FROM posts WHERE id = $1", [id]);
     res.json({ ok: true });
   } catch (err) {

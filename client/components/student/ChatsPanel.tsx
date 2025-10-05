@@ -127,12 +127,22 @@ export default function ChatsPanel({ className }: { className?: string }) {
     }
   }
 
-  async function handleMessageReaction(messageId: string, reaction: string, current?: string | null) {
+  async function handleMessageReaction(
+    messageId: string,
+    reaction: string,
+    current?: string | null,
+  ) {
     try {
       if (current === reaction) {
-        await (await import("@/lib/api")).apiFetch(`/api/admin/messages/${messageId}/reactions`, { method: "DELETE" });
+        await (
+          await import("@/lib/api")
+        ).apiFetch(`/api/admin/messages/${messageId}/reactions`, {
+          method: "DELETE",
+        });
       } else {
-        await (await import("@/lib/api")).apiFetch(`/api/admin/messages/${messageId}/reactions`, {
+        await (
+          await import("@/lib/api")
+        ).apiFetch(`/api/admin/messages/${messageId}/reactions`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type: reaction }),
@@ -219,17 +229,24 @@ export default function ChatsPanel({ className }: { className?: string }) {
                           className="px-3 py-1 rounded bg-primary text-primary-foreground"
                           onClick={async () => {
                             try {
-                              await (await import("@/lib/api")).apiFetch(`/api/admin/messages/${message.id}`, {
+                              await (
+                                await import("@/lib/api")
+                              ).apiFetch(`/api/admin/messages/${message.id}`, {
                                 method: "PUT",
                                 headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ content: editingMessageText }),
+                                body: JSON.stringify({
+                                  content: editingMessageText,
+                                }),
                               });
                               setEditingMessageId(null);
                               setEditingMessageText("");
                               loadMessages();
                               toast({ title: "Message updated" });
                             } catch (err: any) {
-                              toast({ title: "Unable to update", description: err?.message });
+                              toast({
+                                title: "Unable to update",
+                                description: err?.message,
+                              });
                             }
                           }}
                         >
@@ -265,12 +282,21 @@ export default function ChatsPanel({ className }: { className?: string }) {
                     ["like", "👍"],
                     ["smile", "😊"],
                   ].map(([type, icon]) => {
-                    const count = (message as any).reactions && ((message as any).reactions as any)[type] || 0;
+                    const count =
+                      ((message as any).reactions &&
+                        ((message as any).reactions as any)[type]) ||
+                      0;
                     const active = (message as any).user_reaction === type;
                     return (
                       <button
                         key={type}
-                        onClick={() => handleMessageReaction(message.id, type as string, (message as any).user_reaction)}
+                        onClick={() =>
+                          handleMessageReaction(
+                            message.id,
+                            type as string,
+                            (message as any).user_reaction,
+                          )
+                        }
                         className={`inline-flex items-center gap-1 px-2 py-1 rounded ${active ? "bg-primary/20" : "hover:bg-muted/20"}`}
                       >
                         <span aria-hidden>{icon}</span>
@@ -281,7 +307,9 @@ export default function ChatsPanel({ className }: { className?: string }) {
 
                   {/* edited tag */}
                   {message.edited_at && (
-                    <div className="text-xs text-black dark:text-blue-400">edited</div>
+                    <div className="text-xs text-black dark:text-blue-400">
+                      edited
+                    </div>
                   )}
 
                   {/* edit/delete for sender */}
@@ -301,11 +329,18 @@ export default function ChatsPanel({ className }: { className?: string }) {
                         onClick={async () => {
                           if (!confirm("Delete this message?")) return;
                           try {
-                            await (await import("@/lib/api")).apiFetch(`/api/admin/messages/${message.id}`, { method: "DELETE" });
+                            await (
+                              await import("@/lib/api")
+                            ).apiFetch(`/api/admin/messages/${message.id}`, {
+                              method: "DELETE",
+                            });
                             loadMessages();
                             toast({ title: "Message deleted" });
                           } catch (err: any) {
-                            toast({ title: "Unable to delete", description: err?.message });
+                            toast({
+                              title: "Unable to delete",
+                              description: err?.message,
+                            });
                           }
                         }}
                       >

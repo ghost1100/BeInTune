@@ -168,7 +168,8 @@ export default function MyLearningPanel({ className }: { className?: string }) {
       for (const file of Array.from(files)) {
         if (file.type.startsWith("video")) {
           const dur = await getVideoDuration(file);
-          if (dur > 180) throw new Error("Video too long. Maximum allowed is 3 minutes.");
+          if (dur > 180)
+            throw new Error("Video too long. Maximum allowed is 3 minutes.");
         }
         const content = await fileToBase64(file);
         const payload = await (
@@ -285,20 +286,39 @@ export default function MyLearningPanel({ className }: { className?: string }) {
                       <button
                         type="button"
                         className="block w-full h-40 overflow-hidden rounded"
-                        onClick={() => { setLightboxSrc(media.url); setLightboxMime(media.mime || null); }}
+                        onClick={() => {
+                          setLightboxSrc(media.url);
+                          setLightboxMime(media.mime || null);
+                        }}
                       >
-                        <video src={media.url} className="h-40 w-full object-cover" aria-hidden />
+                        <video
+                          src={media.url}
+                          className="h-40 w-full object-cover"
+                          aria-hidden
+                        />
                       </button>
                     ) : media.mime?.startsWith("image") ? (
                       <button
                         type="button"
                         className="block w-full h-40 overflow-hidden rounded"
-                        onClick={() => { setLightboxSrc(media.url); setLightboxMime(media.mime || null); }}
+                        onClick={() => {
+                          setLightboxSrc(media.url);
+                          setLightboxMime(media.mime || null);
+                        }}
                       >
-                        <img src={media.url} alt="resource" className="h-40 w-full object-cover" />
+                        <img
+                          src={media.url}
+                          alt="resource"
+                          className="h-40 w-full object-cover"
+                        />
                       </button>
                     ) : (
-                      <a href={media.url} target="_blank" rel="noreferrer" className="block text-sm font-medium text-primary underline">
+                      <a
+                        href={media.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block text-sm font-medium text-primary underline"
+                      >
                         Download {media.mime?.split("/")[1] || "file"}
                       </a>
                     )}
@@ -314,12 +334,20 @@ export default function MyLearningPanel({ className }: { className?: string }) {
 
   return (
     <>
-      <Lightbox src={lightboxSrc} mime={lightboxMime} onClose={() => { setLightboxSrc(null); setLightboxMime(null); }} />
+      <Lightbox
+        src={lightboxSrc}
+        mime={lightboxMime}
+        onClose={() => {
+          setLightboxSrc(null);
+          setLightboxMime(null);
+        }}
+      />
       <section className={cn("space-y-6", className)}>
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-semibold">My learning</h2>
           <p className="text-sm text-foreground/70">
-            Access shared lesson material, upcoming bookings, and practise files.
+            Access shared lesson material, upcoming bookings, and practise
+            files.
           </p>
         </div>
 
