@@ -1,78 +1,120 @@
-# Changes made
+# Project changes (Theme + Dark Mode + Preview)
 
-This commit includes a set of fixes and improvements to make the app dark-mode compatible and to improve the Theme preview UX.
+This README summarizes all theme-related fixes, the new preview UX, the central theme API, and recommended next steps.
+
+---
+
+## What I changed (summary)
 
 1. Theme preview UX
-- Admin Theme modal updated: Preview modal shows a compact, home-like preview and now has Apply and Cancel buttons.
+- Small compact preview modal added to Admin → Theme. The modal is a small box (~380px wide) with a centered light/dark icon above it and two action buttons below:
+  - Cancel (left, red) — reverts the preview and closes the modal
+  - Apply (right, green) — saves theme tokens + mode to localStorage and applies them globally
 - Overlay click and Escape key close the preview.
-- Clicking Apply saves the theme tokens and theme mode in localStorage (`inTuneTheme`, `inTuneThemeMode`).
 
-Files changed:
-- client/pages/Admin.tsx — wired preview overlay handlers (apply/cancel), added previewMode state, Escape handling, overlay click-to-close, adjusted schedule card classes and tab styles.
-- client/components/admin/ThemeHomePreview.tsx — smaller home preview with light/dark toggle above the preview.
-- client/components/site/ThemeToggle.tsx — theme toggle in header that persists mode to localStorage.
+Files:
+- client/pages/Admin.tsx (preview modal: compact box, Apply/Cancel, overlay click, esc handling)
+- client/components/admin/ThemeHomePreview.tsx (compact preview view) 
 
-2. Global dark-mode improvements
-- Inputs, textareas and selects now adapt to theme tokens.
-- Added dark-specific CSS tokens for inputs, border and muted backgrounds so controls are readable in dark mode.
+2. Central theme management + first-paint boot
+- Added a `useTheme()` hook to manage theme tokens and mode centrally (preview, save, restore functions).
+- Added an inline boot script in `index.html` to apply previously saved theme/mode before React mounts to avoid FOUC.
 
-Files changed:
-- client/global.css — added token overrides (e.g., --input, --border) in the `.dark` block and made form controls use theme tokens.
+Files:
+- client/hooks/useTheme.tsx (new)
+- index.html (inline boot script added)
 
-3. Admin & Index visual fixes
-- Replaced several hard-coded `bg-white` / `bg-gray-50` usages with theme-aware classes: `bg-card`, `bg-muted`, and `bg-card/95` to ensure contrast in dark mode.
-- Tabs now use `text-foreground` and theme-aware background; many modal/card backgrounds use `bg-card`.
-- Schedule availability items adjusted for better contrast in dark mode.
+3. Dark-mode compatibility sweep
+- Replaced many hard-coded light backgrounds and text with theme-aware tokens (bg-card, bg-muted, bg-input, text-foreground) so components adapt to dark mode.
+- Inputs, textareas and selects now use theme tokens; placeholder text color is adjusted in CSS.
+- Added dark-mode tokens for `--input`, `--border`, and muted backgrounds to `client/global.css`.
 
-Files changed:
+Files modified:
+- client/global.css
 - client/pages/Index.tsx
-- client/components/admin/ThemeHomePreview.tsx
-- client/pages/AdminLogin.tsx
 - client/pages/Admin.tsx
+- client/pages/AdminLogin.tsx
+- client/components/admin/ThemeHomePreview.tsx
+- client/components/site/Header.tsx
+- client/components/site/ThemeToggle.tsx (new)
+- many UI adjustments across components (cards, tabs, modals)
 
-4. Misc
-- Minor adjustments to button/layouts to avoid overflow (flex-wrap applied in admin areas).
-- Added a small ReportPanel component to fix missing references.
+4. Misc fixes
+- Fixed overflow/wrapping issues in Admin forms (Random button, flex-wrap on controls).
+- Added a small `ReportPanel` to satisfy a missing reference used in Admin.
 
 Files added:
 - client/components/admin/ThemeHomePreview.tsx
 - client/components/site/ThemeToggle.tsx
+- client/hooks/useTheme.tsx
 
-# How it works now
-- Theme toggle in the header stores the preference in `localStorage.inTuneThemeMode` and toggles the `dark` class on `<html>`.
-- ThemeManager (Admin → Theme) stores HSL tokens in `localStorage.inTuneTheme` and applies them to `:root` CSS variables.
-- Preview overlay can be dismissed with the Cancel button, Close button, pressing Escape, or clicking outside the preview window.
+---
 
-# Recommended next steps
-1. Audit global color tokens
-- Add `--input-foreground`, `--muted-foreground`, etc., to tighten accessibility contrast calculations.
+## How to test locally
 
-2. Replace remaining hard-coded colors
-- Search for `bg-white`, `bg-gray-100`, `text-black` and replace them with theme-aware tokens. I updated many core places but some components may still use explicit classes.
+1. Start dev server
 
-3. Accessibility and contrast testing
-- Run tools (axe, Lighthouse) to validate WCAG contrast ratios in both light and dark modes and adjust token values accordingly.
+pnpm dev
 
-4. Extract theme logic to a small hook
-- Create a `useTheme()` hook to centralize the management of `inTuneTheme` and `inTuneThemeMode` (apply, preview, restore).
+2. Open Admin Theme page
+- Go to `/admin`, sign in and open the Theme tab.
+- Click Preview to open the small modal. Toggle the light/dark icon at the top of the modal (affects the preview).
+- Use Cancel (left, red) to revert and close, or Apply (right, green) to persist and apply the theme + mode.
 
-5. Add unit/UI tests for theme behavior
-- Integration tests that ensure preview/confirm/cancel flows behave as expected and that localStorage is updated.
+3. Confirm persistence
+- Reload the page — the inline boot script will apply the saved theme/mode before React mounts.
 
-6. Persist theme for server rendering/initial page load
-- If you want the theme applied immediately on first paint, set an inline script to read `localStorage.inTuneThemeMode` and add `dark` class before React mounts.
+4. Run typechecks/tests
 
-# Commands
-- Start dev server: `pnpm dev`
-- Typecheck: `pnpm typecheck`
-- Tests: `pnpm test`
+pnpm typecheck
+pnpm test
 
-# Notes
-- I avoided changing visual tokens dramatically; instead I made components react to existing tokens. If you want more aggressive dark-mode color choices I can update the HSL values in `client/global.css`.
+---
 
-If you'd like, I can now:
-- sweep the entire client/ folder to find and update all hard-coded light classes,
-- implement a `useTheme()` hook and centralize theme persistence,
-- add screenshots for both modes.
+## Files changed (detailed)
+- Added
+  - client/components/admin/ThemeHomePreview.tsx
+  - client/components/site/ThemeToggle.tsx
+  - client/hooks/useTheme.tsx
+- Modified
+  - index.html (inline theme boot script)
+  - client/global.css
+  - client/pages/Admin.tsx
+  - client/pages/Index.tsx
+  - client/pages/AdminLogin.tsx
+  - client/components/site/Header.tsx
+  - client/components/admin/ThemeHomePreview.tsx (initial add + subsequent updates)
+  - other minor UI component files (button, modal usage, etc.)
 
-Tell me which of the above you want next and I'll proceed.
+---
+
+## Recommendations / Next steps (priority)
+
+1. Full sweep: replace remaining hard-coded colors
+- I updated core places but a final automated sweep (search replace of `bg-white`, `bg-gray-100`, `text-black`) is recommended to avoid edge cases. I can perform that next.
+
+2. Centralize theme logic
+- Convert all theme code to use the `useTheme()` hook across Admin Theme manager and ThemeToggle component. This will make future changes safer.
+
+3. Accessibility & contrast audit
+- Run Lighthouse/axe to validate contrast ratios and adjust HSL values for tokens accordingly.
+
+4. Add unit/integration tests
+- Tests to cover preview/confirm/cancel flows and localStorage persistence.
+
+5. Optional: inline critical CSS for theme tokens
+- To avoid any flash of incorrect colors, move critical CSS or token-values into a small SSR/inline snippet for production builds.
+
+---
+
+## How to revert changes
+- Use git to checkout previous commit or use the repository UI to revert the changes if needed.
+
+---
+
+If you want, I will:
+- perform the full automated sweep replacing remaining hard-coded colors (I will run a confirmable diff), then
+- convert all theme interactions to useTheme(), and
+- add unit tests for preview flow.
+
+Say `sweep` to run the full color-sweep now, or `hook` to convert remaining code to use the new hook (or both).
