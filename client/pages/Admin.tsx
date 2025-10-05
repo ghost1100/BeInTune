@@ -1902,29 +1902,63 @@ function StudentsManager() {
 
   const save = async (e?: FormEvent) => {
     if (e) e.preventDefault();
-    if (!form.name?.trim()) {
+    const trimmedName = form.name?.trim();
+    if (!trimmedName) {
       alert("Name is required");
       return;
     }
-    if (!form.email?.trim()) {
-      alert("Email is required");
-      return;
-    }
+
     const normalizedAge =
       typeof form.age === "number" && !Number.isNaN(form.age) ? form.age : null;
+
+    const emergencyContact = form.emergencyContacts?.trim() || "";
+    if (!emergencyContact) {
+      alert("Emergency contact is required");
+      return;
+    }
+
+    const guardianName = form.parentGuardianName?.trim() || "";
+    const guardianPhone = form.parentGuardianPhone?.trim() || "";
+    const guardianEmail = form.parentGuardianEmail?.trim() || "";
+    const studentEmail = form.email?.trim() || "";
+
+    if (isUnder16) {
+      if (!guardianName || !guardianPhone || !guardianEmail) {
+        alert(
+          "Parent or guardian name, phone and email are required for students under 16",
+        );
+        return;
+      }
+    }
+
+    const contactEmail = isUnder16 ? guardianEmail : studentEmail;
+    if (!contactEmail) {
+      alert(
+        isUnder16
+          ? "Parent or guardian email is required for students under 16"
+          : "Email is required",
+      );
+      return;
+    }
+
+    const studentPhone = form.phone?.trim() || "";
     const primaryPhone =
-      (isUnder16 ? form.parentGuardianPhone : form.phone) ||
-      form.phone ||
-      form.parentGuardianPhone;
+      (isUnder16 ? guardianPhone : studentPhone) ||
+      studentPhone ||
+      guardianPhone ||
+      "";
+
     const payload: any = {
-      name: form.name.trim(),
+      name: trimmedName,
       age: normalizedAge,
-      parent_name: form.parentGuardianName?.trim() || null,
-      parent_email: form.parentGuardianEmail?.trim() || null,
-      phone: primaryPhone ? primaryPhone.trim() : null,
+      parent_name: isUnder16 ? guardianName : null,
+      parent_email: isUnder16 ? guardianEmail : null,
+      parent_phone: isUnder16 ? guardianPhone : null,
+      phone: primaryPhone || null,
       address: form.address?.trim() || null,
       marketing_consent: !!form.marketingConsent,
-      email: form.email.trim(),
+      email: contactEmail,
+      emergency_contacts: emergencyContact,
     };
     try {
       if (editing) {
