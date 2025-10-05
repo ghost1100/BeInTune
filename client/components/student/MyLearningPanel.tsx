@@ -166,6 +166,10 @@ export default function MyLearningPanel({ className }: { className?: string }) {
     try {
       const uploaded: ResourceMedia[] = [];
       for (const file of Array.from(files)) {
+        if (file.type.startsWith("video")) {
+          const dur = await getVideoDuration(file);
+          if (dur > 180) throw new Error("Video too long. Maximum allowed is 3 minutes.");
+        }
         const content = await fileToBase64(file);
         const payload = await (
           await import("@/lib/api")
