@@ -32,20 +32,6 @@ export function Header() {
               {item.label}
             </NavLink>
           ))}
-          {/* protected links */}
-          {!loading && user && protectedNav.map((item) => (
-            <NavLink
-              key={item.href}
-              to={item.href}
-              className={({ isActive }) =>
-                `transition-colors hover:text-foreground/80 ${
-                  isActive ? "text-foreground" : "text-foreground/60"
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
