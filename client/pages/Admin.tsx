@@ -2280,6 +2280,7 @@ function StudentsManager() {
           Upload learning resources
         </Button>
       </div>
+      {resourceModal}
       <form onSubmit={save} className="grid gap-2">
         <input
           className="h-10 rounded-md border px-3"
