@@ -62,14 +62,16 @@ router.get("/posts", async (req, res) => {
 // body: { author_id?, author_name?, body, attachments? (array of media ids) }
 router.post("/posts", async (req, res) => {
   try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const { author_id, author_name, body, attachments } = req.body as any;
     if (!body && (!attachments || attachments.length === 0))
       return res.status(400).json({ error: "Empty post" });
 
+    const authorId = req.user.id || author_id || null;
     const insert = await query(
       "INSERT INTO posts(author_id, title, body, is_public, metadata) VALUES ($1,$2,$3,$4,$5) RETURNING id, created_at",
       [
-        author_id || null,
+        authorId,
         null,
         body || null,
         true,
@@ -97,6 +99,7 @@ router.post("/posts", async (req, res) => {
 // GET /api/posts/:id/comments
 router.get("/posts/:id/comments", async (req, res) => {
   try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const { id } = req.params;
     const c = await query(
       "SELECT c.*, u.name as author_name FROM comments c LEFT JOIN users u ON c.author_id = u.id WHERE c.post_id = $1 ORDER BY c.created_at ASC",
@@ -112,12 +115,14 @@ router.get("/posts/:id/comments", async (req, res) => {
 // POST /api/posts/:id/comments
 router.post("/posts/:id/comments", async (req, res) => {
   try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const { id } = req.params;
     const { author_id, body } = req.body as any;
     if (!body) return res.status(400).json({ error: "Missing comment body" });
+    const authorId = req.user.id || author_id || null;
     const ins = await query(
       "INSERT INTO comments(post_id, author_id, body) VALUES ($1,$2,$3) RETURNING id, created_at",
-      [id, author_id || null, body],
+      [id, authorId, body],
     );
     res.json({
       ok: true,
@@ -133,12 +138,14 @@ router.post("/posts/:id/comments", async (req, res) => {
 // POST /api/posts/:id/reactions
 router.post("/posts/:id/reactions", async (req, res) => {
   try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const { id } = req.params;
     const { user_id, type } = req.body as any; // type like 'heart', 'like', 'smile'
     if (!type) return res.status(400).json({ error: "Missing reaction type" });
+    const uid = req.user.id || user_id || null;
     await query(
       "INSERT INTO post_reactions(post_id, user_id, type) VALUES ($1,$2,$3)",
-      [id, user_id || null, type],
+      [id, uid, type],
     );
     res.json({ ok: true });
   } catch (err) {
