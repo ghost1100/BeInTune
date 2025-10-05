@@ -158,14 +158,24 @@ export async function addBooking(
       : slots && Array.isArray((slots as any).rows)
         ? (slots as any).rows
         : [];
-    const match = list.find((s: any) => {
+    let match = list.find((s: any) => {
       const time = normalizeTime(s.slot_time || s.slotTime || s.time);
       const available = s.is_available !== false;
       return available && time === booking.time;
     });
+
     if (!match || !match.id) {
-      return null;
+      const create = await api(`/api/admin/slots`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slot_date: booking.date, slot_time: booking.time }),
+      }).catch(() => null);
+      if (!create || !create.id) {
+        return null;
+      }
+      match = { id: create.id };
     }
+
     const payload = {
       slot_id: match.id,
       student_id: booking.studentId || (booking as any).student_id || null,
