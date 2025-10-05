@@ -1554,7 +1554,8 @@ function StudentsManager() {
       parentGuardianPhone: s.parentGuardianPhone,
     });
   };
-  const remove = async (id: string) => {
+  const remove = async (id?: string) => {
+    if (!id) return;
     try {
       await studentsAPI.remove(id);
       await refresh();
