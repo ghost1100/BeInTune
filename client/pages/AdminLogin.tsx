@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getRandomImage } from "@/lib/unsplash";
+import useAuth from "@/hooks/use-auth";
 
 export default function AdminLogin() {
   const [identifier, setIdentifier] = useState("");
@@ -8,6 +9,17 @@ export default function AdminLogin() {
   const [err, setErr] = useState("");
   const [img, setImg] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) return;
+    if (user.role === "admin") {
+      navigate("/admin", { replace: true });
+    } else {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     (async () => {
