@@ -131,9 +131,9 @@ export default function BookingForm() {
           <Button size="lg" variant="gradient">
             Enquire
           </Button>
-          <Button size="lg" variant="ghost">
-            Call
-          </Button>
+          <a href={`tel:${getSiteContent().phone}`} className="inline-block">
+          <Button size="lg" variant="ghost">Call</Button>
+        </a>
         </div>
         {message && (
           <div className="text-sm mt-2 text-foreground/70">{message}</div>
