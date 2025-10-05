@@ -19,7 +19,8 @@ export default function BookingForm() {
   const [message, setMessage] = useState("");
 
   const loadSlots = async () => {
-    const all = getSlotsForDay(date);
+    // show admin/teacher available slots from 08:00 - 17:00
+    const all = getSlotsForDay(date, 8, 17);
     const avail = await getAvailability(date);
     const bookingsRes = await getBookings(date);
     const bookings = Array.isArray(bookingsRes) ? bookingsRes.map((b:any) => b.time) : [];
