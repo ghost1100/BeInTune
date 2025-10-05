@@ -81,12 +81,25 @@ router.post("/messages/:id/reactions", async (req, res) => {
     const { type } = req.body as any;
     if (!type) return res.status(400).json({ error: "Missing reaction type" });
     const uid = req.user.id;
-    await query(
-      `INSERT INTO message_reactions(message_id, user_id, type) VALUES ($1,$2,$3)
-       ON CONFLICT (message_id, user_id) DO UPDATE SET type = EXCLUDED.type, created_at = now()`,
-      [id, uid, type],
-    );
-    res.json({ ok: true });
+
+    // ensure message exists
+    const m = await query("SELECT id FROM messages WHERE id = $1", [id]);
+    if (!m.rows.length) return res.status(404).json({ error: "Message not found" });
+
+    try {
+      await query(
+        `INSERT INTO message_reactions(message_id, user_id, type) VALUES ($1,$2,$3)
+         ON CONFLICT (message_id, user_id) DO UPDATE SET type = EXCLUDED.type, created_at = now()`,
+        [id, uid, type],
+      );
+      res.json({ ok: true });
+    } catch (dbErr: any) {
+      console.error("DB error adding message reaction:", dbErr);
+      if (dbErr && dbErr.code === "23503") {
+        return res.status(400).json({ error: "Invalid message or user" });
+      }
+      return res.status(500).json({ error: "Failed to add message reaction" });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to add message reaction" });
