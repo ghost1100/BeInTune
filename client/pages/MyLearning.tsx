@@ -33,10 +33,13 @@ export default function MyLearning() {
   useEffect(() => {
     if (!selected) return;
     (async () => {
-      const res = await fetch(`/api/admin/learning/${selected}`);
-      if (!res.ok) return setResources([]);
-      const j = await res.json();
-      setResources(j);
+      try {
+        const j = await (await import('@/lib/api')).apiFetch(`/api/admin/learning/${selected}`);
+        setResources(j as any[] || []);
+      } catch (e) {
+        console.error(e);
+        setResources([]);
+      }
     })();
   }, [selected]);
 
