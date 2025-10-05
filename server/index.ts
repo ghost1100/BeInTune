@@ -51,6 +51,12 @@ export function createServer() {
   import auditRoutes from "./routes/audit";
   app.use("/api/admin", auditRoutes);
 
+  // Learning & messages (admin)
+  import learningRoutes from "./routes/learning";
+  app.use("/api/admin", learningRoutes);
+  import messagesRoutes from "./routes/messages";
+  app.use("/api/admin", messagesRoutes);
+
   // Public posts/discussion routes
   import postsRoutes from "./routes/posts";
   app.use("/api", postsRoutes);
