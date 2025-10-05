@@ -732,8 +732,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
       ) : (
         <div className="mt-4 grid grid-cols-4 gap-2">
           {slots.map((s) => {
-            const booked = bookings.find((b) => b.time === s);
-            const available = avail.includes(s);
+            const booked = bookingsState.find((b) => b.time === s);
+            const available = availState.includes(s);
             return (
               <div key={s} className="">
                 <button
