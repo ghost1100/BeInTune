@@ -369,6 +369,20 @@ router.delete("/posts/:id", async (req, res) => {
     if (post.author_id !== req.user.id && req.user.role !== "admin")
       return res.status(403).json({ error: "Forbidden" });
     await query("DELETE FROM posts WHERE id = $1", [id]);
+    // notify post author if deleted by admin
+    try {
+      if (req.user.role === 'admin') {
+        const postAuthor = post.author_id;
+        if (postAuthor && postAuthor !== req.user.id) {
+          await query(
+            "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
+            [postAuthor, req.user.id, 'post:deleted_by_admin', JSON.stringify({ postId: id })],
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Failed to create notification for post delete:', err);
+    }
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
