@@ -65,18 +65,13 @@ export async function getAvailability(date: string): Promise<string[]> {
 
 export async function toggleAvailability(date: string, time: string) {
   try {
-    const res = await fetch(`/api/admin/slots?date=${date}`);
-    if (!res.ok) return;
-    const rows = await res.json();
-    const existing = rows.find((r: any) => r.slot_time === time);
+    const api = (await import("@/lib/api")).apiFetch;
+    const rows = await api(`/api/admin/slots?date=${date}`);
+    const existing = Array.isArray(rows) ? rows.find((r: any) => r.slot_time === time) : null;
     if (existing) {
-      await fetch(`/api/admin/slots/${existing.id}`, { method: "DELETE" });
+      await api(`/api/admin/slots/${existing.id}`, { method: "DELETE" });
     } else {
-      await fetch(`/api/admin/slots`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slot_date: date, slot_time: time }),
-      });
+      await api(`/api/admin/slots`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slot_date: date, slot_time: time }) });
     }
   } catch (e) {
     console.error(e);
