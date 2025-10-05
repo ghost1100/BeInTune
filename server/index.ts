@@ -62,5 +62,8 @@ export function createServer() {
   // Public posts/discussion routes
   app.use("/api", postsRoutes);
 
+  // Notifications
+  app.use("/api", notificationsRoutes);
+
   return app;
 }
