@@ -2129,6 +2129,17 @@ function StudentsManager() {
 
   return (
     <div>
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-start">
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full sm:w-auto"
+          onClick={openResourceModal}
+          disabled={students.length === 0}
+        >
+          Upload learning resources
+        </Button>
+      </div>
       <form onSubmit={save} className="grid gap-2">
         <input
           className="h-10 rounded-md border px-3"
