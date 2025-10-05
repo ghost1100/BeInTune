@@ -71,10 +71,7 @@ export default function SecurityPanel() {
             ? entry.meta
             : {};
         const displayName =
-          entry?.displayName ||
-          entry?.username ||
-          entry?.email ||
-          "System";
+          entry?.displayName || entry?.username || entry?.email || "System";
         return {
           id: String(entry.id),
           created_at: entry.created_at,
@@ -220,7 +217,10 @@ export default function SecurityPanel() {
       </div>
       {log.targetDisplayName && (
         <div className="text-xs text-foreground/70">
-          Target: <span className="font-medium text-foreground">{log.targetDisplayName}</span>
+          Target:{" "}
+          <span className="font-medium text-foreground">
+            {log.targetDisplayName}
+          </span>
         </div>
       )}
       <div className="mt-2 text-sm font-medium text-primary">{log.action}</div>
