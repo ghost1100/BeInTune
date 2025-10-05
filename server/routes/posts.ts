@@ -164,13 +164,27 @@ router.post("/posts/:id/reactions", async (req, res) => {
     const { user_id, type } = req.body as any; // type like 'heart', 'like', 'smile'
     if (!type) return res.status(400).json({ error: "Missing reaction type" });
     const uid = req.user.id || user_id || null;
+
+    // ensure post exists
+    const p = await query("SELECT id FROM posts WHERE id = $1", [id]);
+    if (!p.rows.length) return res.status(404).json({ error: "Post not found" });
+
     // upsert to ensure one reaction per user per post
-    await query(
-      `INSERT INTO post_reactions(post_id, user_id, type) VALUES ($1,$2,$3)
-       ON CONFLICT (post_id, user_id) DO UPDATE SET type = EXCLUDED.type, created_at = now()`,
-      [id, uid, type],
-    );
-    res.json({ ok: true });
+    try {
+      await query(
+        `INSERT INTO post_reactions(post_id, user_id, type) VALUES ($1,$2,$3)
+         ON CONFLICT (post_id, user_id) DO UPDATE SET type = EXCLUDED.type, created_at = now()`,
+        [id, uid, type],
+      );
+      res.json({ ok: true });
+    } catch (dbErr: any) {
+      console.error("DB error adding reaction:", dbErr);
+      // foreign key violation or other db issues
+      if (dbErr && dbErr.code === "23503") {
+        return res.status(400).json({ error: "Invalid post or user" });
+      }
+      return res.status(500).json({ error: "Failed to add reaction" });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to add reaction" });
