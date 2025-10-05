@@ -3,7 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>In Tune ��� Modern Music Lessons & Studio</title>
+    <title>In Tune — Modern Music Lessons & Studio</title>
+    <script>
+      // Inline theme boot: apply saved mode and theme tokens before React mounts to avoid flash
+      (function () {
+        try {
+          var mode = localStorage.getItem("inTuneThemeMode");
+          if (mode === "dark") document.documentElement.classList.add("dark");
+          var theme = localStorage.getItem("inTuneTheme");
+          if (theme) {
+            try {
+              var t = JSON.parse(theme);
+              if (t.primary)
+                document.documentElement.style.setProperty(
+                  "--primary",
+                  t.primary,
+                );
+              if (t.brand1)
+                document.documentElement.style.setProperty(
+                  "--brand-1",
+                  t.brand1,
+                );
+              if (t.brand2)
+                document.documentElement.style.setProperty(
+                  "--brand-2",
+                  t.brand2,
+                );
+              if (t.secondary)
+                document.documentElement.style.setProperty(
+                  "--secondary",
+                  t.secondary,
+                );
+            } catch (e) {}
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
 
   <body>
