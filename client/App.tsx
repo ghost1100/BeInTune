@@ -19,6 +19,7 @@ import AdminLogin from "./pages/AdminLogin";
 import { Header } from "./components/site/Header";
 import { Footer } from "./components/site/Footer";
 import PrivateRoute from "./components/PrivateRoute";
+import AdminRoute from "./components/AdminRoute";
 import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
