@@ -2097,6 +2097,101 @@ function StudentsManager() {
     </div>
   ) : null;
 
+  const viewResourcesModal = viewResourcesOpen ? (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) setViewResourcesOpen(false);
+      }}
+    >
+      <div className="w-full max-w-3xl rounded-lg bg-card p-6 shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">View resources</h3>
+            <p className="text-sm text-foreground/70">Resources shared with the selected student. You may remove items if needed.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => setViewResourcesOpen(false)} disabled={viewActionLoading}>Close</Button>
+          </div>
+        </div>
+        <div className="mt-4">
+          {viewLoading ? (
+            <div className="text-sm text-foreground/70">Loading…</div>
+          ) : viewResourcesData.length === 0 ? (
+            <div className="rounded border border-dashed p-4 text-sm text-foreground/70">No resources found for this student.</div>
+          ) : (
+            <div className="space-y-3">
+              {viewResourcesData.map((entry: any) => (
+                <div key={entry.id} className="rounded border p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold">{entry.title || "Resource"}</div>
+                      <div className="text-xs text-foreground/70">{entry.created_at ? new Date(entry.created_at).toLocaleString() : ""}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="destructive" onClick={async () => {
+                        // delete whole entry
+                        if (!confirm("Delete this resource folder and all its files?")) return;
+                        try {
+                          setViewActionLoading(true);
+                          const { apiFetch } = await import("@/lib/api");
+                          await apiFetch(`/api/admin/learning/entry/${entry.id}`, { method: "DELETE" });
+                          // refresh list
+                          const data = await apiFetch(`/api/admin/learning/${viewResourcesStudentId}`);
+                          setViewResourcesData(Array.isArray(data) ? data : (data && (data as any).rows) || []);
+                        } catch (err) {
+                          console.error(err);
+                          toast({ title: "Failed to delete folder", variant: "destructive" });
+                        } finally {
+                          setViewActionLoading(false);
+                        }
+                      }}>Delete folder</Button>
+                    </div>
+                  </div>
+                  {Array.isArray(entry.media) && entry.media.length > 0 && (
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      {entry.media.map((m: any) => (
+                        <div key={m.id || m.url} className="flex items-center justify-between gap-2 rounded border p-2">
+                          <div className="flex items-center gap-3">
+                            {m.mime?.startsWith("image") ? (
+                              <img src={m.url} alt="" className="h-16 w-24 object-cover rounded" />
+                            ) : m.mime?.startsWith("video") ? (
+                              <video src={m.url} className="h-16 w-24 object-cover" />
+                            ) : (
+                              <a href={m.url} target="_blank" rel="noreferrer" className="underline">Open file</a>
+                            )}
+                            <div className="text-sm">{m.url.split("/").pop()}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline" onClick={() => window.open(m.url, "_blank")}>Open</Button>
+                            <Button size="sm" variant="destructive" onClick={async () => {
+                              if (!confirm("Remove this file from the resource folder?")) return;
+                              try {
+                                setViewActionLoading(true);
+                                const { apiFetch } = await import("@/lib/api");
+                                const data = await apiFetch(`/api/admin/learning/entry/${entry.id}/media/${m.id}`, { method: "DELETE" });
+                                setViewResourcesData(Array.isArray(data) ? data : (data && (data as any).rows) || []);
+                              } catch (err) {
+                                console.error(err);
+                                toast({ title: "Failed to remove file", variant: "destructive" });
+                              } finally {
+                                setViewActionLoading(false);
+                              }
+                            }}>Remove</Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   const toggleStudentDetails = (id: string | undefined | null) => {
     if (!id) return;
     setExpandedStudentIds((prev) => ({
