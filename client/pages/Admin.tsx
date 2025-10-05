@@ -825,7 +825,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                       onClick={() => {
                         if (booked) {
                           setIsCancelling(booked.id);
-                          removeBk(booked.id).finally(() => setIsCancelling(null));
+                          removeBk(booked.id).finally(() =>
+                            setIsCancelling(null),
+                          );
                           return;
                         }
                         if (available) {
@@ -856,12 +858,16 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                           type="button"
                           onClick={() => {
                             setIsCancelling(booked.id);
-                            removeBk(booked.id).finally(() => setIsCancelling(null));
+                            removeBk(booked.id).finally(() =>
+                              setIsCancelling(null),
+                            );
                           }}
                           className="px-3 py-1 rounded-md border"
                           disabled={isCancelling === booked.id}
                         >
-                          {isCancelling === booked.id ? "Cancelling..." : "Unbook"}
+                          {isCancelling === booked.id
+                            ? "Cancelling..."
+                            : "Unbook"}
                         </button>
                       ) : (
                         available && (
@@ -928,7 +934,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                       type="button"
                       onClick={() => {
                         setIsCancelling(booked.id);
-                        removeBk(booked.id).finally(() => setIsCancelling(null));
+                        removeBk(booked.id).finally(() =>
+                          setIsCancelling(null),
+                        );
                       }}
                       className="text-sm rounded-md border px-2 py-1"
                       disabled={isCancelling === booked.id}
@@ -945,12 +953,13 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                           setSelectedSlot(s);
                           setShowStudentModal(true);
                         }}
-                      className="text-sm rounded-md border px-2 py-1"
-                    >
-                      Add
-                    </button>
-                  </div>
-                ))}
+                        className="text-sm rounded-md border px-2 py-1"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  )
+                )}
               </div>
             );
           })}
@@ -1049,7 +1058,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                           {s.email} {s.phone && `• ${s.phone}`}
                         </div>
                       </div>
-                      <div className={`text-xs px-2 py-1 rounded-md ${isSelected ? "bg-primary text-primary-foreground" : "border"}`}>
+                      <div
+                        className={`text-xs px-2 py-1 rounded-md ${isSelected ? "bg-primary text-primary-foreground" : "border"}`}
+                      >
                         {isSelected ? "Selected" : "Tap"}
                       </div>
                     </button>
