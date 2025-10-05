@@ -81,6 +81,9 @@ async function readBookings(date?: string): Promise<Booking[]> {
     return list.map((r: any) => ({
       ...r,
       time: normalizeTime(r.time || r.slot_time || r.slotTime),
+      slot_id: r.slot_id || r.slotId || null,
+      student_name: r.student_name || r.name,
+      student_email: r.student_email || r.email,
     }));
   } catch (e) {
     console.error("readBookings error", e);
