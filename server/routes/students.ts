@@ -98,9 +98,15 @@ router.post("/students", async (req, res) => {
   } else {
     const pw = tempPassword || Math.random().toString(36).slice(2, 10);
     const hash = await bcrypt.hash(pw, 10);
+    const { encryptText, digest } = await import("../lib/crypto");
+    const enc = encryptText(email);
+    const emailToStore = enc.encrypted ? JSON.stringify(enc) : email;
+    const emailIndex = digest(email);
+    const phoneEnc = phone ? encryptText(phone) : null;
+    const phoneToStore = phoneEnc && phoneEnc.encrypted ? JSON.stringify(phoneEnc) : phone || null;
     const userRes = await query(
-      "INSERT INTO users(email, password_hash, role, name, email_verified) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-      [email, hash, "student", name || null, true],
+      "INSERT INTO users(email_encrypted, email_index, phone_encrypted, password_hash, role, name, email_verified) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id",
+      [emailToStore, emailIndex, phoneToStore, hash, "student", name || null, true],
     );
     userId = userRes.rows[0].id;
     generatedPassword = pw;
