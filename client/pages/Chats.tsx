@@ -101,7 +101,8 @@ export default function Chats() {
       <h2 className="text-xl font-semibold">Chats</h2>
       <div className="mt-4 bg-card p-4 rounded flex gap-4">
         <aside className="w-64 border rounded p-2">
-          <input className="w-full p-2 rounded border mb-2" placeholder="Search students" value={query} onChange={(e)=>search(e.target.value)} />
+          <label htmlFor="searchStudents" className="sr-only">Search students</label>
+          <input id="searchStudents" name="search" className="w-full p-2 rounded border mb-2" placeholder="Search students" value={query} onChange={(e)=>search(e.target.value)} />
           <div className="space-y-2 max-h-[60vh] overflow-auto">
             {(searchResults.length?searchResults:students).map((s)=> (
               <div key={s.student_id || s.id} className={`p-2 rounded cursor-pointer ${selected && (selected.student_id||selected.id) === (s.student_id||s.id) ? 'bg-muted':''}`} onClick={()=>setSelected(s)}>
@@ -121,7 +122,8 @@ export default function Chats() {
             ))}
           </div>
           <div className="mt-2 flex gap-2">
-            <input className="flex-1 p-2 rounded border" value={text} onChange={(e)=>setText(e.target.value)} placeholder={selected?`Message ${selected.name||selected.email}`:'Select a student to chat'} />
+            <label htmlFor="chatMessage" className="sr-only">Message</label>
+            <input id="chatMessage" name="message" className="flex-1 p-2 rounded border" value={text} onChange={(e)=>setText(e.target.value)} placeholder={selected?`Message ${selected.name||selected.email}`:'Select a student to chat'} />
             <Button onClick={send} disabled={!selected}>Send</Button>
           </div>
         </section>

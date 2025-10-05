@@ -90,7 +90,10 @@ export default function Discussion() {
     <div className="container mx-auto py-8">
       <h2 className="text-xl font-semibold">Community Discussion</h2>
       <div className="mt-4 bg-card p-4 rounded">
+        <label htmlFor="postBody" className="sr-only">Share something</label>
         <textarea
+          id="postBody"
+          name="body"
           value={body}
           onChange={(e) => setBody(e.target.value)}
           className="w-full min-h-[80px] p-2 rounded border"
@@ -98,6 +101,8 @@ export default function Discussion() {
         />
         <div className="flex items-center gap-2 mt-2">
           <input
+            id="postAttachments"
+            name="attachments"
             type="file"
             multiple
             ref={fileRef}
@@ -230,7 +235,8 @@ function Comments({ postId }: { postId: string }) {
         ))}
       </div>
       <div className="mt-2 flex gap-2">
-        <input className="flex-1 p-2 rounded border" value={text} onChange={(e)=>setText(e.target.value)} />
+        <label htmlFor="commentInput" className="sr-only">Add comment</label>
+        <input id="commentInput" name="comment" className="flex-1 p-2 rounded border" value={text} onChange={(e)=>setText(e.target.value)} />
         <button onClick={add} className="h-10 px-4 rounded-md bg-primary text-primary-foreground">Comment</button>
       </div>
     </div>

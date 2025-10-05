@@ -132,6 +132,8 @@ export default function MyLearning() {
           <div className="bg-card p-4 rounded">
             <div className="flex items-center gap-2">
               <input
+                id="learningFiles"
+                name="resources"
                 type="file"
                 multiple
                 ref={fileRef}

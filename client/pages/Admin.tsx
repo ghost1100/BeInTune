@@ -262,39 +262,58 @@ export default function Admin() {
               <div className="md:col-span-1 rounded-lg border p-4">
                 <h2 className="font-semibold">Add / edit teacher</h2>
                 <form className="mt-3" onSubmit={add}>
+                  <label htmlFor="teacherName" className="sr-only">Name</label>
                   <input
+                    id="teacherName"
+                    name="name"
                     className="w-full h-10 rounded-md border px-3 mb-2"
                     placeholder="Name"
                     value={form.name || ""}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, name: e.target.value }))
                     }
+                    autoComplete="name"
                   />
+                  <label htmlFor="teacherEmail" className="sr-only">Email</label>
                   <input
+                    id="teacherEmail"
+                    name="email"
                     className="w-full h-10 rounded-md border px-3 mb-2"
                     placeholder="Email"
                     value={form.email || ""}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, email: e.target.value }))
                     }
+                    autoComplete="email"
                   />
+                  <label htmlFor="teacherPhone" className="sr-only">Phone</label>
                   <input
+                    id="teacherPhone"
+                    name="phone"
                     className="w-full h-10 rounded-md border px-3 mb-2"
                     placeholder="Phone"
                     value={form.phone || ""}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, phone: e.target.value }))
                     }
+                    autoComplete="tel"
                   />
+                  <label htmlFor="teacherYears" className="sr-only">Years of experience</label>
                   <input
+                    id="teacherYears"
+                    name="years"
                     className="w-full h-10 rounded-md border px-3 mb-2"
                     placeholder="Years of experience"
                     value={form.years || ""}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, years: e.target.value }))
                     }
+                    autoComplete="off"
                   />
+                  <label htmlFor="teacherAbout" className="sr-only">About</label>
                   <textarea
+                    id="teacherAbout"
+                    name="about"
                     className="w-full rounded-md border px-3 mb-2"
                     placeholder="About"
                     value={form.about || ""}
@@ -304,7 +323,7 @@ export default function Admin() {
                   />
 
                   <div className="mb-2">
-                    <label className="block text-sm font-medium mb-2">
+                    <label htmlFor="teacherImage" className="block text-sm font-medium mb-2">
                       Profile picture (drop file or choose)
                     </label>
                     <div
@@ -324,6 +343,8 @@ export default function Admin() {
                         </div>
                       )}
                       <input
+                        id="teacherImage"
+                        name="image"
                         type="file"
                         accept="image/*"
                         onChange={handleFileChange}
@@ -394,7 +415,10 @@ export default function Admin() {
                     }))
                   }
                 />
+                <label htmlFor="heroHeading" className="sr-only">Hero heading</label>
                 <input
+                  id="heroHeading"
+                  name="heroHeading"
                   className="w-full h-10 rounded-md border px-3"
                   placeholder="Hero heading"
                   value={(siteContent && siteContent.heroHeading) || ""}
@@ -405,7 +429,10 @@ export default function Admin() {
                     }))
                   }
                 />
+                <label htmlFor="heroSubheading" className="sr-only">Hero subheading</label>
                 <input
+                  id="heroSubheading"
+                  name="heroSubheading"
                   className="w-full h-10 rounded-md border px-3"
                   placeholder="Hero subheading"
                   value={(siteContent && siteContent.heroSubheading) || ""}
@@ -416,7 +443,10 @@ export default function Admin() {
                     }))
                   }
                 />
+                <label htmlFor="ctaPrimary" className="sr-only">Primary CTA</label>
                 <input
+                  id="ctaPrimary"
+                  name="ctaPrimary"
                   className="w-full h-10 rounded-md border px-3"
                   placeholder="Primary CTA"
                   value={(siteContent && siteContent.ctaPrimary) || ""}
@@ -427,7 +457,10 @@ export default function Admin() {
                     }))
                   }
                 />
+                <label htmlFor="ctaSecondary" className="sr-only">Secondary CTA</label>
                 <input
+                  id="ctaSecondary"
+                  name="ctaSecondary"
                   className="w-full h-10 rounded-md border px-3"
                   placeholder="Secondary CTA"
                   value={(siteContent && siteContent.ctaSecondary) || ""}
@@ -438,7 +471,10 @@ export default function Admin() {
                     }))
                   }
                 />
+                <label htmlFor="programsIntro" className="sr-only">Programs intro</label>
                 <textarea
+                  id="programsIntro"
+                  name="programsIntro"
                   className="w-full rounded-md border px-3"
                   placeholder="Programs intro"
                   value={(siteContent && siteContent.programsIntro) || ""}
@@ -449,7 +485,10 @@ export default function Admin() {
                     }))
                   }
                 />
+                <label htmlFor="aboutHtml" className="sr-only">About HTML</label>
                 <textarea
+                  id="aboutHtml"
+                  name="aboutHtml"
                   className="w-full rounded-md border px-3"
                   placeholder="About HTML"
                   value={(siteContent && siteContent.aboutHtml) || ""}
@@ -460,7 +499,10 @@ export default function Admin() {
                     }))
                   }
                 />
+                <label htmlFor="siteAddress" className="sr-only">Address</label>
                 <input
+                  id="siteAddress"
+                  name="address"
                   className="w-full h-10 rounded-md border px-3"
                   placeholder="Address"
                   value={(siteContent && siteContent.address) || ""}
@@ -471,7 +513,10 @@ export default function Admin() {
                     }))
                   }
                 />
+                <label htmlFor="siteEmail" className="sr-only">Email</label>
                 <input
+                  id="siteEmail"
+                  name="email"
                   className="w-full h-10 rounded-md border px-3"
                   placeholder="Email"
                   value={(siteContent && siteContent.email) || ""}
@@ -482,7 +527,10 @@ export default function Admin() {
                     }))
                   }
                 />
+                <label htmlFor="sitePhone" className="sr-only">Phone</label>
                 <input
+                  id="sitePhone"
+                  name="phone"
                   className="w-full h-10 rounded-md border px-3"
                   placeholder="Phone"
                   value={(siteContent && siteContent.phone) || ""}

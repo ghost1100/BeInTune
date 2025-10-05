@@ -50,7 +50,10 @@ export function Footer() {
             </address>
             <p className="mt-4 font-semibold mb-2">Stay in tune</p>
             <form className="flex gap-2 max-w-sm">
+              <label htmlFor="footerSubscribeEmail" className="sr-only">Email address</label>
               <input
+                id="footerSubscribeEmail"
+                name="email"
                 type="email"
                 placeholder="Email address"
                 className="flex-1 h-10 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
