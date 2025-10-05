@@ -26,17 +26,16 @@ type Teacher = {
   image?: string | null;
 };
 
-function loadTeachers(): Teacher[] {
+async function loadTeachersFromDb(): Promise<Teacher[]> {
   try {
-    const raw = localStorage.getItem("inTuneTeachers");
-    return raw ? JSON.parse(raw) : [];
+    const res = await fetch('/api/admin/teachers');
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data || []).map((r: any) => ({ id: r.user_id, name: r.name, email: r.email, phone: r.phone, years: r.years, about: r.about, image: r.image }));
   } catch (e) {
+    console.error(e);
     return [];
   }
-}
-
-function saveTeachers(list: Teacher[]) {
-  localStorage.setItem("inTuneTeachers", JSON.stringify(list));
 }
 
 export default function Admin() {
@@ -57,46 +56,50 @@ export default function Admin() {
   useEffect(() => {
     const auth = localStorage.getItem("inTuneAdmin");
     if (!auth) navigate("/admin/login");
-    setTeachers(loadTeachers());
+    (async () => {
+      const ts = await loadTeachersFromDb();
+      setTeachers(ts);
+    })();
   }, [navigate]);
 
   const add = async (e: FormEvent) => {
     e.preventDefault();
-    if (editingId) {
-      const next = teachers.map((t) =>
-        t.id === editingId ? { ...t, ...form, id: editingId } : t,
-      );
-      setTeachers(next as Teacher[]);
-      saveTeachers(next as Teacher[]);
+    try {
+      if (editingId) {
+        // update existing teacher
+        await fetch('/api/admin/teachers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: editingId, email: form.email, name: form.name, phone: form.phone, years: form.years, about: form.about, image: form.image }) });
+        setForm({});
+        setEditingId(null);
+        const ts = await loadTeachersFromDb();
+        setTeachers(ts);
+        return;
+      }
+
+      await fetch('/api/admin/teachers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: form.email, name: form.name, phone: form.phone, years: form.years, about: form.about, image: form.image }) });
       setForm({});
-      setEditingId(null);
-      return;
+      const ts = await loadTeachersFromDb();
+      setTeachers(ts);
+    } catch (e) {
+      console.error(e);
+      alert('Unable to save teacher');
     }
-    const t: Teacher = {
-      id: String(Date.now()),
-      name: form.name || "New teacher",
-      email: form.email || "",
-      phone: form.phone || "",
-      years: form.years || "",
-      about: form.about || "",
-      image: form.image || null,
-    };
-    const next = [t, ...teachers];
-    setTeachers(next);
-    saveTeachers(next);
-    setForm({});
   };
 
-  const remove = (id: string) => {
-    const next = teachers.filter((t) => t.id !== id);
-    setTeachers(next);
-    saveTeachers(next);
+  const remove = async (id: string) => {
+    try {
+      await fetch(`/api/admin/teachers/${id}`, { method: 'DELETE' });
+      const ts = await loadTeachersFromDb();
+      setTeachers(ts);
+    } catch (e) {
+      console.error(e);
+      alert('Unable to remove teacher');
+    }
   };
 
   const edit = (t: Teacher) => {
     setEditingId(t.id);
     setForm({ ...t });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const pickRandom = async () => {
