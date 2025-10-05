@@ -31,6 +31,7 @@ export default function ChatsPanel({ className }: { className?: string }) {
 
   useEffect(() => {
     loadStudents();
+    loadAdmins();
     loadMessages();
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
     const ws = new WebSocket(`${proto}://${window.location.host}/ws`);
