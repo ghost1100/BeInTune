@@ -1,45 +1,45 @@
 export async function apiFetch(input: RequestInfo, init?: RequestInit) {
-  const opts = Object.assign({ credentials: 'include' } as RequestInit, init || {});
+  const opts = Object.assign({ credentials: "include" } as RequestInit, init || {});
   const res = await fetch(input, opts);
   const contentType = res.headers.get("content-type") || "";
+  const isJson = contentType.includes("application/json");
 
-  // If JSON, try res.json() first. If body already read, fallback to clone().text()
-  if (contentType.includes("application/json")) {
-    try {
-      return await res.json();
-    } catch (err) {
-      try {
-        const text = await res.clone().text();
-        return JSON.parse(text);
-      } catch (err2) {
-        throw new Error(`Invalid JSON response from ${typeof input === 'string' ? input : ''}: ${err2}`);
-      }
-    }
-  }
-
-  // Non-JSON: get text
+  let raw: string | null = null;
   try {
-    const text = await res.text();
-    if (!text) {
-      if (res.ok) return null;
-      throw new Error(`Request failed: ${res.status} ${res.statusText}`);
-    }
-    if (res.ok) return text;
-    const snippet = text.slice(0, 200);
-    throw new Error(`Request failed: ${res.status} ${res.statusText} - ${snippet}`);
+    raw = await res.text();
   } catch (err) {
-    // If reading text failed because body already read, try clone
-    try {
-      const text = await (res.clone && res.clone().text ? res.clone().text() : Promise.resolve(''));
-      if (!text) {
-        if (res.ok) return null;
-        throw new Error(`Request failed: ${res.status} ${res.statusText}`);
+    throw new Error(
+      `Failed to read response from ${typeof input === "string" ? input : "request"}: ${err}`,
+    );
+  }
+
+  let data: any = null;
+  if (isJson) {
+    if (!raw || raw.trim() === "") {
+      data = null;
+    } else {
+      try {
+        data = JSON.parse(raw);
+      } catch (err) {
+        throw new Error(
+          `Invalid JSON response from ${typeof input === "string" ? input : "request"}: ${err}`,
+        );
       }
-      if (res.ok) return text;
-      const snippet = text.slice(0, 200);
-      throw new Error(`Request failed: ${res.status} ${res.statusText} - ${snippet}`);
-    } catch (e) {
-      throw err;
     }
   }
+
+  if (!res.ok) {
+    if (isJson && data && typeof data === "object") {
+      const message = (data.error || data.message || data.detail) as string | undefined;
+      if (message) throw new Error(message);
+    }
+    const snippet = raw ? raw.slice(0, 200) : "";
+    throw new Error(
+      `Request failed: ${res.status} ${res.statusText}${snippet ? ` - ${snippet}` : ""}`,
+    );
+  }
+
+  if (isJson) return data;
+  if (!raw) return null;
+  return raw;
 }
