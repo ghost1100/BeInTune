@@ -23,7 +23,8 @@ interface MessageRecord {
 export default function ChatsPanel({ className }: { className?: string }) {
   const [messages, setMessages] = useState<MessageRecord[]>([]);
   const [students, setStudents] = useState<StudentRecord[]>([]);
-  const [selected, setSelected] = useState<StudentRecord | null>(null);
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [selected, setSelected] = useState<any | null>(null);
   const [text, setText] = useState("");
   const [query, setQuery] = useState("");
   const { toast } = useToast();
