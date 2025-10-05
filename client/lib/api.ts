@@ -24,7 +24,11 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
     // Network or CORS failure — attempt common fallbacks for serverless deployments
     const attempted: string[] = [];
     try {
-      if (typeof input === "string" && input.startsWith("/api/") && typeof window !== "undefined") {
+      if (
+        typeof input === "string" &&
+        input.startsWith("/api/") &&
+        typeof window !== "undefined"
+      ) {
         // try Netlify functions path
         const alt1 = `/.netlify/functions/api${input.slice(4)}`;
         attempted.push(alt1);
