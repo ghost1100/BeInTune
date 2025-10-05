@@ -8,6 +8,13 @@ export async function ensureDbSetup() {
     // Create unique index on username
     await query("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username);");
 
+    // Add profile columns to users for teacher metadata
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS name text;");
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone text;");
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS years text;");
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS about text;");
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS image text;");
+
     // Ensure admin user exists with username Darryle
     const adminIdentifier = process.env.ADMIN_EMAIL || "admin@intune.local";
     const adminUsername = process.env.ADMIN_USERNAME || "Darryle";
@@ -21,8 +28,8 @@ export async function ensureDbSetup() {
     if (res.rows.length === 0) {
       const hash = await bcrypt.hash(adminPassword, 10);
       const insert = await query(
-        "INSERT INTO users(email, username, password_hash, role, email_verified) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-        [adminIdentifier, adminUsername, hash, "admin", true]
+        "INSERT INTO users(email, username, password_hash, role, email_verified, name) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+        [adminIdentifier, adminUsername, hash, "admin", true, adminUsername]
       );
       console.log("Seeded admin user", insert.rows[0].id);
     }
