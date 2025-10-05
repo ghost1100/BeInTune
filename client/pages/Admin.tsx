@@ -177,8 +177,47 @@ export default function Admin() {
     alert("Content saved");
   };
 
-  const logout = () => {
-    localStorage.removeItem("inTuneAdmin");
+  const logout = async () => {
+    try {
+      // tell server to clear httpOnly cookie
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } catch (e) {
+      console.error("Logout request failed", e);
+    }
+
+    try {
+      // remove any stored auth fallbacks and app data
+      localStorage.removeItem("inTuneAdmin");
+      localStorage.removeItem("inTuneStudent");
+      localStorage.removeItem("inTuneToken");
+      localStorage.removeItem("inTuneContent");
+      sessionStorage.clear();
+
+      // clear Cache Storage
+      if (typeof window !== "undefined" && (window as any).caches) {
+        const keys = await (window as any).caches.keys();
+        await Promise.all(keys.map((k: string) => (window as any).caches.delete(k)));
+      }
+
+      // clear non-httpOnly cookies
+      if (typeof document !== "undefined") {
+        document.cookie.split(";").forEach((cookie) => {
+          const eqPos = cookie.indexOf("=");
+          const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+          // expire cookie for root path
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+        });
+      }
+
+      // unregister service workers
+      if (typeof navigator !== "undefined" && navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+    } catch (err) {
+      console.error("Error clearing client data during logout", err);
+    }
+
     navigate("/");
   };
 
