@@ -1689,6 +1689,74 @@ function StudentsManager() {
     }
   };
 
+  const setPasswordForUser = async (
+    userId: string | undefined,
+    password: string,
+    message?: string,
+  ) => {
+    if (!userId) {
+      toast({ title: "Error", description: "Missing user id" });
+      return;
+    }
+    setPasswordLoading(userId);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/set-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || body.message || "Failed to set password");
+      }
+      toast({
+        title: "Password updated",
+        description: message || "New password applied",
+      });
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: err?.message || "Unable to set password",
+      });
+    } finally {
+      setPasswordLoading(null);
+    }
+  };
+
+  const sendReset = async (email: string | undefined) => {
+    if (!email) {
+      toast({ title: "Error", description: "Missing email" });
+      return;
+    }
+    setPasswordLoading(email);
+    try {
+      const res = await fetch(`/api/auth/send-reset`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(
+          body.error || body.message || "Failed to send reset email",
+        );
+      }
+      toast({
+        title: "Reset sent",
+        description: `Email sent to ${email}`,
+      });
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: err?.message || "Unable to send reset email",
+      });
+    } finally {
+      setPasswordLoading(null);
+    }
+  };
+
   const addInstrument = () => {
     const cur = form.instruments || [];
     if (cur.length >= 3) return alert("Max 3 instruments");
