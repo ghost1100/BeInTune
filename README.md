@@ -28,6 +28,7 @@ Security & Data Handling (current implementation)
 Automated Tests
 
 Project scripts (package.json):
+
 - dev: vite
 - build: build both client and server
 - test: vitest --run
@@ -35,7 +36,7 @@ Project scripts (package.json):
 
 If you already have tests, run:
 
-  npm test
+npm test
 
 If no tests exist, running the test script will run Vitest and report 0 tests.
 
@@ -61,10 +62,12 @@ The app has several good foundations (bcrypt, server-side checks, audit logs) bu
 GDPR & ICO (UK / Scotland) summary and compliance notes
 
 Scope
+
 - Scotland follows UK GDPR (post-Brexit) and the Data Protection Act 2018; the Information Commissioner's Office (ICO) is the regulator for data protection in the UK.
 - If your service processes personal data of UK residents (including users/students), you must comply with UK GDPR principles: lawfulness, fairness, transparency, purpose limitation, data minimisation, accuracy, storage limitation, integrity and confidentiality.
 
 Practical steps relevant to this app
+
 - Lawful basis: determine lawful basis for processing (typically legitimate interests or contract for bookings; explicit consent for marketing).
 - Data minimisation: only collect fields necessary for service (name, email, phone, parental contact for minors).
 - Retention: keep ephemeral messages only as long as necessary. Default policy in app is 21 days unless saved by user; ensure that is documented in the privacy policy and configurable.
@@ -75,6 +78,7 @@ Practical steps relevant to this app
 - Breach notification: have an incident response plan; report certain personal data breaches to ICO within 72 hours where feasible.
 
 About the ICO
+
 - The Information Commissioner's Office is the UK regulator responsible for upholding information rights and enforcing data protection law.
 - The ICO issues guidance, handles complaints, and can impose fines for breaches of data protection law.
 - Registering with the ICO may be required depending on the scale and type of processing; check ICO guidance.
@@ -95,6 +99,7 @@ How I validated routing & functionality
 - I ran the test script (vitest) to discover test coverage. If you want, I can add a test suite for routes and key API endpoints.
 
 Next steps I can take (pick any):
+
 - Add a comprehensive test suite (Vitest + Playwright/Cypress) validating routing, API endpoints, auth flows, and message expiry.
 - Implement automated deletion job (server-side cron) that permanently clears expired messages from the DB.
 - Add Sentry integration and example CI Semgrep rules.

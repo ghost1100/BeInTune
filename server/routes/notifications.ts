@@ -24,7 +24,10 @@ router.patch("/notifications/:id/read", async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const { id } = req.params;
-    await query("UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2", [id, req.user.id]);
+    await query(
+      "UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2",
+      [id, req.user.id],
+    );
     res.json({ ok: true });
   } catch (err) {
     console.error(err);

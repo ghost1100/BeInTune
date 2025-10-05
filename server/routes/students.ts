@@ -40,7 +40,7 @@ router.get("/students/admins", async (_req, res) => {
     res.json(q.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to load admins' });
+    res.status(500).json({ error: "Failed to load admins" });
   }
 });
 

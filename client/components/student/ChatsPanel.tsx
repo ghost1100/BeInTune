@@ -100,7 +100,9 @@ export default function ChatsPanel({ className }: { className?: string }) {
         } as any as StudentRecord & { isAdmin?: boolean };
         setStudents((prev) => {
           // ensure admin is first and not duplicated
-          const filtered = prev.filter((p) => p.user_id !== admin.user_id && p.id !== admin.id);
+          const filtered = prev.filter(
+            (p) => p.user_id !== admin.user_id && p.id !== admin.id,
+          );
           return [admin as any, ...filtered];
         });
       }
@@ -112,9 +114,15 @@ export default function ChatsPanel({ className }: { className?: string }) {
   async function toggleSaveMessage(messageId: string, saved: boolean) {
     try {
       if (saved) {
-        await (await import("@/lib/api")).apiFetch(`/api/admin/messages/${messageId}/save`, { method: "POST" });
+        await (
+          await import("@/lib/api")
+        ).apiFetch(`/api/admin/messages/${messageId}/save`, { method: "POST" });
       } else {
-        await (await import("@/lib/api")).apiFetch(`/api/admin/messages/${messageId}/save`, { method: "DELETE" });
+        await (
+          await import("@/lib/api")
+        ).apiFetch(`/api/admin/messages/${messageId}/save`, {
+          method: "DELETE",
+        });
       }
       setTimeout(() => loadMessages(), 200);
     } catch (err) {
@@ -230,17 +238,26 @@ export default function ChatsPanel({ className }: { className?: string }) {
                   onClick={() => setSelected(student)}
                   className={cn(
                     "w-full rounded border p-2 text-left text-sm transition-colors flex items-center justify-between",
-                    selected && (selected.student_id || selected.id || selected.user_id) === id
+                    selected &&
+                      (selected.student_id ||
+                        selected.id ||
+                        selected.user_id) === id
                       ? "bg-muted"
                       : "hover:bg-muted/70",
                     isAdmin ? "border-l-4 border-primary" : "",
                   )}
                 >
                   <div>
-                    <div className="font-medium">{student.name || student.email}</div>
-                    <div className="text-xs text-foreground/70">{student.email}</div>
+                    <div className="font-medium">
+                      {student.name || student.email}
+                    </div>
+                    <div className="text-xs text-foreground/70">
+                      {student.email}
+                    </div>
                   </div>
-                  {isAdmin && <div className="text-xs text-primary">Pinned</div>}
+                  {isAdmin && (
+                    <div className="text-xs text-primary">Pinned</div>
+                  )}
                 </button>
               );
             })}
@@ -251,8 +268,15 @@ export default function ChatsPanel({ className }: { className?: string }) {
           <div className="flex-1 space-y-2 overflow-auto">
             {selected && (
               <div className="mb-2">
-                <button onClick={() => setSelected(null)} className="text-sm text-foreground/70">← Back</button>
-                <div className="text-lg font-semibold mt-1">{selected.name || selected.email}</div>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="text-sm text-foreground/70"
+                >
+                  ← Back
+                </button>
+                <div className="text-lg font-semibold mt-1">
+                  {selected.name || selected.email}
+                </div>
               </div>
             )}
             {conversationMessages().map((message) => (
@@ -362,13 +386,17 @@ export default function ChatsPanel({ className }: { className?: string }) {
 
                   {/* save/unsave toggle */}
                   <button
-                    className={`text-sm px-2 ${((message as any).saved_by || []).includes(user?.id) ? 'text-primary' : ''}`}
+                    className={`text-sm px-2 ${((message as any).saved_by || []).includes(user?.id) ? "text-primary" : ""}`}
                     onClick={async () => {
-                      const saved = ((message as any).saved_by || []).includes(user?.id);
+                      const saved = ((message as any).saved_by || []).includes(
+                        user?.id,
+                      );
                       await toggleSaveMessage(message.id, !saved);
                     }}
                   >
-                    {((message as any).saved_by || []).includes(user?.id) ? 'Saved' : 'Save'}
+                    {((message as any).saved_by || []).includes(user?.id)
+                      ? "Saved"
+                      : "Save"}
                   </button>
 
                   {/* edit/delete for sender */}

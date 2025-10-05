@@ -57,7 +57,9 @@ router.post("/messages", async (req, res) => {
     if (!content) return res.status(400).json({ error: "Missing content" });
     const sid = req.user.id || sender_id || null;
     // default expire_at to 21 days from now unless explicitly saved
-    const expireAt = save ? null : new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString();
+    const expireAt = save
+      ? null
+      : new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString();
     const ins = await query(
       "INSERT INTO messages(sender_id, recipient_id, content, expire_at) VALUES ($1,$2,$3,$4) RETURNING *",
       [sid, recipient_id || null, content, expireAt],
@@ -74,11 +76,19 @@ router.post("/messages", async (req, res) => {
       if (msg.recipient_id) {
         await query(
           "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
-          [msg.recipient_id, msg.sender_id, 'message', JSON.stringify({ messageId: msg.id, snippet: (msg.content || '').slice(0,200) })],
+          [
+            msg.recipient_id,
+            msg.sender_id,
+            "message",
+            JSON.stringify({
+              messageId: msg.id,
+              snippet: (msg.content || "").slice(0, 200),
+            }),
+          ],
         );
       }
     } catch (err) {
-      console.error('Failed to create notification for message:', err);
+      console.error("Failed to create notification for message:", err);
     }
     res.json({ ok: true, message: msg });
   } catch (err) {
@@ -191,9 +201,15 @@ router.delete("/messages/:id/save", async (req, res) => {
       [id, req.user.id],
     );
     // if no saved_by remain, set expire_at to 21 days from now so it will auto delete
-    const cnt = await query("SELECT jsonb_array_length(COALESCE(saved_by,'[]'::jsonb)) as cnt FROM messages WHERE id = $1", [id]);
+    const cnt = await query(
+      "SELECT jsonb_array_length(COALESCE(saved_by,'[]'::jsonb)) as cnt FROM messages WHERE id = $1",
+      [id],
+    );
     if (cnt.rows[0].cnt === 0) {
-      await query("UPDATE messages SET expire_at = now() + interval '21 days' WHERE id = $1", [id]);
+      await query(
+        "UPDATE messages SET expire_at = now() + interval '21 days' WHERE id = $1",
+        [id],
+      );
     }
     res.json({ ok: true });
   } catch (err) {

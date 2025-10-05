@@ -77,12 +77,28 @@ export default function NotificationBell() {
         className="relative p-2 rounded-full"
         title="Notifications"
       >
-        <svg className="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M13.73 21a2 2 0 01-3.46 0" strokeLinecap="round" strokeLinejoin="round" />
+        <svg
+          className="h-6 w-6 text-blue-600"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
+          <path
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M13.73 21a2 2 0 01-3.46 0"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-xs w-5 h-5">{unreadCount}</span>
+          <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-xs w-5 h-5">
+            {unreadCount}
+          </span>
         )}
       </button>
 
@@ -91,30 +107,67 @@ export default function NotificationBell() {
           <div className="p-3 border-b">
             <div className="flex items-center justify-between">
               <div className="font-semibold">Notifications</div>
-              <button className="text-sm text-foreground/70" onClick={() => { setNotifications([]); setUnreadCount(0); }}>Clear</button>
+              <button
+                className="text-sm text-foreground/70"
+                onClick={() => {
+                  setNotifications([]);
+                  setUnreadCount(0);
+                }}
+              >
+                Clear
+              </button>
             </div>
           </div>
           <div className="max-h-72 overflow-auto p-2 space-y-2">
-            {notifications.length === 0 && <div className="text-sm text-foreground/60 p-3">No notifications</div>}
+            {notifications.length === 0 && (
+              <div className="text-sm text-foreground/60 p-3">
+                No notifications
+              </div>
+            )}
             {notifications.map((n) => (
-              <div key={n.id} className={cn("p-2 rounded hover:bg-muted cursor-pointer flex items-start gap-2", n.is_read ? "opacity-80" : "bg-background/60 border-l-4 border-primary")}
-                onClick={() => handleNotificationClick(n)}>
+              <div
+                key={n.id}
+                className={cn(
+                  "p-2 rounded hover:bg-muted cursor-pointer flex items-start gap-2",
+                  n.is_read
+                    ? "opacity-80"
+                    : "bg-background/60 border-l-4 border-primary",
+                )}
+                onClick={() => handleNotificationClick(n)}
+              >
                 <div className="flex-shrink-0">
-                  <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">🔔</div>
+                  <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                    🔔
+                  </div>
                 </div>
                 <div className="flex-1 text-sm">
                   <div className="font-medium">
                     <button
-                      onClick={(e) => { e.stopPropagation(); if (n.actor_id) navigate(`/chats?user=${n.actor_id}`); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (n.actor_id) navigate(`/chats?user=${n.actor_id}`);
+                      }}
                       className="text-left text-sm font-medium text-foreground/90"
                     >
                       {n.actor_name || (n.actor_id ? "Someone" : "System")}
                     </button>
-                    {n.type === 'post:edited_by_admin' && <span className="ml-2 text-xs text-destructive">edited by admin</span>}
-                    {n.type === 'post:deleted_by_admin' && <span className="ml-2 text-xs text-destructive">deleted by admin</span>}
+                    {n.type === "post:edited_by_admin" && (
+                      <span className="ml-2 text-xs text-destructive">
+                        edited by admin
+                      </span>
+                    )}
+                    {n.type === "post:deleted_by_admin" && (
+                      <span className="ml-2 text-xs text-destructive">
+                        deleted by admin
+                      </span>
+                    )}
                   </div>
-                  <div className="text-xs text-foreground/70 mt-1">{(n.meta && n.meta.snippet) || n.meta?.message || n.type}</div>
-                  <div className="text-xs text-foreground/50 mt-1">{new Date(n.created_at).toLocaleString()}</div>
+                  <div className="text-xs text-foreground/70 mt-1">
+                    {(n.meta && n.meta.snippet) || n.meta?.message || n.type}
+                  </div>
+                  <div className="text-xs text-foreground/50 mt-1">
+                    {new Date(n.created_at).toLocaleString()}
+                  </div>
                 </div>
               </div>
             ))}

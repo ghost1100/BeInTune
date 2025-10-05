@@ -115,19 +115,27 @@ router.post("/posts", async (req, res) => {
       let m;
       while ((m = mentionRegex.exec(body || ""))) {
         const username = m[1];
-        const u = await query("SELECT id FROM users WHERE username = $1 OR name = $1 LIMIT 1", [username]);
+        const u = await query(
+          "SELECT id FROM users WHERE username = $1 OR name = $1 LIMIT 1",
+          [username],
+        );
         if (u.rows[0]) {
           const uid = u.rows[0].id;
           if (uid !== authorId) {
             await query(
               "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
-              [uid, authorId, 'mention', JSON.stringify({ postId, snippet: (body || '').slice(0,200) })],
+              [
+                uid,
+                authorId,
+                "mention",
+                JSON.stringify({ postId, snippet: (body || "").slice(0, 200) }),
+              ],
             );
           }
         }
       }
     } catch (err) {
-      console.error('Failed to create mention notifications for post:', err);
+      console.error("Failed to create mention notifications for post:", err);
     }
 
     res.json({ ok: true, id: postId, created_at: insert.rows[0].created_at });
@@ -167,12 +175,19 @@ router.post("/posts/:id/comments", async (req, res) => {
     );
     // Notify post author (unless commenter is same) and mentioned users
     try {
-      const postRes = await query("SELECT author_id FROM posts WHERE id = $1", [id]);
+      const postRes = await query("SELECT author_id FROM posts WHERE id = $1", [
+        id,
+      ]);
       const postAuthor = postRes.rows[0] && postRes.rows[0].author_id;
       if (postAuthor && postAuthor !== authorId) {
         await query(
           "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
-          [postAuthor, authorId, 'post:comment', JSON.stringify({ postId: id, snippet: (body || '').slice(0,200) })],
+          [
+            postAuthor,
+            authorId,
+            "post:comment",
+            JSON.stringify({ postId: id, snippet: (body || "").slice(0, 200) }),
+          ],
         );
       }
       // mentions
@@ -180,19 +195,30 @@ router.post("/posts/:id/comments", async (req, res) => {
       let m;
       while ((m = mentionRegex.exec(body))) {
         const username = m[1];
-        const u = await query("SELECT id FROM users WHERE username = $1 OR name = $1 LIMIT 1", [username]);
+        const u = await query(
+          "SELECT id FROM users WHERE username = $1 OR name = $1 LIMIT 1",
+          [username],
+        );
         if (u.rows[0]) {
           const uid = u.rows[0].id;
           if (uid !== authorId) {
             await query(
               "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
-              [uid, authorId, 'mention', JSON.stringify({ postId: id, snippet: (body || '').slice(0,200) })],
+              [
+                uid,
+                authorId,
+                "mention",
+                JSON.stringify({
+                  postId: id,
+                  snippet: (body || "").slice(0, 200),
+                }),
+              ],
             );
           }
         }
       }
     } catch (err) {
-      console.error('Failed to create notifications for comment:', err);
+      console.error("Failed to create notifications for comment:", err);
     }
 
     res.json({
@@ -323,17 +349,25 @@ router.put("/posts/:id", async (req, res) => {
     );
     // notify post author if edited by admin and not the same user
     try {
-      if (req.user.role === 'admin') {
+      if (req.user.role === "admin") {
         const postAuthor = post.author_id;
         if (postAuthor && postAuthor !== req.user.id) {
           await query(
             "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
-            [postAuthor, req.user.id, 'post:edited_by_admin', JSON.stringify({ postId: id, snippet: (body || '').slice(0,200) })],
+            [
+              postAuthor,
+              req.user.id,
+              "post:edited_by_admin",
+              JSON.stringify({
+                postId: id,
+                snippet: (body || "").slice(0, 200),
+              }),
+            ],
           );
         }
       }
     } catch (err) {
-      console.error('Failed to create notification for post edit:', err);
+      console.error("Failed to create notification for post edit:", err);
     }
     res.json({ ok: true });
   } catch (err) {
@@ -371,17 +405,22 @@ router.delete("/posts/:id", async (req, res) => {
     await query("DELETE FROM posts WHERE id = $1", [id]);
     // notify post author if deleted by admin
     try {
-      if (req.user.role === 'admin') {
+      if (req.user.role === "admin") {
         const postAuthor = post.author_id;
         if (postAuthor && postAuthor !== req.user.id) {
           await query(
             "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
-            [postAuthor, req.user.id, 'post:deleted_by_admin', JSON.stringify({ postId: id })],
+            [
+              postAuthor,
+              req.user.id,
+              "post:deleted_by_admin",
+              JSON.stringify({ postId: id }),
+            ],
           );
         }
       }
     } catch (err) {
-      console.error('Failed to create notification for post delete:', err);
+      console.error("Failed to create notification for post delete:", err);
     }
     res.json({ ok: true });
   } catch (err) {
