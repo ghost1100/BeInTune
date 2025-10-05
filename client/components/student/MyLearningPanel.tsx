@@ -53,6 +53,8 @@ export default function MyLearningPanel({ className }: { className?: string }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [lightboxMime, setLightboxMime] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
