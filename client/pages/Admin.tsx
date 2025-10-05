@@ -1868,6 +1868,146 @@ function StudentsManager() {
     }
   }, [resourceFiles, resourceStudentId, toast, clearResourceSelection]);
 
+  const resourceModal = resourceModalOpen ? (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          closeResourceModal();
+        }
+      }}
+    >
+      <div
+        className="w-full max-w-2xl rounded-lg bg-card p-6 shadow-xl"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Upload learning resources</h3>
+            <p className="text-sm text-foreground/70">
+              Drag and drop or select files to share with a student.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={closeResourceModal}
+            disabled={resourceUploading}
+          >
+            Close
+          </Button>
+        </div>
+        <div className="mt-4 grid gap-3">
+          <div>
+            <label
+              htmlFor="resourceStudent"
+              className="mb-1 block text-sm font-medium text-foreground"
+            >
+              Student
+            </label>
+            <select
+              id="resourceStudent"
+              className="h-10 w-full rounded-md border px-3"
+              value={resourceStudentId}
+              onChange={(event) => setResourceStudentId(event.target.value)}
+              disabled={studentOptions.length === 0 || resourceUploading}
+            >
+              {studentOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <div
+              onDrop={handleResourceDrop}
+              onDragOver={(event) => event.preventDefault()}
+              className="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/40 bg-muted/20 p-6 text-center text-sm"
+            >
+              <p className="font-medium">Drop files here</p>
+              <p className="text-xs text-foreground/70">
+                Accepted: pdf, zip, doc, docx, txt, rtf, video formats and more
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => resourceInputRef.current?.click()}
+                disabled={resourceUploading}
+              >
+                Select files
+              </Button>
+            </div>
+            <input
+              ref={resourceInputRef}
+              type="file"
+              multiple
+              accept="application/pdf,application/zip,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain,video/*,.doc,.docx,.pdf,.zip,.txt,.rtf,.ppt,.pptx,.xls,.xlsx,.mp4,.mov,.avi,.mkv"
+              className="hidden"
+              onChange={handleResourceSelect}
+            />
+          </div>
+          {resourceFiles.length > 0 ? (
+            <ul className="space-y-2 rounded-md border bg-muted/40 p-3 text-sm">
+              {resourceFiles.map((file) => {
+                const key = resourceFileKey(file);
+                const sizeInMb = file.size / (1024 * 1024);
+                const sizeLabel =
+                  sizeInMb >= 1
+                    ? `${sizeInMb.toFixed(1)} MB`
+                    : `${Math.max(1, Math.round(file.size / 1024))} KB`;
+                return (
+                  <li
+                    key={key}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <span className="flex-1 truncate">{file.name}</span>
+                    <span className="text-xs text-foreground/70">
+                      {sizeLabel}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeResourceFile(key)}
+                      disabled={resourceUploading}
+                    >
+                      Remove
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="rounded-md border border-dashed p-4 text-xs text-foreground/60">
+              No files selected yet.
+            </div>
+          )}
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={clearResourceSelection}
+              disabled={resourceFiles.length === 0 || resourceUploading}
+              className="w-full sm:w-auto"
+            >
+              Clear files
+            </Button>
+            <Button
+              type="button"
+              onClick={uploadSelectedResources}
+              disabled={resourceUploading}
+              className="w-full sm:w-auto"
+            >
+              {resourceUploading ? "Uploading..." : "Share resources"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   const toggleStudentDetails = (id: string | undefined | null) => {
     if (!id) return;
     setExpandedStudentIds((prev) => ({
