@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
 
-import { Link } from "react-router-dom";
-
 const logoUrl = "https://static.wixstatic.com/media/7bc411_e9382625812b44e989df4d74039a1e2b~mv2.png";
 
 export function Logo({ className = "" }: { className?: string }) {
