@@ -7,7 +7,7 @@ const router = express.Router();
 // GET /api/admin/students - list students with user info
 router.get("/students", async (_req, res) => {
   const q = await query(
-    `SELECT u.id as user_id, u.email, u.name, s.id as student_id, s.age, s.parent_name, s.parent_email, s.phone, s.address, s.marketing_consent
+    `SELECT u.id as user_id, u.email, u.name, s.id as student_id, s.id as id, s.age, s.parent_name, s.parent_email, s.phone, s.address, s.marketing_consent
      FROM users u JOIN students s ON s.user_id = u.id WHERE u.role = 'student' ORDER BY u.created_at DESC`,
   );
   res.json(q.rows);
