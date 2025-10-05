@@ -610,9 +610,9 @@ export default function Admin() {
                 </div>
               </div>
             </div>
-      )}
+          )}
 
-      {activeTab === "theme" && (
+          {activeTab === "theme" && (
             <div className="rounded-lg border p-4">
               <h2 className="font-semibold">Theme</h2>
               <div className="mt-4">
@@ -625,9 +625,9 @@ export default function Admin() {
             <div className="rounded-lg border p-4">
               <h2 className="font-semibold">Students</h2>
               <div className="mt-4">
-            <StudentsManager />
-          </div>
-        </div>
+                <StudentsManager />
+              </div>
+            </div>
           )}
 
           {activeTab === "reports" && (
@@ -1594,7 +1594,9 @@ function StudentsManager() {
   );
   const [passwordLoading, setPasswordLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedStudentIds, setExpandedStudentIds] = useState<Record<string, boolean>>({});
+  const [expandedStudentIds, setExpandedStudentIds] = useState<
+    Record<string, boolean>
+  >({});
   const filteredStudents = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return students;
@@ -1667,9 +1669,7 @@ function StudentsManager() {
       return;
     }
     const normalizedAge =
-      typeof form.age === "number" && !Number.isNaN(form.age)
-        ? form.age
-        : null;
+      typeof form.age === "number" && !Number.isNaN(form.age) ? form.age : null;
     const primaryPhone =
       (isUnder16 ? form.parentGuardianPhone : form.phone) ||
       form.phone ||
@@ -2025,10 +2025,7 @@ function StudentsManager() {
         )}
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button
-            type="submit"
-            className="w-full sm:w-auto"
-          >
+          <Button type="submit" className="w-full sm:w-auto">
             {editing ? "Save" : "Add"}
           </Button>
           <Button
@@ -2128,15 +2125,23 @@ function StudentsManager() {
                     <dd>{s.address || "—"}</dd>
                   </div>
                   <div>
-                    <dt className="font-medium text-foreground/80">Marketing consent</dt>
-                    <dd>{s.marketing_consent || s.marketingConsent ? "Yes" : "No"}</dd>
+                    <dt className="font-medium text-foreground/80">
+                      Marketing consent
+                    </dt>
+                    <dd>
+                      {s.marketing_consent || s.marketingConsent ? "Yes" : "No"}
+                    </dd>
                   </div>
                   <div>
-                    <dt className="font-medium text-foreground/80">Guardian name</dt>
+                    <dt className="font-medium text-foreground/80">
+                      Guardian name
+                    </dt>
                     <dd>{s.parent_name || s.parentGuardianName || "—"}</dd>
                   </div>
                   <div>
-                    <dt className="font-medium text-foreground/80">Guardian email</dt>
+                    <dt className="font-medium text-foreground/80">
+                      Guardian email
+                    </dt>
                     <dd>{s.parent_email || s.parentGuardianEmail || "—"}</dd>
                   </div>
                   <div>
@@ -2144,7 +2149,9 @@ function StudentsManager() {
                     <dd>{formatDateTime(s.created_at)}</dd>
                   </div>
                   <div>
-                    <dt className="font-medium text-foreground/80">Last updated</dt>
+                    <dt className="font-medium text-foreground/80">
+                      Last updated
+                    </dt>
                     <dd>{formatDateTime(s.updated_at)}</dd>
                   </div>
                 </dl>
@@ -2191,8 +2198,7 @@ function StudentsManager() {
                   type="button"
                   onClick={() => {
                     const pw = window.prompt("Enter new password", "");
-                    if (pw)
-                      setPasswordForUser(userId, pw, "Password updated");
+                    if (pw) setPasswordForUser(userId, pw, "Password updated");
                   }}
                   variant="outline"
                   size="sm"

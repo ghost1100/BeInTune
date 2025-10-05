@@ -106,9 +106,7 @@ export function getSlotsForDay(date: string, from = 8, to = 17): string[] {
   for (let minutes = startMinutes; minutes <= endMinutes; minutes += 30) {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    slots.push(
-      `${String(hours).padStart(2, "0")}:${mins === 0 ? "00" : "30"}`,
-    );
+    slots.push(`${String(hours).padStart(2, "0")}:${mins === 0 ? "00" : "30"}`);
   }
   return slots;
 }
