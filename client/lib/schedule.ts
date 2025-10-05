@@ -115,13 +115,6 @@ export async function removeBooking(id: string) {
   }
 }
 
-export async function removeBooking(id: string) {
-  try {
-    await fetch(`/api/admin/bookings/${id}`, { method: "DELETE" });
-  } catch (e) {
-    console.error(e);
-  }
-}
 
 export function isSlotBooked(date: string, time: string): boolean {
   // synchronous check not supported for API-backed storage
