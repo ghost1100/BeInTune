@@ -76,6 +76,22 @@ router.get("/me", async (req, res) => {
   }
 });
 
+// POST /api/auth/logout
+router.post("/logout", async (req, res) => {
+  try {
+    // clear cookie by setting empty token with immediate expiry
+    res.cookie("token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      expires: new Date(0),
+    });
+  } catch (err) {
+    console.error("Error clearing cookie:", err);
+  }
+  return res.json({ ok: true });
+});
+
 // POST /api/auth/send-reset
 router.post("/send-reset", async (req, res) => {
   const { email } = req.body as { email?: string };
