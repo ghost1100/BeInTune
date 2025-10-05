@@ -29,7 +29,7 @@ export default function ThemeHomePreview({
           <h3 className="mt-2 text-lg font-semibold text-foreground">
             {content.siteTitle}
           </h3>
-          <p className="mt-1 text-sm text-foreground/70">
+          <p className="mt-1 text-sm text-white/70 dark:text-foreground/70">
             {content.heroHeading}
           </p>
         </div>
@@ -81,7 +81,7 @@ export default function ThemeHomePreview({
             <h1 className="mt-6 text-2xl md:text-3xl font-extrabold leading-tight">
               {content.heroHeading}
             </h1>
-            <p className="mt-4 text-base text-foreground/90">
+            <p className="mt-4 text-base text-white/90 dark:text-foreground/90">
               {content.heroSubheading}
             </p>
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
