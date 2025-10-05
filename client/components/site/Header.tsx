@@ -49,6 +49,11 @@ export function Header() {
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          {user && user.role === 'student' && (
+            <Link to="/dashboard" className="hidden sm:block">
+              <Button variant="ghost">Dashboard</Button>
+            </Link>
+          )}
           <Link to="/admin/login" className="hidden sm:block">
             <Button variant="ghost">Login</Button>
           </Link>
