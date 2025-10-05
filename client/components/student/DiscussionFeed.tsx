@@ -413,7 +413,8 @@ export default function DiscussionFeed({ className }: { className?: string }) {
               {/* edit / delete controls for original poster */}
               {user &&
                 (post.author_id === user.id ||
-                  (post.metadata && (post.metadata as any).author_name === user.name) ||
+                  (post.metadata &&
+                    (post.metadata as any).author_name === user.name) ||
                   user.role === "admin") && (
                   <div className="ml-auto flex items-center gap-2 border-dashed border rounded px-2 py-1">
                     <button
@@ -509,7 +510,9 @@ function Comments({ postId }: { postId: string }) {
   async function saveEditedComment(commentId: string) {
     if (!editingCommentText) return;
     try {
-      await (await import("@/lib/api")).apiFetch(`/api/posts/${postId}/comments/${commentId}`, {
+      await (
+        await import("@/lib/api")
+      ).apiFetch(`/api/posts/${postId}/comments/${commentId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body: editingCommentText }),
@@ -525,7 +528,9 @@ function Comments({ postId }: { postId: string }) {
   async function deleteComment(commentId: string) {
     if (!confirm("Delete this comment?")) return;
     try {
-      await (await import("@/lib/api")).apiFetch(`/api/posts/${postId}/comments/${commentId}`, {
+      await (
+        await import("@/lib/api")
+      ).apiFetch(`/api/posts/${postId}/comments/${commentId}`, {
         method: "DELETE",
       });
       loadComments();
@@ -539,23 +544,62 @@ function Comments({ postId }: { postId: string }) {
       <div className="space-y-2">
         {comments.map((comment) => {
           const isAdminComment = (comment as any).author_role === "admin";
-          const isAuthor = user && ((comment as any).author_id === user.id || (comment as any).author_name === user.name);
+          const isAuthor =
+            user &&
+            ((comment as any).author_id === user.id ||
+              (comment as any).author_name === user.name);
           const canManage = isAuthor || (user && user.role === "admin");
           return (
-            <div key={comment.id} className={cn("rounded p-2", isAdminComment ? "bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary" : "border")}>
+            <div
+              key={comment.id}
+              className={cn(
+                "rounded p-2",
+                isAdminComment
+                  ? "bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary"
+                  : "border",
+              )}
+            >
               <div className="flex items-center justify-between">
-                <div className="text-xs font-medium text-foreground/70">{comment.author_name || "User"}</div>
+                <div className="text-xs font-medium text-foreground/70">
+                  {comment.author_name || "User"}
+                </div>
                 {canManage && (
                   <div className="flex items-center gap-2">
                     {editingCommentId === comment.id ? (
                       <>
-                        <button className="text-sm px-2" onClick={() => saveEditedComment(comment.id)}>Save</button>
-                        <button className="text-sm px-2" onClick={() => { setEditingCommentId(null); setEditingCommentText(""); }}>Cancel</button>
+                        <button
+                          className="text-sm px-2"
+                          onClick={() => saveEditedComment(comment.id)}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="text-sm px-2"
+                          onClick={() => {
+                            setEditingCommentId(null);
+                            setEditingCommentText("");
+                          }}
+                        >
+                          Cancel
+                        </button>
                       </>
                     ) : (
                       <>
-                        <button className="text-sm px-2" onClick={() => { setEditingCommentId(comment.id); setEditingCommentText(comment.body || ""); }}>Edit</button>
-                        <button className="text-sm text-destructive" onClick={() => deleteComment(comment.id)}>Delete</button>
+                        <button
+                          className="text-sm px-2"
+                          onClick={() => {
+                            setEditingCommentId(comment.id);
+                            setEditingCommentText(comment.body || "");
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="text-sm text-destructive"
+                          onClick={() => deleteComment(comment.id)}
+                        >
+                          Delete
+                        </button>
                       </>
                     )}
                   </div>
@@ -564,7 +608,11 @@ function Comments({ postId }: { postId: string }) {
 
               {editingCommentId === comment.id ? (
                 <div className="mt-2">
-                  <textarea value={editingCommentText} onChange={(e) => setEditingCommentText(e.target.value)} className="w-full rounded border p-2" />
+                  <textarea
+                    value={editingCommentText}
+                    onChange={(e) => setEditingCommentText(e.target.value)}
+                    className="w-full rounded border p-2"
+                  />
                 </div>
               ) : (
                 <div className="text-sm text-foreground/90">{comment.body}</div>
@@ -574,9 +622,19 @@ function Comments({ postId }: { postId: string }) {
         })}
       </div>
       <div className="flex gap-2">
-        <label htmlFor={`comment-${postId}`} className="sr-only">Add comment</label>
-        <input id={`comment-${postId}`} value={text} onChange={(event) => setText(event.target.value)} className="flex-1 rounded border p-2" placeholder="Add a comment" />
-        <Button size="sm" onClick={submitComment}>Comment</Button>
+        <label htmlFor={`comment-${postId}`} className="sr-only">
+          Add comment
+        </label>
+        <input
+          id={`comment-${postId}`}
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          className="flex-1 rounded border p-2"
+          placeholder="Add a comment"
+        />
+        <Button size="sm" onClick={submitComment}>
+          Comment
+        </Button>
       </div>
     </div>
   );
