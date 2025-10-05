@@ -239,6 +239,8 @@ export default function Admin() {
     | "theme"
     | "reports"
     | "security"
+    | "discussion"
+    | "chats"
   >("teachers");
 
   return (
