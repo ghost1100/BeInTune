@@ -18,6 +18,29 @@ export default function Dashboard() {
 
   const displayName = user.username || user.name || user.email;
 
+  const [bookings, setBookings] = useState<any[]>([]);
+
+  // Load upcoming bookings for this student
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await (await import("@/lib/api")).apiFetch(`/api/admin/bookings`);
+        const rows = Array.isArray(res) ? res : res && (res as any).rows ? (res as any).rows : [];
+        const mine = rows.filter((b: any) => b.student_user_id === user.id);
+        // sort by date/time
+        mine.sort((a: any, b: any) => {
+          const da = new Date(`${a.date}T${a.time}`).getTime();
+          const db = new Date(`${b.date}T${b.time}`).getTime();
+          return da - db;
+        });
+        setBookings(mine);
+      } catch (err) {
+        console.error("Failed to load bookings", err);
+        setBookings([]);
+      }
+    })();
+  }, [user]);
+
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
