@@ -45,12 +45,9 @@ export default function useAuth() {
       try {
         const res = await fetch("/api/auth/me", { credentials: "include" });
         if (!res.ok) {
-          if (res.status === 401 || res.status === 403) {
-            persistUser(null);
-          }
-          if (!fallbackRef.current && mounted) {
-            setUser(null);
-          }
+          // clear any stored user if server rejects the session to avoid stale local fallbacks
+          persistUser(null);
+          if (mounted) setUser(null);
           return;
         }
         const next = await res.json();
@@ -58,9 +55,9 @@ export default function useAuth() {
         setUser(next);
         persistUser(next);
       } catch (error) {
-        if (!fallbackRef.current && mounted) {
-          setUser(null);
-        }
+        // on network/error, clear fallback to avoid incorrect redirects
+        persistUser(null);
+        if (mounted) setUser(null);
       } finally {
         if (mounted) setLoading(false);
       }
