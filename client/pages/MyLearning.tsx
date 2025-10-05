@@ -34,8 +34,9 @@ export default function MyLearning() {
     if (!selected) return;
     (async () => {
       try {
-        const j = await (await import('@/lib/api')).apiFetch(`/api/admin/learning/${selected}`);
-        setResources(j as any[] || []);
+        const j = await (await import("@/lib/api")).apiFetch(`/api/admin/learning/${selected}`);
+        const arr = Array.isArray(j) ? j : (j && (j as any).rows ? (j as any).rows : []);
+        setResources(arr as any[]);
       } catch (e) {
         console.error(e);
         setResources([]);
