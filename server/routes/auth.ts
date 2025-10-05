@@ -126,13 +126,25 @@ router.post("/send-reset", async (req, res) => {
   const { email } = req.body as { email?: string };
   if (!email) return res.status(400).json({ error: "Missing email" });
 
-  const userRes = await query("SELECT id, email FROM users WHERE email = $1", [
-    email,
-  ]);
+  const { digest, decryptText } = await import('../lib/crypto');
+  const idx = digest(email);
+  let userRes = await query("SELECT id, email, email_encrypted FROM users WHERE email_index = $1", [idx]);
+  if (!userRes.rows.length) {
+    userRes = await query("SELECT id, email, email_encrypted FROM users WHERE email = $1", [email]);
+  }
   const user = userRes.rows[0];
-
   // Always return success to avoid leaking existence
   if (!user) return res.json({ ok: true });
+
+  // determine email to send to
+  let sendTo = user.email;
+  if (!sendTo && user.email_encrypted) {
+    try {
+      const parsed = typeof user.email_encrypted === 'string' ? JSON.parse(user.email_encrypted) : user.email_encrypted;
+      const dec = decryptText(parsed);
+      if (dec) sendTo = dec;
+    } catch (e) {}
+  }
 
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
