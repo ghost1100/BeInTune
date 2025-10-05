@@ -18,23 +18,24 @@ export default function BookingForm() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
-  const loadSlots = () => {
+  const loadSlots = async () => {
     const all = getSlotsForDay(date);
-    const avail = getAvailability(date);
-    const bookings = getBookings(date).map((b) => b.time);
-    const free = avail.filter((t) => !bookings.includes(t));
+    const avail = await getAvailability(date);
+    const bookingsRes = await getBookings(date);
+    const bookings = Array.isArray(bookingsRes) ? bookingsRes.map((b:any) => b.time) : [];
+    const free = (avail || []).filter((t) => !bookings.includes(t));
     setSlots(all);
     setAvailableSlots(free);
     setSelectedSlot(null);
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedSlot) {
       setMessage("Please select an available slot");
       return;
     }
-    const bk = addBooking({
+    const bk = await addBooking({
       name,
       email,
       phone,
