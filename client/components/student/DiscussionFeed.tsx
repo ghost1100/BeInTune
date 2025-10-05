@@ -224,17 +224,68 @@ export default function DiscussionFeed({ className }: { className?: string }) {
                   post.author_name ||
                   "Anonymous"}
               </div>
-              {post.created_at && (
-                <time
-                  className="text-xs text-foreground/60"
-                  dateTime={post.created_at}
-                >
-                  {new Date(post.created_at).toLocaleString()}
-                </time>
-              )}
+              <div className="text-right">
+                {post.created_at && (
+                  <div>
+                    <time
+                      className="text-xs text-foreground/60"
+                      dateTime={post.created_at}
+                    >
+                      {new Date(post.created_at).toLocaleString()}
+                    </time>
+                  </div>
+                )}
+                {/* edited tag */}
+                {(post.metadata && (post.metadata as any).edited) && (
+                  <div className="text-xs mt-1 text-black dark:text-blue-400">edited</div>
+                )}
+              </div>
             </header>
-            {post.body && (
-              <p className="mt-2 text-sm text-foreground/90">{post.body}</p>
+
+            {/* editable body inline */}
+            {editingPostId === post.id ? (
+              <div className="mt-2">
+                <textarea
+                  value={editingBody}
+                  onChange={(e) => setEditingBody(e.target.value)}
+                  className="w-full rounded border p-2"
+                />
+                <div className="flex gap-2 mt-2">
+                  <button
+                    className="px-3 py-1 rounded bg-primary text-primary-foreground"
+                    onClick={async () => {
+                      try {
+                        await (await import("@/lib/api")).apiFetch(`/api/posts/${post.id}`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ body: editingBody }),
+                        });
+                        setEditingPostId(null);
+                        setEditingBody("");
+                        loadPosts();
+                        toast({ title: "Post updated" });
+                      } catch (err: any) {
+                        toast({ title: "Unable to update", description: err?.message });
+                      }
+                    }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="px-3 py-1 rounded border"
+                    onClick={() => {
+                      setEditingPostId(null);
+                      setEditingBody("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              post.body && (
+                <p className="mt-2 text-sm text-foreground/90">{post.body}</p>
+              )
             )}
             {post.media && post.media.length > 0 && (
               <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
