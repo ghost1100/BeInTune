@@ -142,6 +142,7 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <Button variant="ghost" onClick={logout}>
               Logout
             </Button>
