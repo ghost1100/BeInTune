@@ -172,7 +172,7 @@ router.post("/posts/:id/comments", async (req, res) => {
       if (postAuthor && postAuthor !== authorId) {
         await query(
           "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
-          [postAuthor, authorId, 'post:comment', JSON.stringify({ postId: id })],
+          [postAuthor, authorId, 'post:comment', JSON.stringify({ postId: id, snippet: (body || '').slice(0,200) })],
         );
       }
       // mentions
