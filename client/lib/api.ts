@@ -3,7 +3,15 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
     { credentials: "include" } as RequestInit,
     init || {},
   );
-  const res = await fetch(input, opts);
+  let res: Response;
+  try {
+    res = await fetch(input, opts);
+  } catch (err: any) {
+    // Network or CORS failure
+    throw new Error(
+      `Network request failed for ${typeof input === "string" ? input : "request"}: ${err?.message || err}`,
+    );
+  }
   const contentType = res.headers.get("content-type") || "";
   const isJson = contentType.includes("application/json");
 
