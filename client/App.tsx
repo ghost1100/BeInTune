@@ -14,6 +14,7 @@ import Teachers from "./pages/Teachers";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
+import Discussion from "./pages/Discussion";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import { Header } from "./components/site/Header";
@@ -63,6 +64,14 @@ const App = () => (
                 element={
                   <PrivateRoute>
                     <Chats />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/discussion"
+                element={
+                  <PrivateRoute>
+                    <Discussion />
                   </PrivateRoute>
                 }
               />
