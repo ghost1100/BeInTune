@@ -107,6 +107,10 @@ export default function DiscussionFeed({ className }: { className?: string }) {
     if (!files || files.length === 0) return;
     for (const file of Array.from(files)) {
       try {
+        if (file.type.startsWith("video")) {
+          const dur = await getVideoDuration(file);
+          if (dur > 180) throw new Error("Video too long. Maximum allowed is 3 minutes.");
+        }
         const data = await fileToBase64(file);
         const payload = await (
           await import("@/lib/api")
