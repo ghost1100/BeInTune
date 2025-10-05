@@ -111,6 +111,19 @@ router.put("/messages/:id", async (req, res) => {
   }
 });
 
+// DELETE /api/admin/messages/:id/reactions - remove reaction for current user
+router.delete("/messages/:id/reactions", async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    const { id } = req.params;
+    await query("DELETE FROM message_reactions WHERE message_id = $1 AND user_id = $2", [id, req.user.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to remove message reaction" });
+  }
+});
+
 // DELETE /api/admin/messages/:id - delete message (sender only)
 router.delete("/messages/:id", async (req, res) => {
   try {
