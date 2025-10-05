@@ -583,21 +583,30 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
   }, [date]);
 
   useEffect(() => {
-    // noop to respond to updates
-  }, [refresh]);
+    (async () => {
+      try {
+        const b = await getBookings(date);
+        const a = await getAvailability(date);
+        setBookingsState(Array.isArray(b) ? b : []);
+        setAvailState(Array.isArray(a) ? a : []);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  }, [date, refresh]);
 
-  const toggle = (time: string) => {
-    toggleAvailability(date, time);
+  const toggle = async (time: string) => {
+    await toggleAvailability(date, time);
     setRefresh((r) => r + 1);
   };
 
-  const removeBk = (id: string) => {
-    removeBooking(id);
+  const removeBk = async (id: string) => {
+    await removeBooking(id);
     setRefresh((r) => r + 1);
   };
 
-  const bookings = getBookings(date);
-  const avail = getAvailability(date);
+  const [bookingsState, setBookingsState] = useState<any[]>([]);
+  const [availState, setAvailState] = useState<string[]>([]);
   const [students, setStudentsState] = useState<any[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
