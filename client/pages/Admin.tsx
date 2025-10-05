@@ -1583,6 +1583,7 @@ function StudentsManager() {
   const [selectedInstrument, setSelectedInstrument] = useState(
     instrumentsList[0],
   );
+  const [passwordLoading, setPasswordLoading] = useState<string | null>(null);
 
   const refresh = async () => {
     try {
