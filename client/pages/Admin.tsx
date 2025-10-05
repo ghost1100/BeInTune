@@ -1468,8 +1468,13 @@ function StudentsManager() {
       setStudents(Array.isArray(s) ? s : []);
     } catch (e) {
       console.error(e);
+      setStudents([]);
     }
   };
+
+  useEffect(() => {
+    refresh();
+  }, []);
 
   const save = async (e?: FormEvent) => {
     if (e) e.preventDefault();
