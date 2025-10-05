@@ -49,7 +49,7 @@ export default function SecurityPanel() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [identifier, setIdentifier] = useState(" ");
+  const [identifier, setIdentifier] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -114,12 +114,14 @@ export default function SecurityPanel() {
     (log) => !ADMIN_ROLES.has((log.role ?? "").toLowerCase()),
   );
 
-  const resetForm = () => {
+  const resetForm = (nextIdentifier?: string) => {
     setCurrentPassword("");
     setNewUsername("");
     setNewPassword("");
     setConfirmPassword("");
-    if (user?.username || user?.email) {
+    if (typeof nextIdentifier === "string") {
+      setIdentifier(nextIdentifier);
+    } else if (user?.username || user?.email) {
       setIdentifier(user.username || user.email);
     }
   };
@@ -188,10 +190,8 @@ export default function SecurityPanel() {
         description: "Your admin profile has been updated.",
       });
 
-      if (trimmedUsername) {
-        setIdentifier(trimmedUsername);
-      }
-      resetForm();
+      const nextIdentifier = trimmedUsername || trimmedIdentifier;
+      resetForm(nextIdentifier);
       await loadLogs();
     } catch (error: any) {
       console.error(error);
@@ -362,7 +362,7 @@ export default function SecurityPanel() {
             <Button
               type="button"
               variant="outline"
-              onClick={resetForm}
+              onClick={() => resetForm()}
               className="w-full sm:w-auto"
             >
               Clear
