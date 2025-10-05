@@ -463,6 +463,9 @@ export default function DiscussionFeed({ className }: { className?: string }) {
 function Comments({ postId }: { postId: string }) {
   const [comments, setComments] = useState<CommentRecord[]>([]);
   const [text, setText] = useState("");
+  const { user } = useAuth();
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
 
   useEffect(() => {
     loadComments();
@@ -501,43 +504,77 @@ function Comments({ postId }: { postId: string }) {
     }
   }
 
+  async function saveEditedComment(commentId: string) {
+    if (!editingCommentText) return;
+    try {
+      await (await import("@/lib/api")).apiFetch(`/api/posts/${postId}/comments/${commentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: editingCommentText }),
+      });
+      setEditingCommentId(null);
+      setEditingCommentText("");
+      loadComments();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function deleteComment(commentId: string) {
+    if (!confirm("Delete this comment?")) return;
+    try {
+      await (await import("@/lib/api")).apiFetch(`/api/posts/${postId}/comments/${commentId}`, {
+        method: "DELETE",
+      });
+      loadComments();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <div className="space-y-2">
         {comments.map((comment) => {
-          const isAdmin = (comment as any).author_role === "admin";
+          const isAdminComment = (comment as any).author_role === "admin";
+          const isAuthor = user && ((comment as any).author_id === user.id || (comment as any).author_name === user.name);
+          const canManage = isAuthor || (user && user.role === "admin");
           return (
-            <div
-              key={comment.id}
-              className={cn(
-                "rounded p-2",
-                isAdmin
-                  ? "bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary"
-                  : "border",
-              )}
-            >
-              <div className="text-xs font-medium text-foreground/70">
-                {comment.author_name || "User"}
+            <div key={comment.id} className={cn("rounded p-2", isAdminComment ? "bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary" : "border")}>
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-medium text-foreground/70">{comment.author_name || "User"}</div>
+                {canManage && (
+                  <div className="flex items-center gap-2">
+                    {editingCommentId === comment.id ? (
+                      <>
+                        <button className="text-sm px-2" onClick={() => saveEditedComment(comment.id)}>Save</button>
+                        <button className="text-sm px-2" onClick={() => { setEditingCommentId(null); setEditingCommentText(""); }}>Cancel</button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="text-sm px-2" onClick={() => { setEditingCommentId(comment.id); setEditingCommentText(comment.body || ""); }}>Edit</button>
+                        <button className="text-sm text-destructive" onClick={() => deleteComment(comment.id)}>Delete</button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="text-sm text-foreground/90">{comment.body}</div>
+
+              {editingCommentId === comment.id ? (
+                <div className="mt-2">
+                  <textarea value={editingCommentText} onChange={(e) => setEditingCommentText(e.target.value)} className="w-full rounded border p-2" />
+                </div>
+              ) : (
+                <div className="text-sm text-foreground/90">{comment.body}</div>
+              )}
             </div>
           );
         })}
       </div>
       <div className="flex gap-2">
-        <label htmlFor={`comment-${postId}`} className="sr-only">
-          Add comment
-        </label>
-        <input
-          id={`comment-${postId}`}
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          className="flex-1 rounded border p-2"
-          placeholder="Add a comment"
-        />
-        <Button size="sm" onClick={submitComment}>
-          Comment
-        </Button>
+        <label htmlFor={`comment-${postId}`} className="sr-only">Add comment</label>
+        <input id={`comment-${postId}`} value={text} onChange={(event) => setText(event.target.value)} className="flex-1 rounded border p-2" placeholder="Add a comment" />
+        <Button size="sm" onClick={submitComment}>Comment</Button>
       </div>
     </div>
   );
