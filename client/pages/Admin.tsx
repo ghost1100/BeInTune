@@ -867,10 +867,12 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
             </div>
             <div className="mt-3">
               <input
+                name="studentSearch"
                 placeholder="Search students"
                 className="w-full h-10 rounded-md border px-3"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                autoComplete="off"
               />
               <div className="mt-3 max-h-64 overflow-auto space-y-2">
                 {filteredStudents.length === 0 && (
