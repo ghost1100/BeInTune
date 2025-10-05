@@ -23,11 +23,11 @@ export default function Index() {
             className="lg:col-span-7 text-foreground max-w-2xl"
             style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}
           >
-            <div className="inline-flex items-center gap-3 rounded-full bg-white/10 px-3 py-1 text-sm">
+            <div className="inline-flex items-center gap-3 rounded-full bg-white/10 px-3 py-1 text-sm text-white/90 dark:text-foreground/90">
               <Star className="size-4 text-yellow-300" />
               West Lothian’s award-winning tuition
             </div>
-            <h1 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight">
+            <h1 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-white dark:text-foreground">
               {content.heroHeading}
             </h1>
             <p className="mt-4 text-lg text-white/90 dark:text-foreground/90">
@@ -47,21 +47,21 @@ export default function Index() {
               </Link>
             </div>
 
-            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 text-foreground/90 text-sm">
+            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 text-white/90 dark:text-foreground/90 text-sm">
               <div className="flex items-center gap-2">
-                <Headphones className="size-4" />
+                <Headphones className="size-4 text-white/90 dark:text-foreground/90" />
                 Guitar
               </div>
               <div className="flex items-center gap-2">
-                <Mic2 className="size-4" />
+                <Mic2 className="size-4 text-white/90 dark:text-foreground/90" />
                 Singing
               </div>
               <div className="flex items-center gap-2">
-                <Headphones className="size-4" />
+                <Headphones className="size-4 text-white/90 dark:text-foreground/90" />
                 Piano
               </div>
               <div className="flex items-center gap-2">
-                <Headphones className="size-4" />
+                <Headphones className="size-4 text-white/90 dark:text-foreground/90" />
                 Drums
               </div>
             </div>
