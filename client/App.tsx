@@ -23,6 +23,8 @@ import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import Chats from "./pages/Chats";
 import Dashboard from "./pages/Dashboard";
+import CookieBanner from "./components/ui/CookieBanner";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
