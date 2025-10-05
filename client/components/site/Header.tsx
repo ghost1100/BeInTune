@@ -11,11 +11,6 @@ const publicNav = [
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
-const protectedNav = [
-  { href: "/discussion", label: "Discussion" },
-  { href: "/mylearning", label: "My Learning" },
-  { href: "/chats", label: "Chats" },
-];
 
 export function Header() {
   const { user, loading } = useAuth();
