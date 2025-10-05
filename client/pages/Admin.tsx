@@ -2714,6 +2714,19 @@ function StudentsManager() {
                     ? "Sending..."
                     : "Send reset"}
                 </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    // open the existing resource modal for this specific student
+                    setResourceStudentId(studentId || "");
+                    setResourceModalOpen(true);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full whitespace-normal sm:w-auto"
+                >
+                  Upload material
+                </Button>
               </div>
             </div>
           );
