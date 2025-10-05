@@ -249,6 +249,28 @@ export default function ChatsPanel({ className }: { className?: string }) {
             placeholder="Search students"
           />
           <div className="mt-3 max-h-[60vh] space-y-2 overflow-auto">
+            {rooms.length > 0 && (
+              <div className="mb-2">
+                <div className="text-xs text-foreground/60 mb-1">Group chats</div>
+                {rooms.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => setSelected(r)}
+                    className={cn(
+                      "w-full rounded border p-2 text-left text-sm transition-colors flex items-center justify-between",
+                      selected && selected.id === r.id ? "bg-muted" : "hover:bg-muted/70",
+                    )}
+                  >
+                    <div>
+                      <div className="font-medium">{r.name}</div>
+                      <div className="text-xs text-foreground/70">{r.members} members</div>
+                    </div>
+                    <div className="text-xs text-primary">Group</div>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {(query ? filteredStudents() : students).map((student) => {
               const id = student.student_id || student.id || student.user_id;
               const isAdmin = (student as any).isAdmin;
@@ -269,12 +291,8 @@ export default function ChatsPanel({ className }: { className?: string }) {
                   )}
                 >
                   <div>
-                    <div className="font-medium">
-                      {student.name || student.email}
-                    </div>
-                    <div className="text-xs text-foreground/70">
-                      {student.email}
-                    </div>
+                    <div className="font-medium">{student.name || student.email}</div>
+                    <div className="text-xs text-foreground/70">{student.email}</div>
                   </div>
                   {isAdmin && (
                     <div className="text-xs text-primary">Pinned</div>
