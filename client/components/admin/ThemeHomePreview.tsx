@@ -1,23 +1,34 @@
 import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { getSiteContent } from "@/lib/siteContent";
 import { Sun, Moon } from "lucide-react";
-import { useState } from "react";
 
-export default function ThemeHomePreview({ mode, setMode }:{ mode: 'light'|'dark', setMode: (m:'light'|'dark')=>void }) {
+export default function ThemeHomePreview({ mode, setMode, compact }:{ mode: 'light'|'dark', setMode: (m:'light'|'dark')=>void, compact?:boolean }) {
   const content = getSiteContent();
   const wrapperClass = mode === 'dark' ? 'dark' : '';
 
+  if(compact){
+    return (
+      <div className={`rounded-md overflow-hidden border bg-card ${wrapperClass} w-full`}>
+        <div className="p-3 text-center">
+          <div className="text-sm text-foreground/70">Preview</div>
+          <h3 className="mt-2 text-lg font-semibold text-foreground">{content.siteTitle}</h3>
+          <p className="mt-1 text-sm text-foreground/70">{content.heroHeading}</p>
+        </div>
+        <div className="px-4 pb-4">
+          <div className="bg-muted rounded-md p-3 text-center">
+            <div className="text-base font-semibold text-foreground">{content.ctaPrimary}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-[50vh] rounded-lg overflow-hidden border bg-card ${wrapperClass}`}>
-      <div className="p-3 flex items-center justify-end gap-2">
-        <button onClick={()=>setMode(mode==='dark'?'light':'dark')} className="p-2 rounded-md border bg-background">
-          {mode === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
-        </button>
-      </div>
-
       {/* Header */}
       <header className="px-6 py-3 border-b bg-card flex items-center justify-between">
-        <div className="font-bold text-lg">{content.siteTitle}</div>
+        <div className="font-bold text-lg text-foreground">{content.siteTitle}</div>
         <nav className="hidden sm:flex gap-3 text-sm text-foreground/80">
           <span>Lessons</span>
           <span>About</span>
