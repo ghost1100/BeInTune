@@ -3,6 +3,20 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
     { credentials: "include" } as RequestInit,
     init || {},
   );
+
+  // Attach stored token as Authorization header when available and not already provided
+  try {
+    if (typeof window !== "undefined") {
+      const token = window.localStorage.getItem("inTuneToken");
+      if (token) {
+        opts.headers = Object.assign({}, opts.headers || {}, {
+          Authorization: `Bearer ${token}`,
+        });
+      }
+    }
+  } catch (e) {
+    // ignore storage errors
+  }
   let res: Response;
   try {
     res = await fetch(input, opts);
