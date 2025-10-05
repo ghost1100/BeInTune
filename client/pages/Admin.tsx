@@ -41,9 +41,9 @@ type Teacher = {
 
 async function loadTeachersFromDb(): Promise<Teacher[]> {
   try {
-    const res = await fetch("/api/admin/teachers");
-    if (!res.ok) return [];
-    const data = await res.json();
+    const { apiFetch } = await import("@/lib/api");
+    const data = await apiFetch("/api/admin/teachers");
+    if (!data || !Array.isArray(data)) return [];
     return (data || []).map((r: any) => ({
       id: r.user_id,
       name: r.name,
