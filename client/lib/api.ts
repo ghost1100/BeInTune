@@ -35,22 +35,29 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
     for (const url of candidates) {
       try {
         attempted.push(url);
+        console.debug("apiFetch trying:", url, opts);
         res = await fetch(url, opts);
+        console.debug("apiFetch response for", url, res && { ok: res.ok, status: res.status });
         // if fetch returns, break (even if non-ok)
         break;
-      } catch (err) {
+      } catch (err: any) {
+        console.warn("apiFetch attempt failed for", url, err?.message || err);
         // continue to next candidate
         res = null;
       }
     }
 
     if (!res) {
+      console.error("apiFetch all attempts failed for", input, attempted);
       throw new Error(`Network request failed for ${input}. Tried: ${attempted.join(", ")}`);
     }
   } else {
     try {
+      console.debug("apiFetch trying:", input, opts);
       res = await fetch(input, opts);
+      console.debug("apiFetch response for", input, res && { ok: res.ok, status: res.status });
     } catch (err: any) {
+      console.error("apiFetch network error for", input, err);
       throw new Error(
         `Network request failed for ${typeof input === "string" ? input : "request"}: ${err?.message || err}`,
       );
