@@ -169,17 +169,13 @@ router.post("/posts/:id/reactions", async (req, res) => {
     const p = await query("SELECT id FROM posts WHERE id = $1", [id]);
     if (!p.rows.length) return res.status(404).json({ error: "Post not found" });
 
-    // upsert to ensure one reaction per user per post
+    // Replace previous reaction (if any) to ensure only one reaction per user per post
     try {
-      await query(
-        `INSERT INTO post_reactions(post_id, user_id, type) VALUES ($1,$2,$3)
-         ON CONFLICT (post_id, user_id) DO UPDATE SET type = EXCLUDED.type, created_at = now()`,
-        [id, uid, type],
-      );
+      await query("DELETE FROM post_reactions WHERE post_id = $1 AND user_id = $2", [id, uid]);
+      await query("INSERT INTO post_reactions(post_id, user_id, type) VALUES ($1,$2,$3)", [id, uid, type]);
       res.json({ ok: true });
     } catch (dbErr: any) {
       console.error("DB error adding reaction:", dbErr);
-      // foreign key violation or other db issues
       if (dbErr && dbErr.code === "23503") {
         return res.status(400).json({ error: "Invalid post or user" });
       }
