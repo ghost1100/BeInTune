@@ -30,7 +30,14 @@ router.post("/messages", async (req, res) => {
       "INSERT INTO messages(sender_id, recipient_id, content) VALUES ($1,$2,$3) RETURNING *",
       [sid, recipient_id || null, content],
     );
-    res.json({ ok: true, message: ins.rows[0] });
+    const msg = ins.rows[0];
+    // broadcast to websocket clients
+    try {
+      req.app.locals.broadcast?.("message:new", msg);
+    } catch (e) {
+      console.error("WS broadcast error:", e);
+    }
+    res.json({ ok: true, message: msg });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to send message" });
