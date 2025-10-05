@@ -680,6 +680,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
 
   const [bookingsState, setBookingsState] = useState<any[]>([]);
   const [availState, setAvailState] = useState<string[]>([]);
+  const [slotMeta, setSlotMeta] = useState<any[]>([]);
   const [students, setStudentsState] = useState<any[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
@@ -1814,7 +1815,7 @@ function StudentsManager() {
                 {s.isElderly ? "• Elderly" : ""}
               </div>
               <div className="text-sm text-foreground/70">
-                {s.email} {s.phone && `• ${s.phone}`}
+                {s.email} {s.phone && `�� ${s.phone}`}
               </div>
               {s.bandName && (
                 <div className="text-sm text-foreground/70">
