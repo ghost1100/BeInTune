@@ -100,6 +100,32 @@ export default function Dashboard() {
         </header>
 
         <Tabs value={tab} onValueChange={setTab} className="space-y-4">
+
+        {/* Upcoming lessons */}
+        <div className="rounded-lg border bg-card p-4">
+          <h2 className="text-lg font-semibold">Upcoming lessons</h2>
+          {bookings.length === 0 ? (
+            <p className="text-sm text-foreground/70 mt-2">No upcoming lessons scheduled.</p>
+          ) : (
+            <ul className="mt-2 space-y-2">
+              {bookings.map((b) => (
+                <li key={b.id} className="flex items-center justify-between rounded border p-2">
+                  <div>
+                    <div className="font-medium">
+                      {b.student_name || b.student_email}
+                    </div>
+                    <div className="text-xs text-foreground/70">
+                      {new Date(`${b.date}T${b.time}`).toLocaleString()} • {b.lesson_type || "Lesson"}
+                    </div>
+                  </div>
+                  <div>
+                    <a href={`/admin/slots?date=${b.date}`} className="text-sm text-primary underline">View</a>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
           <TabsList className="w-fit">
             <TabsTrigger value="learning">My learning</TabsTrigger>
             <TabsTrigger value="discussion">Discussion</TabsTrigger>
