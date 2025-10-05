@@ -601,11 +601,9 @@ export default function Admin() {
                 </div>
               </div>
             </div>
-          )}
+      )}
 
-          {/* Students section removed: student password controls are non-functional and have been disabled. */}
-
-          {activeTab === "theme" && (
+      {activeTab === "theme" && (
             <div className="rounded-lg border p-4">
               <h2 className="font-semibold">Theme</h2>
               <div className="mt-4">
