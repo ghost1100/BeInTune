@@ -59,7 +59,8 @@ async function readAvail(date?: string): Promise<Record<string, string[]>> {
     return map;
   } catch (e) {
     console.error("readAvail error", e);
-    return {};
+    const d = date || new Date().toISOString().slice(0, 10);
+    return { [d]: getSlotsForDay(d) };
   }
 }
 
