@@ -84,6 +84,16 @@ export default function ChatsPanel({ className }: { className?: string }) {
     }
   }
 
+  async function loadRooms() {
+    try {
+      const resp = await (await import("@/lib/api")).apiFetch('/api/admin/rooms');
+      setRooms(Array.isArray(resp) ? resp : []);
+    } catch (e) {
+      console.error('Failed to load rooms', e);
+      setRooms([]);
+    }
+  }
+
   // load admin users so we can pin them above student list
   async function loadAdmins() {
     try {
