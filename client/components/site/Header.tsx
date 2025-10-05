@@ -35,6 +35,10 @@ export function Header() {
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          {/* Notification bell */}
+          <div className="hidden sm:block">
+            <NotificationBell />
+          </div>
           {user && user.role === "student" && (
             <Link to="/dashboard" className="hidden sm:block">
               <Button variant="ghost">Dashboard</Button>
