@@ -1298,9 +1298,7 @@ function ThemeManager() {
 function ReportPanel() {
   const today = new Date().toISOString().slice(0, 10);
   const [studentsCount, setStudentsCount] = useState(0);
-  const [bookingsToday, setBookingsToday] = useState(
-    () => getBookings(today).length,
-  );
+  const [bookingsToday, setBookingsToday] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -1309,9 +1307,8 @@ function ReportPanel() {
         const s = await studentsAPI.list();
         if (!mounted) return;
         setStudentsCount(Array.isArray(s) ? s.length : 0);
-        setBookingsToday(
-          getBookings(new Date().toISOString().slice(0, 10)).length,
-        );
+        const b = await getBookings(new Date().toISOString().slice(0, 10));
+        setBookingsToday(Array.isArray(b) ? b.length : 0);
       } catch (e) {
         console.error(e);
       }
