@@ -766,6 +766,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
             <div className="text-sm font-medium mb-2">Availability</div>
             <div className="space-y-2">
               {slots.map((s) => {
+                const meta = slotMeta.find(
+                  (m) => normalizeTime(m.slot_time || m.slotTime || m.time) === s,
+                );
                 const booked = bookingsState.find((b) => b.time === s);
                 const available = availState.includes(s);
                 return (
@@ -786,10 +789,12 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                         <div>{s}</div>
                         <div>
                           {booked
-                            ? `Booked: ${booked.name}`
+                            ? `Booked: ${booked.student_name || booked.student_email || booked.name || booked.email || "Unknown"}`
                             : available
                               ? "Available"
-                              : "Unavailable"}
+                              : meta && meta.is_available === false
+                                ? "Unavailable"
+                                : "Available"}
                         </div>
                       </div>
                     </div>
