@@ -87,11 +87,8 @@ router.post("/messages/:id/reactions", async (req, res) => {
     if (!m.rows.length) return res.status(404).json({ error: "Message not found" });
 
     try {
-      await query(
-        `INSERT INTO message_reactions(message_id, user_id, type) VALUES ($1,$2,$3)
-         ON CONFLICT (message_id, user_id) DO UPDATE SET type = EXCLUDED.type, created_at = now()`,
-        [id, uid, type],
-      );
+      await query("DELETE FROM message_reactions WHERE message_id = $1 AND user_id = $2", [id, uid]);
+      await query("INSERT INTO message_reactions(message_id, user_id, type) VALUES ($1,$2,$3)", [id, uid, type]);
       res.json({ ok: true });
     } catch (dbErr: any) {
       console.error("DB error adding message reaction:", dbErr);
