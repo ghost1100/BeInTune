@@ -2090,16 +2090,18 @@ function StudentsManager() {
         {filteredStudents.map((s) => {
           const studentId = s.student_id || s.id;
           const userId = s.user_id || s.userId || s.id;
+          const recordKey = studentId || userId;
           const email = s.email;
+          const isExpanded = !!(recordKey && expandedStudentIds[recordKey]);
           return (
             <div
-              key={studentId || userId}
+              key={recordKey}
               className="flex flex-col gap-3 rounded-md border p-3"
             >
               <div className="space-y-2">
                 <button
                   type="button"
-                  onClick={() => toggleStudentDetails(studentId || userId)}
+                  onClick={() => toggleStudentDetails(recordKey)}
                   className="flex w-full items-center justify-between gap-2 text-left"
                 >
                   <span className="font-medium">
@@ -2109,9 +2111,7 @@ function StudentsManager() {
                   </span>
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 transition-transform ${
-                      expandedStudentIds[studentId || userId]
-                        ? "rotate-180"
-                        : ""
+                      isExpanded ? "rotate-180" : ""
                     }`}
                   />
                 </button>
@@ -2121,7 +2121,7 @@ function StudentsManager() {
                 </div>
               </div>
 
-              {expandedStudentIds[studentId || userId] && (
+              {isExpanded && (
                 <dl className="grid gap-2 rounded-md bg-muted/40 p-3 text-sm sm:grid-cols-2">
                   <div>
                     <dt className="font-medium text-foreground/80">Address</dt>
