@@ -29,6 +29,10 @@ export const API = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || "Failed to create student");
+    }
     return res.json();
   },
   async update(id: string, payload: any) {
@@ -37,10 +41,18 @@ export const API = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || "Failed to update student");
+    }
     return res.json();
   },
   async remove(id: string) {
     const res = await fetch(`/api/admin/students/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || "Failed to delete student");
+    }
     return res.json();
   },
 };
