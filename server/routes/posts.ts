@@ -198,6 +198,19 @@ router.put("/posts/:id", async (req, res) => {
   }
 });
 
+// DELETE /api/posts/:id/reactions - remove reaction for current user
+router.delete("/posts/:id/reactions", async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    const { id } = req.params;
+    await query("DELETE FROM post_reactions WHERE post_id = $1 AND user_id = $2", [id, req.user.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to remove reaction" });
+  }
+});
+
 // DELETE /api/posts/:id - delete post (author only)
 router.delete("/posts/:id", async (req, res) => {
   try {
