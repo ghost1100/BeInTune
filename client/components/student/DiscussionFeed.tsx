@@ -276,7 +276,9 @@ export default function DiscussionFeed({ className }: { className?: string }) {
                 {/* edited tag */}
                 {post.metadata && (post.metadata as any).edited && (
                   <div className="text-xs mt-1 text-black dark:text-blue-400">
-                    edited
+                    {(post.metadata as any).edited_by_role === "admin"
+                      ? "edited by admin"
+                      : "edited"}
                   </div>
                 )}
               </div>
