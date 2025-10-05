@@ -70,7 +70,16 @@ export function getBookings(date?: string): Booking[] {
   return b;
 }
 
-import { getStudentById } from "@/lib/students";
+function getStudentById(id: string) {
+  try {
+    const raw = localStorage.getItem('inTuneStudents');
+    if (!raw) return null;
+    const list = JSON.parse(raw);
+    return list.find((s: any) => s.id === id) || null;
+  } catch (e) {
+    return null;
+  }
+}
 
 export function addBooking(booking: Omit<Booking, 'id'>): Booking | null {
   // Ensure slot is available and not already booked
