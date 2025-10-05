@@ -129,10 +129,17 @@ pnpm test
 
 ---
 
-If you want, I will:
+Completed actions: the main sweep and hook integration are done for core areas:
 
-- perform the full automated sweep replacing remaining hard-coded colors (I will run a confirmable diff), then
-- convert all theme interactions to useTheme(), and
-- add unit tests for preview flow.
+- ThemeManager now uses the central `useTheme()` hook (preview/save/restore).
+- ThemeToggle is wired to `useTheme()` so toggling mode persists and applies globally.
+- Inline boot script applies saved theme + mode before React mounts.
+- A broad sweep replaced many hard-coded light backgrounds/texts in key pages (Admin, Index, AdminLogin, NotFound) with theme-aware tokens.
 
-Say `sweep` to run the full color-sweep now, or `hook` to convert remaining code to use the new hook (or both).
+Remaining suggested tasks you may want me to complete:
+
+- Run a full automated repository-wide sweep for `bg-white`, `bg-gray-*`, `text-black` and replace with tokens where appropriate (I can run this and provide a confirmable diff).
+- Add unit/integration tests for preview/confirm/cancel flows and theme persistence.
+- Accessibility & contrast audit (axe/Lighthouse) and tune HSL values for tokens.
+
+If you'd like me to continue, reply `sweep` to run the full repo sweep, `tests` to add tests, or `audit` to run a contrast audit and suggest token adjustments.
