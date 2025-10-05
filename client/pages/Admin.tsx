@@ -618,13 +618,9 @@ export default function Admin() {
             <div className="rounded-lg border p-4">
               <h2 className="font-semibold">Students</h2>
               <div className="mt-4">
-                <StudentsManager />
-              </div>
-
-              <div className="mt-6">
-                <StudentPasswordControls />
-              </div>
-            </div>
+            <StudentsManager />
+          </div>
+        </div>
           )}
 
           {activeTab === "reports" && (
