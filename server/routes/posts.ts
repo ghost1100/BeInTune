@@ -109,6 +109,27 @@ router.post("/posts", async (req, res) => {
     } catch (e) {
       console.error("WS broadcast error:", e);
     }
+    // create mention notifications for any @username in body
+    try {
+      const mentionRegex = /@([\w._-]+)/g;
+      let m;
+      while ((m = mentionRegex.exec(body || ""))) {
+        const username = m[1];
+        const u = await query("SELECT id FROM users WHERE username = $1 OR name = $1 LIMIT 1", [username]);
+        if (u.rows[0]) {
+          const uid = u.rows[0].id;
+          if (uid !== authorId) {
+            await query(
+              "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
+              [uid, authorId, 'mention', JSON.stringify({ postId })],
+            );
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to create mention notifications for post:', err);
+    }
+
     res.json({ ok: true, id: postId, created_at: insert.rows[0].created_at });
   } catch (err) {
     console.error(err);
