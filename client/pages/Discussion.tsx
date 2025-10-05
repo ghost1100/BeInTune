@@ -20,6 +20,21 @@ export default function Discussion() {
 
   useEffect(() => {
     load();
+    // setup websocket for realtime
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const ws = new WebSocket(`${proto}://${window.location.host}/ws`);
+    ws.addEventListener('message', (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === 'post:new') {
+          // reload posts
+          load();
+        }
+      } catch (e) {
+        // ignore
+      }
+    });
+    return () => { ws.close(); };
   }, []);
 
   async function load() {
