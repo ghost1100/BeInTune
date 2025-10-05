@@ -12,12 +12,6 @@ export default function Dashboard() {
   const { user, loading } = useAuth();
   const [tab, setTab] = useState("learning");
 
-  if (loading) return null;
-  if (!user) return <Navigate to="/admin/login" replace />;
-  if (user.role !== "student") return <Navigate to="/admin" replace />;
-
-  const displayName = user.username || user.name || user.email;
-
   const [bookings, setBookings] = useState<any[]>([]);
 
   // Load upcoming bookings for this student
@@ -26,7 +20,7 @@ export default function Dashboard() {
       try {
         const res = await (await import("@/lib/api")).apiFetch(`/api/admin/bookings`);
         const rows = Array.isArray(res) ? res : res && (res as any).rows ? (res as any).rows : [];
-        const mine = rows.filter((b: any) => b.student_user_id === user.id);
+        const mine = user ? rows.filter((b: any) => b.student_user_id === user.id) : [];
         // sort by date/time
         mine.sort((a: any, b: any) => {
           const da = new Date(`${a.date}T${a.time}`).getTime();
@@ -40,6 +34,12 @@ export default function Dashboard() {
       }
     })();
   }, [user]);
+
+  if (loading) return null;
+  if (!user) return <Navigate to="/admin/login" replace />;
+  if (user.role !== "student") return <Navigate to="/admin" replace />;
+
+  const displayName = user.username || user.name || user.email;
 
   const logout = async () => {
     try {
