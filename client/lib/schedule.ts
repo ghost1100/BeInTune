@@ -37,13 +37,25 @@ async function readAvail(date?: string): Promise<Record<string, string[]>> {
       : rows && Array.isArray((rows as any).rows)
         ? (rows as any).rows
         : [];
+
+    const defaults = new Set(getSlotsForDay(d));
+
     if (list.length === 0) {
-      map[d] = getSlotsForDay(d);
+      map[d] = Array.from(defaults);
       return map;
     }
-    map[d] = list
-      .filter((r: any) => r.is_available !== false)
-      .map((r: any) => normalizeTime(r.slot_time || r.slotTime || r.time));
+
+    for (const entry of list) {
+      const time = normalizeTime(entry.slot_time || entry.slotTime || entry.time);
+      if (!time) continue;
+      if (entry.is_available === false) {
+        defaults.delete(time);
+      } else {
+        defaults.add(time);
+      }
+    }
+
+    map[d] = Array.from(defaults).sort();
     return map;
   } catch (e) {
     console.error("readAvail error", e);
