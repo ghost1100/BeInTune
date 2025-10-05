@@ -35,12 +35,17 @@ function fileToBase64(file: File) {
   });
 }
 
+import useAuth from "@/hooks/use-auth";
+
 export default function DiscussionFeed({ className }: { className?: string }) {
   const [posts, setPosts] = useState<DiscussionPost[]>([]);
   const [body, setBody] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const { user } = useAuth();
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editingBody, setEditingBody] = useState("");
 
   useEffect(() => {
     loadPosts();
