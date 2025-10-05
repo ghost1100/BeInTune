@@ -7,6 +7,27 @@
 
 The server now includes scaffolded routes for authentication, admin user management, media uploads, and newsletter sending. See server/routes/* for implementations.
 
+### Newsletter input checklist
+
+When composing a newsletter (POST /api/admin/newsletters), provide the following fields in the JSON payload:
+
+- subject (string, required): email subject line
+- html (string, required): full HTML content of the email
+- plain (string, optional): plain-text fallback content
+- unsplash_image (string, optional): URL to an image to include in the newsletter header
+- attachments (array, optional): list of attachments where each item is an object with { filename: string, mime: string, data: base64 string }
+- scheduled_at (ISO timestamp, optional): when to schedule the send; if omitted the newsletter will be sent immediately
+
+Notes:
+- The server accepts attachments as base64 and stores media in public/uploads via the upload endpoint. Attachments will be recorded in the newsletters.attachments JSON column as media ids when uploaded through the media upload API.
+- Keep HTML and plain content size reasonable; for large media include links rather than embedding large files inline.
+
+### Admin UI changes
+
+- Removed the Students tab from the Admin UI. The student password controls are intentionally disabled / removed from the admin interface for now.
+- The top-right "Admin" navigation button has been relabeled to "Login" (links to /admin/login).
+- Admin pages have been simplified to the essential sections (Teachers, Site, Schedule, Theme, Reports). If you want the Students section restored or to re-enable password controls, reply and I will re-add it behind secure admin auth.
+
 
 This README summarizes all theme-related fixes, the new preview UX, the central theme API, and recommended next steps.
 
