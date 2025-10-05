@@ -4,13 +4,33 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
   const contentType = res.headers.get("content-type") || "";
   const isJson = contentType.includes("application/json");
 
+  // Try to read body from a clone first to avoid issues with consumed streams
+  let reader: Response = res;
+  if (!res.bodyUsed && typeof res.clone === "function") {
+    try {
+      reader = res.clone();
+    } catch (err) {
+      reader = res;
+    }
+  }
+
   let raw: string | null = null;
   try {
-    raw = await res.text();
+    raw = await reader.text();
   } catch (err) {
-    throw new Error(
-      `Failed to read response from ${typeof input === "string" ? input : "request"}: ${err}`,
-    );
+    if (reader !== res) {
+      try {
+        raw = await res.text();
+      } catch (innerErr) {
+        throw new Error(
+          `Failed to read response from ${typeof input === "string" ? input : "request"}: ${innerErr}`,
+        );
+      }
+    } else {
+      throw new Error(
+        `Failed to read response from ${typeof input === "string" ? input : "request"}: ${err}`,
+      );
+    }
   }
 
   let data: any = null;
