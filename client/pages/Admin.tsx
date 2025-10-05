@@ -895,10 +895,12 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
           >
             <div>
               <div className="font-medium">
-                {b.time} — {b.name}
+                {b.time} — {b.student_name || b.name || "Student"}
               </div>
               <div className="text-sm text-foreground/70">
-                {b.email} {b.phone ? `• ${b.phone}` : ""} • {b.lessonType || ""}
+                {(b.student_email || b.email || "") && (b.student_email || b.email)}
+                {b.phone ? ` • ${b.phone}` : ""}
+                {b.lessonType ? ` • ${b.lessonType}` : ""}
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
