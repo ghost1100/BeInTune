@@ -56,26 +56,29 @@ export function getSlotsForDay(date: string, from = 8, to = 20): string[] {
   return slots;
 }
 
-export function getAvailability(date: string): string[] {
-  const a = readAvail();
+export async function getAvailability(date: string): Promise<string[]> {
+  const a = await readAvail(date);
   return a[date] || [];
 }
 
-export function toggleAvailability(date: string, time: string) {
-  const a = readAvail();
-  const day = a[date] || [];
-  if (day.includes(time)) {
-    a[date] = day.filter((t) => t !== time);
-  } else {
-    a[date] = [...day, time].sort();
+export async function toggleAvailability(date: string, time: string) {
+  try {
+    const res = await fetch(`/api/admin/slots?date=${date}`);
+    if (!res.ok) return;
+    const rows = await res.json();
+    const existing = rows.find((r:any)=>r.slot_time===time);
+    if (existing) {
+      await fetch(`/api/admin/slots/${existing.id}`, { method: 'DELETE' });
+    } else {
+      await fetch(`/api/admin/slots`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slot_date: date, slot_time: time }) });
+    }
+  } catch (e) {
+    console.error(e);
   }
-  writeAvail(a);
 }
 
-export function getBookings(date?: string): Booking[] {
-  const b = readBookings();
-  if (date) return b.filter((bk) => bk.date === date);
-  return b;
+export async function getBookings(date?: string): Promise<Booking[]> {
+  return readBookings(date);
 }
 
 function getStudentById(id: string) {
@@ -89,35 +92,28 @@ function getStudentById(id: string) {
   }
 }
 
-export function addBooking(booking: Omit<Booking, 'id'>): Booking | null {
-  // Ensure slot is available and not already booked
-  const { date, time } = booking;
-  const avail = getAvailability(date);
-  const bookings = getBookings(date);
-  const alreadyBooked = bookings.find((b) => b.time === time);
-  if (!avail.includes(time) || alreadyBooked) return null;
-
-  let filled = { ...booking } as Omit<Booking, 'id'>;
-  if (booking.studentId) {
-    const s = getStudentById(booking.studentId);
-    if (s) {
-      filled = { ...filled, name: s.name, email: s.email, phone: s.phone };
-    }
+export async function addBooking(booking: Omit<Booking, 'id'>): Promise<Booking | null> {
+  try {
+    const res = await fetch(`/api/admin/bookings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(booking) });
+    if (!res.ok) return null;
+    return res.json();
+  } catch (e) {
+    console.error(e);
+    return null;
   }
-
-  const bk: Booking = { ...filled, id: String(Date.now()) };
-  const next = [...readBookings(), bk];
-  writeBookings(next);
-  return bk;
 }
 
-export function removeBooking(id: string) {
-  const next = readBookings().filter((b) => b.id !== id);
-  writeBookings(next);
+export async function removeBooking(id: string) {
+  try {
+    await fetch(`/api/admin/bookings/${id}`, { method: 'DELETE' });
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 export function isSlotBooked(date: string, time: string): boolean {
-  return !!getBookings(date).find((b) => b.time === time);
+  // synchronous check not supported for API-backed storage
+  return false;
 }
 
 // Expose helper for other modules
