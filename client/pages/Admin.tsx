@@ -28,6 +28,8 @@ import NewsletterComposer from "@/components/admin/NewsletterComposer";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import DiscussionFeed from "@/components/student/DiscussionFeed";
+import ChatsPanel from "@/components/student/ChatsPanel";
 
 type Teacher = {
   id: string;
