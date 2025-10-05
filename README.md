@@ -25,10 +25,55 @@ Notes:
 
 ### Admin UI changes
 
-- Removed the Students tab from the Admin UI. The student password controls are intentionally disabled / removed from the admin interface for now.
+- Students tab was temporarily removed then restored and wired to the database. Student password controls now operate on real DB records.
 - The top-right "Admin" navigation button has been relabeled to "Login" (links to /admin/login).
-- Admin pages have been simplified to the essential sections (Teachers, Site, Schedule, Theme, Reports). If you want the Students section restored or to re-enable password controls, reply and I will re-add it behind secure admin auth.
+- Admin pages now use API-backed data for Teachers, Students, Bookings, and Slots instead of localStorage where implemented.
 
+### Booking & Schedule
+
+Implemented:
+- Migrated slots and bookings to the database with server routes:
+  - GET /api/admin/slots?date=YYYY-MM-DD
+  - POST /api/admin/slots
+  - DELETE /api/admin/slots/:id
+  - GET /api/admin/bookings?date=YYYY-MM-DD
+  - POST /api/admin/bookings
+  - DELETE /api/admin/bookings/:id
+- Client updated to use the new APIs. The Schedule manager and Booking form now fetch availability and bookings from the server.
+- "Find slots" on the booking form now lists available admin/teacher slots between 08:00 and 17:00 that are not already booked by students.
+
+Not yet implemented / follow-ups:
+- Move booking availability caching / slot bulk updates to a server-side batch API (currently toggle creates/deletes individual slots).
+- Add server-side validation to prevent race conditions when multiple users try to book the same slot at the same time (use transactions/locking).
+
+### Login background images & Unsplash cache
+
+Implemented:
+- Login background now requests images using queries for nature and musical instruments (guitar, piano, etc.).
+- A local cache/backups mechanism is added so previously-fetched images (and a curated backup set) are used if the Unsplash API fails or rate limits are reached. The cache is stored in localStorage under key `unsplash_cache_v1`.
+
+Notes:
+- Add environment variable VITE_UNSPLASH_ACCESS_KEY to increase quota; the code falls back to backup images if the API limit is reached.
+
+### Security & Auth
+
+Implemented:
+- JWT issuance on successful login, with token set as an HTTP-only cookie. Auth middleware decodes the token and attaches the user to requests.
+
+Not yet implemented / recommended:
+- Implement token refresh/rotation and proper logout endpoint to revoke cookies.
+- Harden JWT secret management in production (set JWT_SECRET env var and store in secret manager).
+
+### Misc / Next steps
+
+- Convert remaining client-side localStorage usages (schedule bookings cache, other lists) to API-backed calls. Some components still fall back to localStorage for compatibility.
+- Add unit/integration tests, especially for booking concurrency and auth flows.
+- Add admin UI pages for slot bulk import/export and a calendar view for bookings.
+
+If you want, I can now:
+- Implement server-side booking transaction checks to prevent double-booking.
+- Add session refresh endpoints and a logout route.
+- Seed demo students/teachers for easier testing.
 This README summarizes all theme-related fixes, the new preview UX, the central theme API, and recommended next steps.
 
 ---
