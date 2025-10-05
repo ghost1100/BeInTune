@@ -109,6 +109,16 @@ export async function getAvailability(date: string): Promise<string[]> {
   return a[date] || [];
 }
 
+export async function getSlotsWithMeta(date: string) {
+  const api = (await import("@/lib/api")).apiFetch;
+  const rows = await api(`/api/admin/slots?date=${date}`);
+  return Array.isArray(rows)
+    ? rows
+    : rows && Array.isArray((rows as any).rows)
+      ? (rows as any).rows
+      : [];
+}
+
 export async function toggleAvailability(date: string, time: string) {
   try {
     const api = (await import("@/lib/api")).apiFetch;
