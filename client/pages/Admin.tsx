@@ -17,6 +17,7 @@ import {
   removeStudent as removeStudentFromStore,
 } from "@/lib/students";
 import ThemeHomePreview from "@/components/admin/ThemeHomePreview";
+import useTheme from "@/hooks/useTheme";
 
 type Teacher = {
   id: string;
