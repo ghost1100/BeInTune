@@ -513,7 +513,7 @@ function Comments({ postId }: { postId: string }) {
                 "rounded p-2",
                 isAdmin
                   ? "bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary"
-                  : "border"
+                  : "border",
               )}
             >
               <div className="text-xs font-medium text-foreground/70">
