@@ -20,11 +20,13 @@ export default function MyLearning() {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch("/api/admin/students");
-      if (!res.ok) return;
-      const j = await res.json();
-      setStudents(j);
-      if (j.length) setSelected(j[0].student_id || j[0].id);
+      try {
+        const j = await (await import('@/lib/api')).apiFetch('/api/admin/students');
+        setStudents(j as any[] || []);
+        if ((j as any[])?.length) setSelected((j as any[])[0].student_id || (j as any[])[0].id);
+      } catch (e) {
+        console.error(e);
+      }
     })();
   }, []);
 
