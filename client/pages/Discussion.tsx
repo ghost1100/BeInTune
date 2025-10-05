@@ -56,21 +56,17 @@ export default function Discussion() {
   async function submitPost() {
     if (!body && attachments.length === 0) return;
     try {
-      const res = await fetch("/api/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          body,
-          attachments: attachments.map((a) => a.id),
-        }),
+      const r = await (await import('@/lib/api')).apiFetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body, attachments: attachments.map((a) => a.id) }),
       });
-      if (!res.ok) throw new Error("Failed to create post");
-      setBody("");
+      setBody('');
       setAttachments([]);
-      toast({ title: "Posted" });
+      toast({ title: 'Posted' });
       load();
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Failed" });
+      toast({ title: 'Error', description: err?.message || 'Failed' });
     }
   }
 
