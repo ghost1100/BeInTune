@@ -1713,6 +1713,13 @@ function StudentsManager() {
   const [expandedStudentIds, setExpandedStudentIds] = useState<
     Record<string, boolean>
   >({});
+
+  // View resources modal state
+  const [viewResourcesOpen, setViewResourcesOpen] = useState(false);
+  const [viewResourcesStudentId, setViewResourcesStudentId] = useState<string | null>(null);
+  const [viewResourcesData, setViewResourcesData] = useState<any[]>([]);
+  const [viewLoading, setViewLoading] = useState(false);
+  const [viewActionLoading, setViewActionLoading] = useState(false);
   const filteredStudents = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return students;
