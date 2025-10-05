@@ -266,29 +266,59 @@ export default function DiscussionFeed({ className }: { className?: string }) {
                   ["clap", "👏"],
                   ["wow", "😮"],
                   ["sad", "😢"],
-                ].map(([type, icon]) => (
-                  <button
-                    key={type}
-                    type="button"
-                    className="transition-colors hover:text-foreground"
-                    onClick={() => addReaction(post.id, type)}
-                  >
-                    {icon}
-                  </button>
-                ))}
+                ].map(([type, icon]) => {
+                  const count = (post.reactions && (post.reactions as any)[type]) || 0;
+                  const active = post.user_reaction === type;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => addReaction(post.id, type)}
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded ${active ? "bg-primary/20" : "hover:bg-muted/20"}`}
+                    >
+                      <span aria-hidden>{icon}</span>
+                      <span className="text-xs font-medium">{count}</span>
+                    </button>
+                  );
+                })}
               </div>
-              <div>
-                {post.reactions && Object.keys(post.reactions).length > 0
-                  ? Object.entries(post.reactions)
-                      .map(([key, value]) => `${key}: ${value}`)
-                      .join(" • ")
-                  : "No reactions yet"}
-              </div>
-              <div>
+              <div className="text-xs">
                 {typeof post.comment_count === "number"
                   ? `${post.comment_count} comments`
                   : "Comments"}
               </div>
+
+              {/* edit / delete controls for original poster */}
+              {user && (post.author_id === user.id || (post.metadata && (post.metadata as any).author_name === user.name)) && (
+                <div className="ml-auto flex items-center gap-2 border-dashed border rounded px-2 py-1">
+                  <button
+                    type="button"
+                    className="text-sm px-2"
+                    onClick={() => {
+                      setEditingPostId(post.id);
+                      setEditingBody(post.body || "");
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="text-sm text-destructive"
+                    onClick={async () => {
+                      if (!confirm("Delete this post?")) return;
+                      try {
+                        await (await import("@/lib/api")).apiFetch(`/api/posts/${post.id}`, { method: "DELETE" });
+                        loadPosts();
+                        toast({ title: "Post deleted" });
+                      } catch (err: any) {
+                        toast({ title: "Unable to delete", description: err?.message });
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
             </footer>
             <div className="mt-3">
               <Comments postId={post.id} />
