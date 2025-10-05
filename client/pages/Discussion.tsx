@@ -25,7 +25,8 @@ export default function Discussion() {
   async function load() {
     try {
       const j = await (await import('@/lib/api')).apiFetch('/api/posts');
-      setPosts(j as any[]);
+      const arr = Array.isArray(j) ? j : (j && (j as any).rows ? (j as any).rows : []);
+      setPosts(arr as any[]);
     } catch (err: any) {
       toast({ title: 'Error', description: err?.message || 'Failed to load' });
     }
