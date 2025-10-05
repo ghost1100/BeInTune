@@ -221,25 +221,26 @@ export default function ChatsPanel({ className }: { className?: string }) {
           />
           <div className="mt-3 max-h-[60vh] space-y-2 overflow-auto">
             {(query ? filteredStudents() : students).map((student) => {
-              const id = student.student_id || student.id;
+              const id = student.student_id || student.id || student.user_id;
+              const isAdmin = (student as any).isAdmin;
               return (
                 <button
                   key={id}
                   type="button"
                   onClick={() => setSelected(student)}
                   className={cn(
-                    "w-full rounded border p-2 text-left text-sm transition-colors",
-                    selected && (selected.student_id || selected.id) === id
+                    "w-full rounded border p-2 text-left text-sm transition-colors flex items-center justify-between",
+                    selected && (selected.student_id || selected.id || selected.user_id) === id
                       ? "bg-muted"
                       : "hover:bg-muted/70",
+                    isAdmin ? "border-l-4 border-primary" : "",
                   )}
                 >
-                  <div className="font-medium">
-                    {student.name || student.email}
+                  <div>
+                    <div className="font-medium">{student.name || student.email}</div>
+                    <div className="text-xs text-foreground/70">{student.email}</div>
                   </div>
-                  <div className="text-xs text-foreground/70">
-                    {student.email}
-                  </div>
+                  {isAdmin && <div className="text-xs text-primary">Pinned</div>}
                 </button>
               );
             })}
