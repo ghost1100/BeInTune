@@ -11,7 +11,13 @@ export default function AdminLogin() {
 
   useEffect(() => {
     (async () => {
-      const u = await getRandomImage("music teacher");
+      const queries = ["nature", "guitar", "musical instruments", "acoustic guitar", "piano"];
+      // try several queries until we get an image
+      let u: string | null = null;
+      for (let q of queries) {
+        u = await getRandomImage(q);
+        if (u) break;
+      }
       setImg(u);
     })();
   }, []);
