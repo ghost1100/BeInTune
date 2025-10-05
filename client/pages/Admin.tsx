@@ -9,6 +9,7 @@ import {
   addBooking,
   removeBooking,
   isSlotBooked,
+  getSlotsWithMeta,
 } from "@/lib/schedule";
 import studentsAPI from "@/lib/students";
 import ThemeHomePreview from "@/components/admin/ThemeHomePreview";
