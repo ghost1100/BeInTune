@@ -919,6 +919,8 @@ function ThemeManager() {
     },
   };
 
+  const { mode, setMode, saveTheme, previewTheme, restoreTheme } = useTheme();
+
   const [preset, setPreset] = useState("blue");
   const [primary, setPrimary] = useState(presets.blue.primary);
   const [brand1, setBrand1] = useState(presets.blue.brand1);
