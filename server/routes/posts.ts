@@ -206,7 +206,7 @@ router.put("/posts/:id", async (req, res) => {
     );
     const post = p.rows[0];
     if (!post) return res.status(404).json({ error: "Not found" });
-    if (post.author_id !== req.user.id)
+    if (post.author_id !== req.user.id && req.user.role !== "admin")
       return res.status(403).json({ error: "Forbidden" });
     const metadata = post.metadata || {};
     metadata.edited = true;
@@ -246,7 +246,7 @@ router.delete("/posts/:id", async (req, res) => {
     const p = await query("SELECT author_id FROM posts WHERE id = $1", [id]);
     const post = p.rows[0];
     if (!post) return res.status(404).json({ error: "Not found" });
-    if (post.author_id !== req.user.id)
+    if (post.author_id !== req.user.id && req.user.role !== "admin")
       return res.status(403).json({ error: "Forbidden" });
     await query("DELETE FROM posts WHERE id = $1", [id]);
     res.json({ ok: true });
