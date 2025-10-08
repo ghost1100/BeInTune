@@ -41,6 +41,14 @@ export async function ensureDbSetup() {
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS about text;");
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS image text;");
 
+    // Ensure students table has extended fields used by the admin UI
+    await query("ALTER TABLE students ADD COLUMN IF NOT EXISTS parent_phone text;");
+    await query("ALTER TABLE students ADD COLUMN IF NOT EXISTS emergency_contacts text;");
+    await query("ALTER TABLE students ADD COLUMN IF NOT EXISTS allergies text;");
+    await query("ALTER TABLE students ADD COLUMN IF NOT EXISTS medications text;");
+    await query("ALTER TABLE students ADD COLUMN IF NOT EXISTS instruments jsonb;");
+    await query("ALTER TABLE students ADD COLUMN IF NOT EXISTS band text;");
+
     // Ensure comment, reaction, learning and audit tables exist
     await query(`CREATE TABLE IF NOT EXISTS comments (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
