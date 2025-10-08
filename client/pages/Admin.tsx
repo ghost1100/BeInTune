@@ -76,14 +76,21 @@ export default function Admin() {
 
   const sendQuick = async () => {
     if (!quickSubject || !quickHtml) {
-      toast({ title: "Missing fields", description: "Subject and message are required" });
+      toast({
+        title: "Missing fields",
+        description: "Subject and message are required",
+      });
       return;
     }
     try {
       const res = await fetch("/api/admin/newsletters", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject: quickSubject, html: quickHtml, plain: quickHtml.replace(/<[^>]+>/g, "") }),
+        body: JSON.stringify({
+          subject: quickSubject,
+          html: quickHtml,
+          plain: quickHtml.replace(/<[^>]+>/g, ""),
+        }),
       });
       if (!res.ok) throw new Error("Failed to send newsletter");
       toast({ title: "Sent", description: "Newsletter queued/sent" });
@@ -193,7 +200,6 @@ export default function Admin() {
     const file = e.target.files && e.target.files[0];
     if (file) onDropImage(file);
   };
-
 
   const logout = async () => {
     try {
@@ -515,16 +521,28 @@ export default function Admin() {
               <h2 className="font-semibold">Newsletter &amp; more</h2>
               <div className="mt-4">
                 <div className="flex gap-2 flex-wrap">
-                  <Button onClick={() => setShowNewsletter(true)} className="px-4 py-2" variant="gradient">
+                  <Button
+                    onClick={() => setShowNewsletter(true)}
+                    className="px-4 py-2"
+                    variant="gradient"
+                  >
                     Compose newsletter
                   </Button>
-                  <Button onClick={() => setQuickOpen((v) => !v)} className="px-4 py-2" variant="outline">
+                  <Button
+                    onClick={() => setQuickOpen((v) => !v)}
+                    className="px-4 py-2"
+                    variant="outline"
+                  >
                     {quickOpen ? "Hide quick send" : "Quick send"}
                   </Button>
-                  <Button onClick={() => {
-                    // navigate to students/subscriptions management (reuse existing Students tab)
-                    setActiveTab("students");
-                  }} className="px-4 py-2" variant="ghost">
+                  <Button
+                    onClick={() => {
+                      // navigate to students/subscriptions management (reuse existing Students tab)
+                      setActiveTab("students");
+                    }}
+                    className="px-4 py-2"
+                    variant="ghost"
+                  >
                     Manage subscribers
                   </Button>
                 </div>
@@ -547,14 +565,23 @@ export default function Admin() {
                       <Button onClick={sendQuick} variant="gradient" size="lg">
                         Send to subscribers
                       </Button>
-                      <Button onClick={() => { setQuickSubject(""); setQuickHtml(""); }} variant="outline">
+                      <Button
+                        onClick={() => {
+                          setQuickSubject("");
+                          setQuickHtml("");
+                        }}
+                        variant="outline"
+                      >
                         Clear
                       </Button>
                     </div>
                   </div>
                 )}
 
-                <p className="text-sm text-foreground/70 mt-3">Use Compose for rich newsletters, Quick send for short announcements.</p>
+                <p className="text-sm text-foreground/70 mt-3">
+                  Use Compose for rich newsletters, Quick send for short
+                  announcements.
+                </p>
               </div>
             </div>
           )}
