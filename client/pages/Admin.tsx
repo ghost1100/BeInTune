@@ -907,11 +907,25 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
           <div className="col-span-1">
             <div className="text-sm font-medium mb-2">Time</div>
             <div className="space-y-2">
-              {slots.map((s) => (
-                <div key={s} className="text-sm text-foreground/70 py-2">
-                  {s}
-                </div>
-              ))}
+              {slots.map((s) => {
+                const booked = bookingsState.find((b) => b.time === s);
+                const isGuest = booked && !booked.student_user_id;
+                return (
+                  <div key={s} className="text-sm text-foreground/70 py-2 flex items-center gap-2">
+                    {isGuest && (
+                      <button
+                        type="button"
+                        className="text-xs rounded-md border px-2 py-1"
+                        onClick={() => setBookingDetail(booked)}
+                        title="View booking details"
+                      >
+                        Details
+                      </button>
+                    )}
+                    <span>{s}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
           <div className="col-span-5">
