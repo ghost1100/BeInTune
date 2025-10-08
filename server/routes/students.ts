@@ -8,25 +8,31 @@ const router = express.Router();
 router.get("/students", async (_req, res) => {
   const q = await query(
     `SELECT
-        u.id AS user_id,
-        s.id AS student_id,
-        s.id AS id,
-        COALESCE(s.name, u.name) AS name,
-        u.email,
-        s.age,
-        s.parent_name,
-        s.parent_email,
-        s.phone,
-        s.address,
-        s.marketing_consent,
-        s.created_at,
-        s.updated_at,
-        u.created_at AS user_created_at,
-        u.updated_at AS user_updated_at
-      FROM users u
-      JOIN students s ON s.user_id = u.id
-      WHERE u.role = 'student'
-      ORDER BY u.created_at DESC`,
+       u.id AS user_id,
+       s.id AS student_id,
+       s.id AS id,
+       COALESCE(s.name, u.name) AS name,
+       u.email,
+       s.age,
+       s.parent_name,
+       s.parent_email,
+       s.parent_phone,
+       s.phone,
+       s.address,
+       s.emergency_contacts,
+       s.allergies,
+       s.medications,
+       s.instruments,
+       s.band,
+       s.marketing_consent,
+       s.created_at,
+       s.updated_at,
+       u.created_at AS user_created_at,
+       u.updated_at AS user_updated_at
+     FROM users u
+     JOIN students s ON s.user_id = u.id
+     WHERE u.role = 'student'
+     ORDER BY u.created_at DESC`,
   );
   const rows = q.rows.map((r: any) => {
     try {
