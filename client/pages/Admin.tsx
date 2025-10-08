@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { getRandomImage } from "@/lib/unsplash";
+import { getSiteContent, setSiteContent } from "@/lib/siteContent";
 import {
   getSlotsForDay,
   getAvailability,
@@ -69,7 +70,7 @@ export default function Admin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [siteContent, setSiteContentState] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("inTuneContent") || "null");
+      return getSiteContent();
     } catch {
       return null;
     }
@@ -176,7 +177,7 @@ export default function Admin() {
   };
 
   const saveContent = () => {
-    localStorage.setItem("inTuneContent", JSON.stringify(siteContent || {}));
+    setSiteContent(siteContent || {});
     alert("Content saved");
   };
 
@@ -666,7 +667,7 @@ export default function Admin() {
                     type="button"
                     onClick={() => {
                       localStorage.removeItem("inTuneContent");
-                      setSiteContentState(null);
+                      setSiteContentState(getSiteContent());
                       alert("Reset");
                     }}
                     className="px-4 py-2 rounded-md border"
