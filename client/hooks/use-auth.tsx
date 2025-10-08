@@ -43,7 +43,17 @@ export default function useAuth() {
     let mounted = true;
     (async () => {
       try {
-        const res = await fetch("/api/auth/me", { credentials: "include" });
+        const token =
+          typeof window !== "undefined"
+            ? window.localStorage.getItem("inTuneToken")
+            : null;
+        const headers: any = token
+          ? { Authorization: `Bearer ${token}` }
+          : undefined;
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
+          headers,
+        });
         if (!res.ok) {
           // clear any stored user if server rejects the session to avoid stale local fallbacks
           persistUser(null);

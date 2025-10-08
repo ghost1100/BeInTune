@@ -28,7 +28,37 @@ router.get("/students", async (_req, res) => {
       WHERE u.role = 'student'
       ORDER BY u.created_at DESC`,
   );
-  res.json(q.rows);
+  const rows = q.rows.map((r: any) => {
+    try {
+      if (r.email) return r;
+      if (r.email_encrypted) {
+        const { decryptText } = require("../lib/crypto");
+        const parsed =
+          typeof r.email_encrypted === "string"
+            ? JSON.parse(r.email_encrypted)
+            : r.email_encrypted;
+        const dec = decryptText(parsed);
+        r.email = dec || null;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return r;
+  });
+  res.json(rows);
+});
+
+// GET /api/admin/students/admins - list admin users
+router.get("/students/admins", async (_req, res) => {
+  try {
+    const q = await query(
+      `SELECT id AS user_id, email, name FROM users WHERE role = 'admin' ORDER BY created_at ASC`,
+    );
+    res.json(q.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load admins" });
+  }
 });
 
 // POST /api/admin/students - create student (creates user + student row)
@@ -46,10 +76,21 @@ router.post("/students", async (req, res) => {
   } = req.body as any;
   if (!email) return res.status(400).json({ error: "Missing email" });
 
+  const { digest } = await import("../lib/crypto");
   const existingUserRes = await query(
-    "SELECT id, role FROM users WHERE lower(email)=lower($1) LIMIT 1",
-    [email],
+    "SELECT id, role FROM users WHERE email_index = $1 LIMIT 1",
+    [digest(email).toString()],
   );
+  // fallback to old behavior for existing rows
+  if (existingUserRes.rows.length === 0) {
+    const fallback = await query(
+      "SELECT id, role FROM users WHERE lower(email)=lower($1) LIMIT 1",
+      [email],
+    );
+    if (fallback.rows.length) {
+      existingUserRes.rows = fallback.rows;
+    }
+  }
 
   let userId: string;
   let generatedPassword: string | null = null;
@@ -74,9 +115,24 @@ router.post("/students", async (req, res) => {
   } else {
     const pw = tempPassword || Math.random().toString(36).slice(2, 10);
     const hash = await bcrypt.hash(pw, 10);
+    const { encryptText, digest } = await import("../lib/crypto");
+    const enc = encryptText(email);
+    const emailToStore = enc.encrypted ? JSON.stringify(enc) : email;
+    const emailIndex = digest(email);
+    const phoneEnc = phone ? encryptText(phone) : null;
+    const phoneToStore =
+      phoneEnc && phoneEnc.encrypted ? JSON.stringify(phoneEnc) : phone || null;
     const userRes = await query(
-      "INSERT INTO users(email, password_hash, role, name, email_verified) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-      [email, hash, "student", name || null, true],
+      "INSERT INTO users(email_encrypted, email_index, phone_encrypted, password_hash, role, name, email_verified) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id",
+      [
+        emailToStore,
+        emailIndex,
+        phoneToStore,
+        hash,
+        "student",
+        name || null,
+        true,
+      ],
     );
     userId = userRes.rows[0].id;
     generatedPassword = pw;
@@ -171,6 +227,70 @@ router.delete("/students/:id", async (req, res) => {
     return res.status(500).json({ error: "Unable to delete student" });
   }
   res.json({ ok: true });
+});
+
+// Sync group chats based on student.band
+router.post("/group-chats/sync", async (_req, res) => {
+  try {
+    // get distinct bands
+    const bandsRes = await query(
+      "SELECT DISTINCT band FROM students WHERE band IS NOT NULL AND band <> ''",
+    );
+    const bands = bandsRes.rows.map((r: any) => r.band).filter(Boolean);
+    const adminsRes = await query("SELECT id FROM users WHERE role = 'admin'");
+    const adminIds = adminsRes.rows.map((r: any) => r.id);
+    for (const band of bands) {
+      // ensure room exists
+      const roomRes = await query(
+        "SELECT id FROM rooms WHERE name = $1 LIMIT 1",
+        [band],
+      );
+      let roomId: string;
+      if (roomRes.rows.length) {
+        roomId = roomRes.rows[0].id;
+      } else {
+        const ins = await query(
+          "INSERT INTO rooms(name, metadata) VALUES ($1,$2) RETURNING id",
+          [band, JSON.stringify({ auto: true })],
+        );
+        roomId = ins.rows[0].id;
+      }
+      // add members: all users in students with this band
+      const membersRes = await query(
+        "SELECT u.id FROM users u JOIN students s ON s.user_id = u.id WHERE s.band = $1",
+        [band],
+      );
+      const memberIds = membersRes.rows.map((r: any) => r.id);
+      const toAdd = Array.from(new Set([...memberIds, ...adminIds]));
+      for (const uid of toAdd) {
+        try {
+          await query(
+            "INSERT INTO room_members(room_id, user_id) VALUES ($1,$2) ON CONFLICT DO NOTHING",
+            [roomId, uid],
+          );
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+    res.json({ ok: true, bands });
+  } catch (err) {
+    console.error("Failed to sync group chats", err);
+    res.status(500).json({ error: "Failed to sync group chats" });
+  }
+});
+
+// list rooms
+router.get("/rooms", async (_req, res) => {
+  try {
+    const r = await query(
+      "SELECT r.id, r.name, r.metadata, count(rm.user_id) as members FROM rooms r LEFT JOIN room_members rm ON rm.room_id = r.id GROUP BY r.id ORDER BY r.name",
+    );
+    res.json(r.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load rooms" });
+  }
 });
 
 export default router;

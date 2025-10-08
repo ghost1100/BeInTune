@@ -56,6 +56,14 @@ export default function AdminLogin() {
         return;
       }
       const user = await res.json();
+      // store token if provided (fallback for environments where cookies are blocked)
+      try {
+        if (user.token) {
+          localStorage.setItem("inTuneToken", user.token);
+        }
+      } catch (e) {
+        console.error("Failed to persist token", e);
+      }
       if (user.role === "admin") {
         localStorage.setItem("inTuneAdmin", JSON.stringify(user));
         localStorage.removeItem("inTuneStudent");

@@ -28,19 +28,31 @@ router.post("/upload", async (req, res) => {
   const buffer = Buffer.from(data, "base64");
 
   try {
-    // Use sharp to resize to max width 1600 while preserving aspect
-    const img = sharp(buffer).rotate();
-    const metadata = await img.metadata();
-    if ((metadata.width || 0) > 1600) {
-      await img.resize({ width: 1600 }).toFile(outPath);
+    const videoExts = new Set([".mp4", ".webm", ".mov", ".mkv", ".avi"]);
+    let mime: string | null = null;
+    let metadata: any = null;
+
+    if (videoExts.has(ext.toLowerCase())) {
+      // Save video directly without image processing
+      await fs.writeFile(outPath, buffer);
+      mime = `video/${ext.replace(".", "")}`;
+      metadata = { format: ext.replace(".", "") };
     } else {
-      await img.toFile(outPath);
+      // Use sharp to resize to max width 1600 while preserving aspect
+      const img = sharp(buffer).rotate();
+      metadata = await img.metadata();
+      if ((metadata.width || 0) > 1600) {
+        await img.resize({ width: 1600 }).toFile(outPath);
+      } else {
+        await img.toFile(outPath);
+      }
+      mime = metadataFormat(metadata) || `image/${ext.replace(".", "")}`;
     }
 
     const url = `/uploads/${outFilename}`;
     const result = await query(
       "INSERT INTO media(bucket_key, url, mime, size, uploaded_by) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-      [outFilename, url, metadataFormat(metadata), buffer.length, null],
+      [outFilename, url, mime, buffer.length, null],
     );
 
     res.json({ ok: true, url, id: result.rows[0].id });

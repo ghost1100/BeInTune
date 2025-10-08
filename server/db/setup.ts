@@ -1,47 +1,30 @@
-import { query } from "./index";
 import bcrypt from "bcrypt";
 import fs from "fs/promises";
 import path from "path";
+import { query } from ".";
 
 export async function ensureDbSetup() {
   try {
-    // If users table is missing, run the initial migration SQL
-    const check = await query("SELECT to_regclass('public.users') as reg");
-    const exists = check.rows[0] && check.rows[0].reg;
-    if (!exists) {
-      try {
-        const migrationsPath = path.join(
-          __dirname,
-          "migrations",
-          "001_init.sql",
-        );
-        const sql = await fs.readFile(migrationsPath, "utf-8");
-        await query(sql);
-        console.log("Applied initial DB migrations");
-      } catch (e) {
-        console.error("Failed to apply migrations:", e);
-        throw e;
-      }
-    }
-
-    // If posts table missing (partial DB), attempt to apply migrations as well
+    // Apply all SQL files in the migrations folder in alphabetical order.
+    // Each migration script should be idempotent (use IF NOT EXISTS etc.).
     try {
-      const checkPosts = await query(
-        "SELECT to_regclass('public.posts') as reg",
-      );
-      const postsExists = checkPosts.rows[0] && checkPosts.rows[0].reg;
-      if (!postsExists) {
-        const migrationsPath = path.join(
-          __dirname,
-          "migrations",
-          "001_init.sql",
-        );
-        const sql = await fs.readFile(migrationsPath, "utf-8");
-        await query(sql);
-        console.log("Applied initial DB migrations (posts missing)");
+      const migrationsDir = path.join(__dirname, "migrations");
+      const entries = await fs.readdir(migrationsDir);
+      const sqlFiles = entries.filter((f) => f.endsWith(".sql")).sort();
+      for (const file of sqlFiles) {
+        try {
+          const migrationsPath = path.join(migrationsDir, file);
+          const sql = await fs.readFile(migrationsPath, "utf-8");
+          if (sql && sql.trim()) {
+            await query(sql);
+            console.log(`Applied migration: ${file}`);
+          }
+        } catch (e) {
+          console.error(`Failed to apply migration ${file}:`, e);
+        }
       }
     } catch (e) {
-      console.error("Failed to apply migrations for posts (continuing):", e);
+      console.error("Failed to read/apply migrations directory:", e);
     }
 
     // Add username column if missing (safe after migrations)
@@ -74,6 +57,22 @@ export async function ensureDbSetup() {
       type text,
       created_at timestamptz NOT NULL DEFAULT now()
     )`);
+    // Ensure unique reaction per user per post
+    await query(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_post_reactions_unique ON post_reactions(post_id, user_id);",
+    );
+
+    // Message reactions (per-message reactions)
+    await query(`CREATE TABLE IF NOT EXISTS message_reactions (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      message_id uuid REFERENCES messages(id) ON DELETE CASCADE,
+      user_id uuid REFERENCES users(id) ON DELETE SET NULL,
+      type text,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )`);
+    await query(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_message_reactions_unique ON message_reactions(message_id, user_id);",
+    );
 
     await query(`CREATE TABLE IF NOT EXISTS learning_resources (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -82,6 +81,17 @@ export async function ensureDbSetup() {
       title text,
       description text,
       media jsonb DEFAULT '[]',
+      created_at timestamptz NOT NULL DEFAULT now()
+    )`);
+
+    // Notifications table for user alerts
+    await query(`CREATE TABLE IF NOT EXISTS notifications (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid REFERENCES users(id) ON DELETE CASCADE,
+      actor_id uuid REFERENCES users(id) ON DELETE SET NULL,
+      type text NOT NULL,
+      meta jsonb DEFAULT '{}',
+      is_read boolean DEFAULT false,
       created_at timestamptz NOT NULL DEFAULT now()
     )`);
 

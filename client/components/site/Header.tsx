@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import useAuth from "@/hooks/use-auth";
-
 const publicNav = [
   { href: "/lessons", label: "Lessons" },
   { href: "/teachers", label: "Teachers" },

@@ -14,6 +14,7 @@ import auditRoutes from "./routes/audit";
 import learningRoutes from "./routes/learning";
 import messagesRoutes from "./routes/messages";
 import postsRoutes from "./routes/posts";
+import notificationsRoutes from "./routes/notifications";
 import { ensureDbSetup } from "./db/setup";
 import { authMiddleware } from "./middleware/auth";
 
@@ -26,8 +27,9 @@ export function createServer() {
   // Middleware
   app.use(cors({ origin: true, credentials: true }));
   app.use(cookieParser());
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  // Increase payload limits to support base64 file uploads and larger JSON bodies (up to ~200MB)
+  app.use(express.json({ limit: "200mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "200mb" }));
 
   // attach auth middleware (decodes JWT if present)
   app.use(authMiddleware);
@@ -59,6 +61,29 @@ export function createServer() {
 
   // Public posts/discussion routes
   app.use("/api", postsRoutes);
+
+  // Notifications
+  app.use("/api", notificationsRoutes);
+
+  // Background cleanup: permanently remove expired messages every hour
+  const cleanupIntervalMs = Number(
+    process.env.CLEANUP_INTERVAL_MS || String(1000 * 60 * 60),
+  );
+  const cleanupJob = async () => {
+    try {
+      await (
+        await import("./db")
+      ).query(
+        "DELETE FROM messages WHERE expire_at IS NOT NULL AND expire_at <= now() AND (saved_by IS NULL OR jsonb_array_length(saved_by)=0)",
+      );
+      console.log("Expired messages cleanup completed");
+    } catch (err) {
+      console.error("Cleanup job error:", err);
+    }
+  };
+  const cleanupHandle = setInterval(cleanupJob, cleanupIntervalMs);
+  // ensure server shutdown clears interval
+  (app as any).locals.cleanupHandle = cleanupHandle;
 
   return app;
 }

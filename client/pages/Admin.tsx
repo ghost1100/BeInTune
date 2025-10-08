@@ -28,6 +28,9 @@ import NewsletterComposer from "@/components/admin/NewsletterComposer";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import DiscussionFeed from "@/components/student/DiscussionFeed";
+import ChatsPanel from "@/components/student/ChatsPanel";
+import NotificationBell from "@/components/ui/NotificationBell";
 
 type Teacher = {
   id: string;
@@ -41,9 +44,9 @@ type Teacher = {
 
 async function loadTeachersFromDb(): Promise<Teacher[]> {
   try {
-    const res = await fetch("/api/admin/teachers");
-    if (!res.ok) return [];
-    const data = await res.json();
+    const { apiFetch } = await import("@/lib/api");
+    const data = await apiFetch("/api/admin/teachers");
+    if (!data || !Array.isArray(data)) return [];
     return (data || []).map((r: any) => ({
       id: r.user_id,
       name: r.name,
@@ -177,8 +180,57 @@ export default function Admin() {
     alert("Content saved");
   };
 
-  const logout = () => {
-    localStorage.removeItem("inTuneAdmin");
+  const logout = async () => {
+    try {
+      // tell server to clear httpOnly cookie
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (e) {
+      console.error("Logout request failed", e);
+    }
+
+    try {
+      // remove any stored auth fallbacks and app data
+      localStorage.removeItem("inTuneAdmin");
+      localStorage.removeItem("inTuneStudent");
+      localStorage.removeItem("inTuneToken");
+      localStorage.removeItem("inTuneContent");
+      sessionStorage.clear();
+
+      // clear Cache Storage
+      if (typeof window !== "undefined" && (window as any).caches) {
+        const keys = await (window as any).caches.keys();
+        await Promise.all(
+          keys.map((k: string) => (window as any).caches.delete(k)),
+        );
+      }
+
+      // clear non-httpOnly cookies
+      if (typeof document !== "undefined") {
+        document.cookie.split(";").forEach((cookie) => {
+          const eqPos = cookie.indexOf("=");
+          const name =
+            eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+          // expire cookie for root path
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+        });
+      }
+
+      // unregister service workers
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.serviceWorker &&
+        navigator.serviceWorker.getRegistrations
+      ) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+    } catch (err) {
+      console.error("Error clearing client data during logout", err);
+    }
+
     navigate("/");
   };
 
@@ -190,6 +242,8 @@ export default function Admin() {
     | "theme"
     | "reports"
     | "security"
+    | "discussion"
+    | "chats"
   >("teachers");
 
   return (
@@ -197,6 +251,7 @@ export default function Admin() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Admin — Teachers & Site</h1>
         <div className="flex gap-2 flex-wrap">
+          <NotificationBell />
           <button onClick={logout} className="px-3 py-2 rounded-md border">
             Logout
           </button>
@@ -257,6 +312,22 @@ export default function Admin() {
             className={`px-4 py-2 rounded-md ${activeTab === "reports" ? "bg-card shadow" : "bg-muted"} text-foreground`}
           >
             Reports
+          </button>
+          <button
+            onClick={() => setActiveTab("discussion")}
+            role="tab"
+            aria-selected={activeTab === "discussion"}
+            className={`px-4 py-2 rounded-md ${activeTab === "discussion" ? "bg-card shadow" : "bg-muted"} text-foreground`}
+          >
+            Discussion
+          </button>
+          <button
+            onClick={() => setActiveTab("chats")}
+            role="tab"
+            aria-selected={activeTab === "chats"}
+            className={`px-4 py-2 rounded-md ${activeTab === "chats" ? "bg-card shadow" : "bg-muted"} text-foreground`}
+          >
+            Chats
           </button>
           <button
             onClick={() => setActiveTab("security")}
@@ -637,6 +708,24 @@ export default function Admin() {
               <h2 className="font-semibold">Reports</h2>
               <div className="mt-4 grid gap-4">
                 <ReportPanel />
+              </div>
+            </div>
+          )}
+
+          {activeTab === "discussion" && (
+            <div className="rounded-lg border p-4">
+              <h2 className="font-semibold">Discussion</h2>
+              <div className="mt-4">
+                <DiscussionFeed />
+              </div>
+            </div>
+          )}
+
+          {activeTab === "chats" && (
+            <div className="rounded-lg border p-4">
+              <h2 className="font-semibold">Chats</h2>
+              <div className="mt-4">
+                <ChatsPanel />
               </div>
             </div>
           )}
@@ -1658,11 +1747,21 @@ function StudentsManager() {
   const [resourceModalOpen, setResourceModalOpen] = useState(false);
   const [resourceFiles, setResourceFiles] = useState<File[]>([]);
   const [resourceStudentId, setResourceStudentId] = useState<string>("");
+  const [resourceFolderName, setResourceFolderName] = useState<string>("");
   const resourceInputRef = useRef<HTMLInputElement | null>(null);
   const [resourceUploading, setResourceUploading] = useState(false);
   const [expandedStudentIds, setExpandedStudentIds] = useState<
     Record<string, boolean>
   >({});
+
+  // View resources modal state
+  const [viewResourcesOpen, setViewResourcesOpen] = useState(false);
+  const [viewResourcesStudentId, setViewResourcesStudentId] = useState<
+    string | null
+  >(null);
+  const [viewResourcesData, setViewResourcesData] = useState<any[]>([]);
+  const [viewLoading, setViewLoading] = useState(false);
+  const [viewActionLoading, setViewActionLoading] = useState(false);
   const filteredStudents = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return students;
@@ -1721,10 +1820,17 @@ function StudentsManager() {
       }
       return studentOptions[0].value;
     });
+    // default folder name when opening modal
+    setResourceFolderName(() => {
+      const d = new Date();
+      const datePart = d.toISOString().slice(0, 10);
+      return `${datePart} - `;
+    });
   }, [resourceModalOpen, studentOptions]);
 
   const clearResourceSelection = useCallback(() => {
     setResourceFiles([]);
+    setResourceFolderName("");
     if (resourceInputRef.current) {
       resourceInputRef.current.value = "";
     }
@@ -1856,7 +1962,10 @@ function StudentsManager() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: "Learning resources",
+          title:
+            resourceFolderName && resourceFolderName.trim()
+              ? resourceFolderName.trim()
+              : "Learning resources",
           description: "",
           media: uploaded,
         }),
@@ -1910,6 +2019,22 @@ function StudentsManager() {
           </Button>
         </div>
         <div className="mt-4 grid gap-3">
+          <div>
+            <label
+              htmlFor="resourceFolder"
+              className="mb-1 block text-sm font-medium text-foreground"
+            >
+              Folder name
+            </label>
+            <input
+              id="resourceFolder"
+              className="h-10 w-full rounded-md border px-3"
+              value={resourceFolderName}
+              onChange={(e) => setResourceFolderName(e.target.value)}
+              placeholder="e.g. 2025-01-01 - Week 1 materials"
+              disabled={resourceUploading}
+            />
+          </div>
           <div>
             <label
               htmlFor="resourceStudent"
@@ -2015,6 +2140,192 @@ function StudentsManager() {
               {resourceUploading ? "Uploading..." : "Share resources"}
             </Button>
           </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  const viewResourcesModal = viewResourcesOpen ? (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) setViewResourcesOpen(false);
+      }}
+    >
+      <div
+        className="w-full max-w-3xl rounded-lg bg-card p-6 shadow-xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">View resources</h3>
+            <p className="text-sm text-foreground/70">
+              Resources shared with the selected student. You may remove items
+              if needed.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => setViewResourcesOpen(false)}
+              disabled={viewActionLoading}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+        <div className="mt-4">
+          {viewLoading ? (
+            <div className="text-sm text-foreground/70">Loading…</div>
+          ) : viewResourcesData.length === 0 ? (
+            <div className="rounded border border-dashed p-4 text-sm text-foreground/70">
+              No resources found for this student.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {viewResourcesData.map((entry: any) => (
+                <div key={entry.id} className="rounded border p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold">
+                        {entry.title || "Resource"}
+                      </div>
+                      <div className="text-xs text-foreground/70">
+                        {entry.created_at
+                          ? new Date(entry.created_at).toLocaleString()
+                          : ""}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={async () => {
+                          // delete whole entry
+                          if (
+                            !confirm(
+                              "Delete this resource folder and all its files?",
+                            )
+                          )
+                            return;
+                          try {
+                            setViewActionLoading(true);
+                            const { apiFetch } = await import("@/lib/api");
+                            await apiFetch(
+                              `/api/admin/learning/entry/${entry.id}`,
+                              { method: "DELETE" },
+                            );
+                            // refresh list
+                            const data = await apiFetch(
+                              `/api/admin/learning/${viewResourcesStudentId}`,
+                            );
+                            setViewResourcesData(
+                              Array.isArray(data)
+                                ? data
+                                : (data && (data as any).rows) || [],
+                            );
+                          } catch (err) {
+                            console.error(err);
+                            toast({
+                              title: "Failed to delete folder",
+                              variant: "destructive",
+                            });
+                          } finally {
+                            setViewActionLoading(false);
+                          }
+                        }}
+                      >
+                        Delete folder
+                      </Button>
+                    </div>
+                  </div>
+                  {Array.isArray(entry.media) && entry.media.length > 0 && (
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      {entry.media.map((m: any) => (
+                        <div
+                          key={m.id || m.url}
+                          className="flex items-center justify-between gap-2 rounded border p-2"
+                        >
+                          <div className="flex items-center gap-3">
+                            {m.mime?.startsWith("image") ? (
+                              <img
+                                src={m.url}
+                                alt=""
+                                className="h-16 w-24 object-cover rounded"
+                              />
+                            ) : m.mime?.startsWith("video") ? (
+                              <video
+                                src={m.url}
+                                className="h-16 w-24 object-cover"
+                              />
+                            ) : (
+                              <a
+                                href={m.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="underline"
+                              >
+                                Open file
+                              </a>
+                            )}
+                            <div className="text-sm">
+                              {m.url.split("/").pop()}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.open(m.url, "_blank")}
+                            >
+                              Open
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={async () => {
+                                if (
+                                  !confirm(
+                                    "Remove this file from the resource folder?",
+                                  )
+                                )
+                                  return;
+                                try {
+                                  setViewActionLoading(true);
+                                  const { apiFetch } = await import(
+                                    "@/lib/api"
+                                  );
+                                  const data = await apiFetch(
+                                    `/api/admin/learning/entry/${entry.id}/media/${m.id}`,
+                                    { method: "DELETE" },
+                                  );
+                                  setViewResourcesData(
+                                    Array.isArray(data)
+                                      ? data
+                                      : (data && (data as any).rows) || [],
+                                  );
+                                } catch (err) {
+                                  console.error(err);
+                                  toast({
+                                    title: "Failed to remove file",
+                                    variant: "destructive",
+                                  });
+                                } finally {
+                                  setViewActionLoading(false);
+                                }
+                              }}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -2293,6 +2604,7 @@ function StudentsManager() {
         </Button>
       </div>
       {resourceModal}
+      {viewResourcesModal}
       <form onSubmit={save} className="grid gap-2">
         <input
           className="h-10 rounded-md border px-3"
@@ -2550,7 +2862,7 @@ function StudentsManager() {
                   <span className="font-medium">
                     {s.name}
                     {s.age ? ` • ${s.age}` : ""}
-                    {s.isElderly ? " • Elderly" : ""}
+                    {s.isElderly ? " �� Elderly" : ""}
                   </span>
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 transition-transform ${
@@ -2664,6 +2976,50 @@ function StudentsManager() {
                   {passwordLoading === (userId || email)
                     ? "Sending..."
                     : "Send reset"}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    // open the existing resource modal for this specific student
+                    setResourceStudentId(studentId || "");
+                    setResourceModalOpen(true);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full whitespace-normal sm:w-auto"
+                >
+                  Upload material
+                </Button>
+                <Button
+                  type="button"
+                  onClick={async () => {
+                    const id = studentId || "";
+                    setViewResourcesStudentId(id);
+                    setViewResourcesOpen(true);
+                    setViewLoading(true);
+                    try {
+                      const { apiFetch } = await import("@/lib/api");
+                      const data = await apiFetch(`/api/admin/learning/${id}`);
+                      setViewResourcesData(
+                        Array.isArray(data)
+                          ? data
+                          : (data && (data as any).rows) || [],
+                      );
+                    } catch (e) {
+                      console.error(e);
+                      toast({
+                        title: "Failed to load resources",
+                        variant: "destructive",
+                      });
+                    } finally {
+                      setViewLoading(false);
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full whitespace-normal sm:w-auto"
+                >
+                  View resources
                 </Button>
               </div>
             </div>

@@ -17,13 +17,38 @@ router.post("/login", async (req, res) => {
   if (!identifier || !password)
     return res.status(400).json({ error: "Missing identifier or password" });
 
-  // Search by email or username (case-insensitive)
-  const userRes = await query(
-    "SELECT id, email, username, password_hash, role, is_active FROM users WHERE lower(email) = lower($1) OR lower(username) = lower($1) LIMIT 1",
-    [identifier],
-  );
+  // Search by email (via index) or username (case-insensitive)
+  const { digest, decryptText } = await import("../lib/crypto");
+  const idx =
+    identifier && identifier.includes("@") ? digest(identifier) : null;
+  let userRes;
+  if (idx) {
+    userRes = await query(
+      "SELECT id, email, email_encrypted, username, password_hash, role, is_active FROM users WHERE email_index = $1 OR lower(username) = lower($2) LIMIT 1",
+      [idx, identifier],
+    );
+  }
+  if (!userRes || !userRes.rows || userRes.rows.length === 0) {
+    userRes = await query(
+      "SELECT id, email, email_encrypted, username, password_hash, role, is_active FROM users WHERE lower(email) = lower($1) OR lower(username) = lower($1) LIMIT 1",
+      [identifier],
+    );
+  }
   const user = userRes.rows[0];
   if (!user) return res.status(401).json({ error: "Invalid credentials" });
+  // if email_encrypted present, decrypt before returning
+  if (!user.email && user.email_encrypted) {
+    try {
+      const parsed =
+        typeof user.email_encrypted === "string"
+          ? JSON.parse(user.email_encrypted)
+          : user.email_encrypted;
+      const dec = decryptText(parsed);
+      if (dec) user.email = dec;
+    } catch (e) {
+      // ignore
+    }
+  }
   if (!user.is_active)
     return res.status(403).json({ error: "Account inactive" });
 
@@ -52,6 +77,7 @@ router.post("/login", async (req, res) => {
     email: user.email,
     username: user.username,
     role: user.role,
+    token,
   });
 });
 
@@ -63,16 +89,43 @@ router.get("/me", async (req, res) => {
     const jwt = (await import("jsonwebtoken")).default;
     const SECRET = process.env.JWT_SECRET || "changeme123";
     const decoded: any = jwt.verify(token, SECRET);
+    const { decryptText } = await import("../lib/crypto");
     const userRes = await query(
-      "SELECT id, email, username, role FROM users WHERE id = $1",
+      "SELECT id, email, email_encrypted, username, role FROM users WHERE id = $1",
       [decoded.sub],
     );
     const user = userRes.rows[0];
     if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user.email && user.email_encrypted) {
+      try {
+        const parsed =
+          typeof user.email_encrypted === "string"
+            ? JSON.parse(user.email_encrypted)
+            : user.email_encrypted;
+        const dec = decryptText(parsed);
+        if (dec) user.email = dec;
+      } catch (e) {}
+    }
     res.json(user);
   } catch (err) {
     res.status(401).json({ error: "Invalid token" });
   }
+});
+
+// POST /api/auth/logout
+router.post("/logout", async (req, res) => {
+  try {
+    // clear cookie by setting empty token with immediate expiry
+    res.cookie("token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      expires: new Date(0),
+    });
+  } catch (err) {
+    console.error("Error clearing cookie:", err);
+  }
+  return res.json({ ok: true });
 });
 
 // POST /api/auth/send-reset
@@ -80,13 +133,34 @@ router.post("/send-reset", async (req, res) => {
   const { email } = req.body as { email?: string };
   if (!email) return res.status(400).json({ error: "Missing email" });
 
-  const userRes = await query("SELECT id, email FROM users WHERE email = $1", [
-    email,
-  ]);
+  const { digest, decryptText } = await import("../lib/crypto");
+  const idx = digest(email);
+  let userRes = await query(
+    "SELECT id, email, email_encrypted FROM users WHERE email_index = $1",
+    [idx],
+  );
+  if (!userRes.rows.length) {
+    userRes = await query(
+      "SELECT id, email, email_encrypted FROM users WHERE email = $1",
+      [email],
+    );
+  }
   const user = userRes.rows[0];
-
   // Always return success to avoid leaking existence
   if (!user) return res.json({ ok: true });
+
+  // determine email to send to
+  let sendTo = user.email;
+  if (!sendTo && user.email_encrypted) {
+    try {
+      const parsed =
+        typeof user.email_encrypted === "string"
+          ? JSON.parse(user.email_encrypted)
+          : user.email_encrypted;
+      const dec = decryptText(parsed);
+      if (dec) sendTo = dec;
+    } catch (e) {}
+  }
 
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour

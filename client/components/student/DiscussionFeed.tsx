@@ -35,12 +35,37 @@ function fileToBase64(file: File) {
   });
 }
 
+async function getVideoDuration(file: File) {
+  return new Promise<number>((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const vid = document.createElement("video");
+    vid.preload = "metadata";
+    vid.src = url;
+    vid.onloadedmetadata = () => {
+      URL.revokeObjectURL(url);
+      resolve(vid.duration || 0);
+    };
+    vid.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      reject(e);
+    };
+  });
+}
+
+import useAuth from "@/hooks/use-auth";
+import Lightbox from "@/components/ui/Lightbox";
+
 export default function DiscussionFeed({ className }: { className?: string }) {
   const [posts, setPosts] = useState<DiscussionPost[]>([]);
   const [body, setBody] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const { user } = useAuth();
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editingBody, setEditingBody] = useState("");
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [lightboxMime, setLightboxMime] = useState<string | null>(null);
 
   useEffect(() => {
     loadPosts();
@@ -82,6 +107,11 @@ export default function DiscussionFeed({ className }: { className?: string }) {
     if (!files || files.length === 0) return;
     for (const file of Array.from(files)) {
       try {
+        if (file.type.startsWith("video")) {
+          const dur = await getVideoDuration(file);
+          if (dur > 180)
+            throw new Error("Video too long. Maximum allowed is 3 minutes.");
+        }
         const data = await fileToBase64(file);
         const payload = await (
           await import("@/lib/api")
@@ -135,15 +165,28 @@ export default function DiscussionFeed({ className }: { className?: string }) {
     }
   }
 
-  async function addReaction(postId: string, reaction: string) {
+  async function handleReaction(
+    postId: string,
+    reaction: string,
+    current?: string | null,
+  ) {
     try {
-      await (
-        await import("@/lib/api")
-      ).apiFetch(`/api/posts/${postId}/reactions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: reaction }),
-      });
+      if (current === reaction) {
+        // remove
+        await (
+          await import("@/lib/api")
+        ).apiFetch(`/api/posts/${postId}/reactions`, {
+          method: "DELETE",
+        });
+      } else {
+        await (
+          await import("@/lib/api")
+        ).apiFetch(`/api/posts/${postId}/reactions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: reaction }),
+        });
+      }
       loadPosts();
     } catch (error) {
       console.error(error);
@@ -219,39 +262,116 @@ export default function DiscussionFeed({ className }: { className?: string }) {
                   post.author_name ||
                   "Anonymous"}
               </div>
-              {post.created_at && (
-                <time
-                  className="text-xs text-foreground/60"
-                  dateTime={post.created_at}
-                >
-                  {new Date(post.created_at).toLocaleString()}
-                </time>
-              )}
+              <div className="text-right">
+                {post.created_at && (
+                  <div>
+                    <time
+                      className="text-xs text-foreground/60"
+                      dateTime={post.created_at}
+                    >
+                      {new Date(post.created_at).toLocaleString()}
+                    </time>
+                  </div>
+                )}
+                {/* edited tag */}
+                {post.metadata && (post.metadata as any).edited && (
+                  <div className="text-xs mt-1 text-black dark:text-blue-400">
+                    {(post.metadata as any).edited_by_role === "admin"
+                      ? "edited by admin"
+                      : "edited"}
+                  </div>
+                )}
+              </div>
             </header>
-            {post.body && (
-              <p className="mt-2 text-sm text-foreground/90">{post.body}</p>
+
+            {/* editable body inline */}
+            {editingPostId === post.id ? (
+              <div className="mt-2">
+                <textarea
+                  value={editingBody}
+                  onChange={(e) => setEditingBody(e.target.value)}
+                  className="w-full rounded border p-2"
+                />
+                <div className="flex gap-2 mt-2">
+                  <button
+                    className="px-3 py-1 rounded bg-primary text-primary-foreground"
+                    onClick={async () => {
+                      try {
+                        await (
+                          await import("@/lib/api")
+                        ).apiFetch(`/api/posts/${post.id}`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ body: editingBody }),
+                        });
+                        setEditingPostId(null);
+                        setEditingBody("");
+                        loadPosts();
+                        toast({ title: "Post updated" });
+                      } catch (err: any) {
+                        toast({
+                          title: "Unable to update",
+                          description: err?.message,
+                        });
+                      }
+                    }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="px-3 py-1 rounded border"
+                    onClick={() => {
+                      setEditingPostId(null);
+                      setEditingBody("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              post.body && (
+                <p className="mt-2 text-sm text-foreground/90">{post.body}</p>
+              )
             )}
             {post.media && post.media.length > 0 && (
               <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {post.media.map((media) => (
                   <div key={media.id} className="overflow-hidden rounded">
-                    {media.mime?.startsWith("video") ? (
-                      <video
-                        src={media.url}
-                        controls
-                        className="h-40 w-full object-cover"
-                      />
-                    ) : (
-                      <img
-                        src={media.url}
-                        alt="Post attachment"
-                        className="h-40 w-full object-cover"
-                      />
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLightboxSrc(media.url);
+                        setLightboxMime(media.mime || null);
+                      }}
+                      className="w-full h-40 overflow-hidden"
+                    >
+                      {media.mime?.startsWith("video") ? (
+                        <video
+                          src={media.url}
+                          className="h-40 w-full object-cover"
+                          aria-hidden
+                        />
+                      ) : (
+                        <img
+                          src={media.url}
+                          alt="Post attachment"
+                          className="h-40 w-full object-cover"
+                        />
+                      )}
+                    </button>
                   </div>
                 ))}
               </div>
             )}
+            <Lightbox
+              src={lightboxSrc}
+              mime={lightboxMime}
+              onClose={() => {
+                setLightboxSrc(null);
+                setLightboxMime(null);
+              }}
+            />
             <footer className="mt-3 flex flex-wrap items-center gap-3 text-xs text-foreground/70">
               <div className="flex items-center gap-2">
                 {[
@@ -261,29 +381,77 @@ export default function DiscussionFeed({ className }: { className?: string }) {
                   ["clap", "👏"],
                   ["wow", "😮"],
                   ["sad", "😢"],
-                ].map(([type, icon]) => (
-                  <button
-                    key={type}
-                    type="button"
-                    className="transition-colors hover:text-foreground"
-                    onClick={() => addReaction(post.id, type)}
-                  >
-                    {icon}
-                  </button>
-                ))}
+                ].map(([type, icon]) => {
+                  const count =
+                    (post.reactions && (post.reactions as any)[type]) || 0;
+                  const active = post.user_reaction === type;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() =>
+                        handleReaction(
+                          post.id,
+                          type as string,
+                          (post as any).user_reaction,
+                        )
+                      }
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded ${active ? "bg-primary/20" : "hover:bg-muted/20"}`}
+                    >
+                      <span aria-hidden>{icon}</span>
+                      <span className="text-xs font-medium">{count}</span>
+                    </button>
+                  );
+                })}
               </div>
-              <div>
-                {post.reactions && Object.keys(post.reactions).length > 0
-                  ? Object.entries(post.reactions)
-                      .map(([key, value]) => `${key}: ${value}`)
-                      .join(" • ")
-                  : "No reactions yet"}
-              </div>
-              <div>
+              <div className="text-xs">
                 {typeof post.comment_count === "number"
                   ? `${post.comment_count} comments`
                   : "Comments"}
               </div>
+
+              {/* edit / delete controls for original poster */}
+              {user &&
+                (post.author_id === user.id ||
+                  (post.metadata &&
+                    (post.metadata as any).author_name === user.name) ||
+                  user.role === "admin") && (
+                  <div className="ml-auto flex items-center gap-2 border-dashed border rounded px-2 py-1">
+                    <button
+                      type="button"
+                      className="text-sm px-2"
+                      onClick={() => {
+                        setEditingPostId(post.id);
+                        setEditingBody(post.body || "");
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="text-sm text-destructive"
+                      onClick={async () => {
+                        if (!confirm("Delete this post?")) return;
+                        try {
+                          await (
+                            await import("@/lib/api")
+                          ).apiFetch(`/api/posts/${post.id}`, {
+                            method: "DELETE",
+                          });
+                          loadPosts();
+                          toast({ title: "Post deleted" });
+                        } catch (err: any) {
+                          toast({
+                            title: "Unable to delete",
+                            description: err?.message,
+                          });
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
             </footer>
             <div className="mt-3">
               <Comments postId={post.id} />
@@ -298,6 +466,9 @@ export default function DiscussionFeed({ className }: { className?: string }) {
 function Comments({ postId }: { postId: string }) {
   const [comments, setComments] = useState<CommentRecord[]>([]);
   const [text, setText] = useState("");
+  const { user } = useAuth();
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
 
   useEffect(() => {
     loadComments();
@@ -336,17 +507,119 @@ function Comments({ postId }: { postId: string }) {
     }
   }
 
+  async function saveEditedComment(commentId: string) {
+    if (!editingCommentText) return;
+    try {
+      await (
+        await import("@/lib/api")
+      ).apiFetch(`/api/posts/${postId}/comments/${commentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: editingCommentText }),
+      });
+      setEditingCommentId(null);
+      setEditingCommentText("");
+      loadComments();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function deleteComment(commentId: string) {
+    if (!confirm("Delete this comment?")) return;
+    try {
+      await (
+        await import("@/lib/api")
+      ).apiFetch(`/api/posts/${postId}/comments/${commentId}`, {
+        method: "DELETE",
+      });
+      loadComments();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        {comments.map((comment) => (
-          <div key={comment.id} className="rounded border p-2">
-            <div className="text-xs font-medium text-foreground/70">
-              {comment.author_name || "User"}
+        {comments.map((comment) => {
+          const isAdminComment = (comment as any).author_role === "admin";
+          const isAuthor =
+            user &&
+            ((comment as any).author_id === user.id ||
+              (comment as any).author_name === user.name);
+          const canManage = isAuthor || (user && user.role === "admin");
+          return (
+            <div
+              key={comment.id}
+              className={cn(
+                "rounded p-2",
+                isAdminComment
+                  ? "bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary"
+                  : "border",
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-medium text-foreground/70">
+                  {comment.author_name || "User"}
+                </div>
+                {canManage && (
+                  <div className="flex items-center gap-2">
+                    {editingCommentId === comment.id ? (
+                      <>
+                        <button
+                          className="text-sm px-2"
+                          onClick={() => saveEditedComment(comment.id)}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="text-sm px-2"
+                          onClick={() => {
+                            setEditingCommentId(null);
+                            setEditingCommentText("");
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="text-sm px-2"
+                          onClick={() => {
+                            setEditingCommentId(comment.id);
+                            setEditingCommentText(comment.body || "");
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="text-sm text-destructive"
+                          onClick={() => deleteComment(comment.id)}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {editingCommentId === comment.id ? (
+                <div className="mt-2">
+                  <textarea
+                    value={editingCommentText}
+                    onChange={(e) => setEditingCommentText(e.target.value)}
+                    className="w-full rounded border p-2"
+                  />
+                </div>
+              ) : (
+                <div className="text-sm text-foreground/90">{comment.body}</div>
+              )}
             </div>
-            <div className="text-sm text-foreground/90">{comment.body}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="flex gap-2">
         <label htmlFor={`comment-${postId}`} className="sr-only">

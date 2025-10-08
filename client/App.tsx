@@ -14,13 +14,17 @@ import Teachers from "./pages/Teachers";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
+import Discussion from "./pages/Discussion";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import { Header } from "./components/site/Header";
 import { Footer } from "./components/site/Footer";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
+import Chats from "./pages/Chats";
 import Dashboard from "./pages/Dashboard";
+import CookieBanner from "./components/ui/CookieBanner";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +44,7 @@ const App = () => (
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/about" element={<About />} />
+              <Route path="/privacy" element={<Privacy />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route
                 path="/admin"
@@ -57,10 +62,27 @@ const App = () => (
                   </PrivateRoute>
                 }
               />
+              <Route
+                path="/chats"
+                element={
+                  <PrivateRoute>
+                    <Chats />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/discussion"
+                element={
+                  <PrivateRoute>
+                    <Discussion />
+                  </PrivateRoute>
+                }
+              />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
+          <CookieBanner />
           <Footer />
         </ErrorBoundary>
       </BrowserRouter>
