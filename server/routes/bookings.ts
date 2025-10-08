@@ -111,7 +111,44 @@ router.get("/bookings", async (req, res) => {
          ORDER BY sl.slot_date DESC, sl.slot_time ASC`,
       );
     }
-    res.json(q.rows);
+    // attempt to decrypt guest fields if encrypted
+    try {
+      const { decryptText } = await import("../lib/crypto");
+      const rows = q.rows.map((r: any) => {
+        const out = { ...r };
+        try {
+          if (out.guest_name) {
+            const parsed = typeof out.guest_name === "string" ? JSON.parse(out.guest_name) : out.guest_name;
+            const dec = decryptText(parsed);
+            out.guest_name = dec || out.guest_name;
+          }
+        } catch (e) {
+          // ignore
+        }
+        try {
+          if (out.guest_email) {
+            const parsed = typeof out.guest_email === "string" ? JSON.parse(out.guest_email) : out.guest_email;
+            const dec = decryptText(parsed);
+            out.guest_email = dec || out.guest_email;
+          }
+        } catch (e) {
+          // ignore
+        }
+        try {
+          if (out.guest_phone) {
+            const parsed = typeof out.guest_phone === "string" ? JSON.parse(out.guest_phone) : out.guest_phone;
+            const dec = decryptText(parsed);
+            out.guest_phone = dec || out.guest_phone;
+          }
+        } catch (e) {
+          // ignore
+        }
+        return out;
+      });
+      res.json(rows);
+    } catch (e) {
+      res.json(q.rows);
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to load bookings" });
