@@ -510,6 +510,55 @@ export default function Admin() {
             </div>
           )}
 
+          {activeTab === "site" && (
+            <div className="rounded-lg border p-4">
+              <h2 className="font-semibold">Newsletter &amp; more</h2>
+              <div className="mt-4">
+                <div className="flex gap-2 flex-wrap">
+                  <Button onClick={() => setShowNewsletter(true)} className="px-4 py-2" variant="gradient">
+                    Compose newsletter
+                  </Button>
+                  <Button onClick={() => setQuickOpen((v) => !v)} className="px-4 py-2" variant="outline">
+                    {quickOpen ? "Hide quick send" : "Quick send"}
+                  </Button>
+                  <Button onClick={() => {
+                    // navigate to students/subscriptions management (reuse existing Students tab)
+                    setActiveTab("students");
+                  }} className="px-4 py-2" variant="ghost">
+                    Manage subscribers
+                  </Button>
+                </div>
+
+                {quickOpen && (
+                  <div className="mt-4 grid gap-2">
+                    <input
+                      value={quickSubject}
+                      onChange={(e) => setQuickSubject(e.target.value)}
+                      placeholder="Subject"
+                      className="h-10 rounded-md border px-3"
+                    />
+                    <textarea
+                      value={quickHtml}
+                      onChange={(e) => setQuickHtml(e.target.value)}
+                      placeholder="Message (HTML allowed)"
+                      className="rounded-md border px-3 py-2 min-h-[120px]"
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={sendQuick} variant="gradient" size="lg">
+                        Send to subscribers
+                      </Button>
+                      <Button onClick={() => { setQuickSubject(""); setQuickHtml(""); }} variant="outline">
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-sm text-foreground/70 mt-3">Use Compose for rich newsletters, Quick send for short announcements.</p>
+              </div>
+            </div>
+          )}
+
           {activeTab === "theme" && (
             <div className="rounded-lg border p-4">
               <h2 className="font-semibold">Theme</h2>
