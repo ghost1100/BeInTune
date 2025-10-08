@@ -1151,6 +1151,108 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
         </div>
       )}
 
+      {/* Cancellation modal */}
+      {cancellationBooking && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-40"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setCancellationBooking(null);
+              setCancellationReason("");
+            }
+          }}
+        >
+          <div className="bg-card rounded-md p-4 w-full max-w-lg">
+            <div className="flex justify-between items-center">
+              <h4 className="font-semibold">Cancel booking for {cancellationBooking.time} on {date}</h4>
+              <button
+                onClick={() => {
+                  setCancellationBooking(null);
+                  setCancellationReason("");
+                }}
+                className="px-2 py-1 border rounded-md"
+              >
+                Close
+              </button>
+            </div>
+            <div className="mt-3">
+              <div className="text-sm mb-2">Choose a reason</div>
+              <div className="space-y-2">
+                {cancellationReasons.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setCancellationReason(r)}
+                    className={`w-full text-left p-2 rounded-md border ${cancellationReason === r ? "bg-primary/10 border-primary" : ""}`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3">
+                <textarea
+                  className="w-full border rounded-md p-2"
+                  placeholder="Or write a custom reason"
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button
+                  className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground"
+                  onClick={async () => {
+                    if (!cancellationBooking) return;
+                    setIsCancelling(cancellationBooking.id);
+                    try {
+                      await removeBk(cancellationBooking.id, { reason: cancellationReason || null, notify: true });
+                      setCancellationBooking(null);
+                      setCancellationReason("");
+                      setRefresh((r) => r + 1);
+                    } catch (e) {
+                      console.error(e);
+                      alert("Failed to cancel booking");
+                    } finally {
+                      setIsCancelling(null);
+                    }
+                  }}
+                >
+                  Send cancellation & remove booking
+                </button>
+                <button
+                  className="px-4 py-2 rounded-md border"
+                  onClick={async () => {
+                    if (!cancellationBooking) return;
+                    setIsCancelling(cancellationBooking.id);
+                    try {
+                      await removeBk(cancellationBooking.id, { reason: null, notify: true });
+                      setCancellationBooking(null);
+                      setCancellationReason("");
+                      setRefresh((r) => r + 1);
+                    } catch (e) {
+                      console.error(e);
+                      alert("Failed to cancel booking");
+                    } finally {
+                      setIsCancelling(null);
+                    }
+                  }}
+                >
+                  Send notification without reason
+                </button>
+                <button
+                  className="px-4 py-2 rounded-md border"
+                  onClick={() => {
+                    setCancellationBooking(null);
+                    setCancellationReason("");
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Student selection modal */}
       {showStudentModal && selectedSlot && (
         <div
@@ -2910,7 +3012,7 @@ function StudentsManager() {
                   <span className="font-medium">
                     {s.name}
                     {s.age ? ` • ${s.age}` : ""}
-                    {s.isElderly ? " �� Elderly" : ""}
+                    {s.isElderly ? " ���� Elderly" : ""}
                   </span>
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 transition-transform ${
