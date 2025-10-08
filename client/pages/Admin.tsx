@@ -3073,7 +3073,7 @@ function StudentsManager() {
                     <dt className="font-medium text-foreground/80">
                       Guardian name
                     </dt>
-                    <dd>{s.parent_name || s.parentGuardianName || "��"}</dd>
+                    <dd>{s.parent_name || s.parentGuardianName || "—"}</dd>
                   </div>
                   <div>
                     <dt className="font-medium text-foreground/80">
