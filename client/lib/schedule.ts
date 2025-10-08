@@ -224,12 +224,18 @@ export async function addBooking(
   }
 }
 
-export async function removeBooking(id: string) {
+export async function removeBooking(id: string, options?: { reason?: string | null; notify?: boolean }) {
   try {
     const api = (await import("@/lib/api")).apiFetch;
-    await api(`/api/admin/bookings/${id}`, { method: "DELETE" });
+    const opts: any = { method: "DELETE" };
+    if (options) {
+      opts.headers = { "Content-Type": "application/json" };
+      opts.body = JSON.stringify({ reason: options.reason || null, notify: options.notify !== false });
+    }
+    await api(`/api/admin/bookings/${id}`, opts);
   } catch (e) {
     console.error(e);
+    throw e;
   }
 }
 
