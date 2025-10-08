@@ -1103,6 +1103,45 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
         ))}
       </div>
 
+      {/* Booking details modal for guest bookings */}
+      {bookingDetail && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-40"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setBookingDetail(null);
+          }}
+        >
+          <div className="bg-card rounded-md p-4 w-full max-w-md">
+            <div className="flex justify-between items-center">
+              <h4 className="font-semibold">Booking details</h4>
+              <button
+                onClick={() => setBookingDetail(null)}
+                className="px-2 py-1 border rounded-md"
+              >
+                Close
+              </button>
+            </div>
+            <div className="mt-3 space-y-1 text-sm">
+              <div>
+                <span className="font-medium">Time:</span> {bookingDetail.time} on {date}
+              </div>
+              <div>
+                <span className="font-medium">Name:</span> {bookingDetail.student_name || bookingDetail.name || "—"}
+              </div>
+              <div>
+                <span className="font-medium">Email:</span> {bookingDetail.student_email || bookingDetail.email || "—"}
+              </div>
+              <div>
+                <span className="font-medium">Phone:</span> {bookingDetail.phone || "—"}
+              </div>
+              <div>
+                <span className="font-medium">Instrument:</span> {bookingDetail.lessonType || bookingDetail.lesson_type || "—"}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Student selection modal */}
       {showStudentModal && selectedSlot && (
         <div
