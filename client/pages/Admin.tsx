@@ -891,6 +891,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
 
   return (
     <div className="mt-4">
+      <style>{`@media (max-width: 991px) { .details-btn-responsive{margin-right:490px;background-color:rgba(208,2,27,1);padding:0 8px;} .cancel-btn-responsive{color:rgba(208,2,27,1);} }`}</style>
       <div className="flex items-center gap-2">
         <input
           type="date"
