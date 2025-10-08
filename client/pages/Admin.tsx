@@ -2656,7 +2656,7 @@ function StudentsManager() {
       marketingConsent: !!(s.marketing_consent ?? s.marketingConsent),
       allergies: s.allergies || "",
       instruments: s.instruments || [],
-      bandName: s.bandName || "",
+      bandName: s.band || "",
       email: s.email || "",
       phone: minor ? "" : s.phone || "",
       address: s.address || "",
