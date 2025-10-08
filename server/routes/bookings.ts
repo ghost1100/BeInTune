@@ -58,7 +58,19 @@ router.get("/bookings", async (req, res) => {
     let q;
     if (date) {
       q = await query(
-        `SELECT b.id, b.lesson_type, b.created_at, s.user_id as student_user_id, u.email as student_email, u.name as student_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
+        `SELECT
+           b.id,
+           b.lesson_type,
+           b.created_at,
+           s.user_id as student_user_id,
+           u.email as student_email,
+           u.name as student_name,
+           COALESCE(u.name, b.guest_name) as name,
+           COALESCE(u.email, b.guest_email) as email,
+           COALESCE(u.phone, b.guest_phone) as phone,
+           sl.id as slot_id,
+           sl.slot_time as time,
+           sl.slot_date as date
          FROM bookings b
          LEFT JOIN slots sl ON b.slot_id = sl.id
          LEFT JOIN students s ON b.student_id = s.id
@@ -69,7 +81,19 @@ router.get("/bookings", async (req, res) => {
       );
     } else {
       q = await query(
-        `SELECT b.id, b.lesson_type, b.created_at, s.user_id as student_user_id, u.email as student_email, u.name as student_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
+        `SELECT
+           b.id,
+           b.lesson_type,
+           b.created_at,
+           s.user_id as student_user_id,
+           u.email as student_email,
+           u.name as student_name,
+           COALESCE(u.name, b.guest_name) as name,
+           COALESCE(u.email, b.guest_email) as email,
+           COALESCE(u.phone, b.guest_phone) as phone,
+           sl.id as slot_id,
+           sl.slot_time as time,
+           sl.slot_date as date
          FROM bookings b
          LEFT JOIN slots sl ON b.slot_id = sl.id
          LEFT JOIN students s ON b.student_id = s.id
@@ -86,15 +110,15 @@ router.get("/bookings", async (req, res) => {
 
 // POST /api/admin/bookings - create booking
 router.post("/bookings", async (req, res) => {
-  const { student_id, slot_id, lesson_type } = req.body as any;
+  const { student_id, slot_id, lesson_type, name, email, phone } = req.body as any;
   if (!slot_id) return res.status(400).json({ error: "Missing slot_id" });
   const slotRes = await query("SELECT * FROM slots WHERE id = $1", [slot_id]);
   if (!slotRes.rows[0])
     return res.status(404).json({ error: "Slot not found" });
 
   const ins = await query(
-    "INSERT INTO bookings(student_id, slot_id, lesson_type) VALUES ($1,$2,$3) RETURNING id, created_at",
-    [student_id || null, slot_id, lesson_type || null],
+    "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_at",
+    [student_id || null, slot_id, lesson_type || null, name || null, email || null, phone || null],
   );
   // mark slot unavailable
   await query("UPDATE slots SET is_available = false WHERE id = $1", [slot_id]);
