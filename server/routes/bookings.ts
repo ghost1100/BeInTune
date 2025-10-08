@@ -126,17 +126,31 @@ router.post("/bookings", async (req, res) => {
   if (!slotRes.rows[0])
     return res.status(404).json({ error: "Slot not found" });
 
-  const ins = await query(
-    "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_at",
-    [student_id || null, slot_id, lesson_type || null, name || null, email || null, phone || null],
-  );
-  // mark slot unavailable
-  await query("UPDATE slots SET is_available = false WHERE id = $1", [slot_id]);
-  res.json({
-    ok: true,
-    bookingId: ins.rows[0].id,
-    created_at: ins.rows[0].created_at,
-  });
+  try {
+    // encrypt guest fields if encryption key present
+    const { encryptText } = await import("../lib/crypto");
+    const nameEnc = name ? encryptText(String(name)) : null;
+    const emailEnc = email ? encryptText(String(email)) : null;
+    const phoneEnc = phone ? encryptText(String(phone)) : null;
+    const nameToStore = nameEnc && nameEnc.encrypted ? JSON.stringify(nameEnc) : name || null;
+    const emailToStore = emailEnc && emailEnc.encrypted ? JSON.stringify(emailEnc) : email || null;
+    const phoneToStore = phoneEnc && phoneEnc.encrypted ? JSON.stringify(phoneEnc) : phone || null;
+
+    const ins = await query(
+      "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_at",
+      [student_id || null, slot_id, lesson_type || null, nameToStore, emailToStore, phoneToStore],
+    );
+    // mark slot unavailable
+    await query("UPDATE slots SET is_available = false WHERE id = $1", [slot_id]);
+    res.json({
+      ok: true,
+      bookingId: ins.rows[0].id,
+      created_at: ins.rows[0].created_at,
+    });
+  } catch (e) {
+    console.error("Failed to create booking:", e);
+    res.status(500).json({ error: "Failed to create booking" });
+  }
 });
 
 // DELETE /api/admin/bookings/:id
