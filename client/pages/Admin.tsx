@@ -67,6 +67,7 @@ export default function Admin() {
   const [loadingImg, setLoadingImg] = useState(false);
   const [form, setForm] = useState<Partial<Teacher>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [teacherModalOpen, setTeacherModalOpen] = useState(false);
   const navigate = useNavigate();
   const [showNewsletter, setShowNewsletter] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
@@ -132,6 +133,7 @@ export default function Admin() {
         });
         setForm({});
         setEditingId(null);
+        setTeacherModalOpen(false);
         const ts = await loadTeachersFromDb();
         setTeachers(ts);
         return;
@@ -150,6 +152,7 @@ export default function Admin() {
         }),
       });
       setForm({});
+      setTeacherModalOpen(false);
       const ts = await loadTeachersFromDb();
       setTeachers(ts);
     } catch (e) {
@@ -172,7 +175,7 @@ export default function Admin() {
   const edit = (t: Teacher) => {
     setEditingId(t.id);
     setForm({ ...t });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTeacherModalOpen(true);
   };
 
   const pickRandom = async () => {
@@ -364,135 +367,12 @@ export default function Admin() {
           {activeTab === "teachers" && (
             <div className="grid md:grid-cols-3 gap-6">
               <div className="md:col-span-1 rounded-lg border p-4">
-                <h2 className="font-semibold">Add / edit teacher</h2>
-                <form className="mt-3" onSubmit={add}>
-                  <label htmlFor="teacherName" className="sr-only">
-                    Name
-                  </label>
-                  <input
-                    id="teacherName"
-                    name="name"
-                    className="w-full h-10 rounded-md border px-3 mb-2"
-                    placeholder="Name"
-                    value={form.name || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, name: e.target.value }))
-                    }
-                    autoComplete="name"
-                  />
-                  <label htmlFor="teacherEmail" className="sr-only">
-                    Email
-                  </label>
-                  <input
-                    id="teacherEmail"
-                    name="email"
-                    className="w-full h-10 rounded-md border px-3 mb-2"
-                    placeholder="Email"
-                    value={form.email || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, email: e.target.value }))
-                    }
-                    autoComplete="email"
-                  />
-                  <label htmlFor="teacherPhone" className="sr-only">
-                    Phone
-                  </label>
-                  <input
-                    id="teacherPhone"
-                    name="phone"
-                    className="w-full h-10 rounded-md border px-3 mb-2"
-                    placeholder="Phone"
-                    value={form.phone || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, phone: e.target.value }))
-                    }
-                    autoComplete="tel"
-                  />
-                  <label htmlFor="teacherYears" className="sr-only">
-                    Years of experience
-                  </label>
-                  <input
-                    id="teacherYears"
-                    name="years"
-                    className="w-full h-10 rounded-md border px-3 mb-2"
-                    placeholder="Years of experience"
-                    value={form.years || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, years: e.target.value }))
-                    }
-                    autoComplete="off"
-                  />
-                  <label htmlFor="teacherAbout" className="sr-only">
-                    About
-                  </label>
-                  <textarea
-                    id="teacherAbout"
-                    name="about"
-                    className="w-full rounded-md border px-3 mb-2"
-                    placeholder="About"
-                    value={form.about || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, about: e.target.value }))
-                    }
-                  />
-
-                  <div className="mb-2">
-                    <label
-                      htmlFor="teacherImage"
-                      className="block text-sm font-medium mb-2"
-                    >
-                      Profile picture (drop file or choose)
-                    </label>
-                    <div
-                      onDrop={handleDrop}
-                      onDragOver={(e) => e.preventDefault()}
-                      className="border-dashed border-2 border-gray-300 rounded-md p-3 text-sm text-center"
-                    >
-                      {form.image ? (
-                        <img
-                          src={form.image as string}
-                          alt="preview"
-                          className="mx-auto h-24 object-cover rounded-md"
-                        />
-                      ) : (
-                        <div className="text-foreground/70">
-                          Drop image here or use choose file
-                        </div>
-                      )}
-                      <input
-                        id="teacherImage"
-                        name="image"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="mt-2 w-full"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 flex-wrap">
-                    <button className="px-4 py-2 rounded-md bg-primary text-primary-foreground">
-                      {editingId ? "Save" : "Add"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setForm({});
-                        setEditingId(null);
-                      }}
-                      className="px-4 py-2 rounded-md border"
-                    >
-                      Clear
-                    </button>
-                    <button
-                      type="button"
-                      onClick={pickRandom}
-                      className="px-4 py-2 rounded-md border"
-                    >
-                      {loadingImg ? "Loading..." : "Random"}
-                    </button>
-                  </div>
-                </form>
+                <h2 className="font-semibold">Teachers</h2>
+                <p className="text-sm text-foreground/70 mt-1">Add or edit teachers. Click the button to open the form.</p>
+                <div className="mt-3">
+                  <Button onClick={() => { setForm({}); setEditingId(null); setTeacherModalOpen(true); }} variant="gradient">Add teacher</Button>
+                </div>
+                <div className="mt-4 text-sm text-foreground/70">You can also edit an existing teacher from the list to the right.</div>
               </div>
 
               <div className="md:col-span-2">
@@ -500,7 +380,7 @@ export default function Admin() {
                 <div className="mt-4 grid sm:grid-cols-2 gap-4">
                   {teachers.length === 0 && (
                     <div className="text-foreground/70">
-                      No teachers yet. Use the form to add one.
+                      No teachers yet. Use the button to add one.
                     </div>
                   )}
                   {teachers.map((t) => (
@@ -513,6 +393,7 @@ export default function Admin() {
                   ))}
                 </div>
               </div>
+
             </div>
           )}
 
@@ -666,6 +547,91 @@ export default function Admin() {
         >
           <div className="w-full max-w-3xl p-4">
             <NewsletterComposer onClose={() => setShowNewsletter(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* Teacher modal */}
+      {teacherModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setTeacherModalOpen(false);
+              setForm({});
+              setEditingId(null);
+            }
+          }}
+        >
+          <div className="bg-card rounded-md p-4 max-w-2xl w-full">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">{editingId ? "Edit teacher" : "Add teacher"}</h3>
+              <Button variant="ghost" onClick={() => { setTeacherModalOpen(false); setForm({}); setEditingId(null); }}>Close</Button>
+            </div>
+            <form onSubmit={add} className="grid gap-2">
+              <input
+                id="teacherName"
+                name="name"
+                className="w-full h-10 rounded-md border px-3"
+                placeholder="Name"
+                value={form.name || ""}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                autoComplete="name"
+              />
+              <input
+                id="teacherEmail"
+                name="email"
+                className="w-full h-10 rounded-md border px-3"
+                placeholder="Email"
+                value={form.email || ""}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                autoComplete="email"
+              />
+              <input
+                id="teacherPhone"
+                name="phone"
+                className="w-full h-10 rounded-md border px-3"
+                placeholder="Phone"
+                value={form.phone || ""}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                autoComplete="tel"
+              />
+              <input
+                id="teacherYears"
+                name="years"
+                className="w-full h-10 rounded-md border px-3"
+                placeholder="Years of experience"
+                value={form.years || ""}
+                onChange={(e) => setForm((f) => ({ ...f, years: e.target.value }))}
+                autoComplete="off"
+              />
+              <textarea
+                id="teacherAbout"
+                name="about"
+                className="w-full rounded-md border px-3"
+                placeholder="About"
+                value={form.about || ""}
+                onChange={(e) => setForm((f) => ({ ...f, about: e.target.value }))}
+              />
+
+              <div className="mb-2">
+                <label htmlFor="teacherImage" className="block text-sm font-medium mb-2">Profile picture (drop file or choose)</label>
+                <div onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} className="border-dashed border-2 border-gray-300 rounded-md p-3 text-sm text-center">
+                  {form.image ? (
+                    <img src={form.image as string} alt="preview" className="mx-auto h-24 object-cover rounded-md" />
+                  ) : (
+                    <div className="text-foreground/70">Drop image here or use choose file</div>
+                  )}
+                  <input id="teacherImage" name="image" type="file" accept="image/*" onChange={handleFileChange} className="mt-2 w-full" />
+                </div>
+              </div>
+
+              <div className="flex gap-2 flex-wrap">
+                <Button type="submit" className="px-4 py-2" variant="primary">{editingId ? "Save" : "Add"}</Button>
+                <Button type="button" onClick={() => { setForm({}); setEditingId(null); }} variant="outline">Clear</Button>
+                <Button type="button" onClick={pickRandom} variant="ghost">{loadingImg ? "Loading..." : "Random"}</Button>
+              </div>
+            </form>
           </div>
         </div>
       )}
