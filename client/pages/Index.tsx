@@ -68,7 +68,10 @@ export default function Index() {
           </div>
 
           <aside className="lg:col-span-5">
-            <div id="book" className="bg-card rounded-xl p-6 shadow-lg max-w-md mx-auto">
+            <div
+              id="book"
+              className="bg-card rounded-xl p-6 shadow-lg max-w-md mx-auto"
+            >
               <h3 className="text-lg font-semibold">Book a free trial</h3>
               <p className="text-sm text-foreground/70 mt-1">
                 No commitment — try a 30 minute lesson.

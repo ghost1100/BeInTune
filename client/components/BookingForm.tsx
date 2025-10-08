@@ -147,7 +147,10 @@ export default function BookingForm() {
             onClick={(e) => {
               e.preventDefault();
               const tel = `tel:${getSiteContent().phone}`;
-              const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/.test(navigator.userAgent);
+              const isMobile =
+                /Mobi|Android|iPhone|iPad|iPod|Windows Phone/.test(
+                  navigator.userAgent,
+                );
               if (isMobile) {
                 window.location.href = tel;
               } else {
