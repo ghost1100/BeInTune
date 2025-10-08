@@ -1138,7 +1138,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
             <div className="flex gap-2 flex-wrap">
               <button
                 onClick={() => { setCancellationBooking(b); setCancellationReason(""); }}
-                className="px-3 py-1 rounded-md border"
+                className="px-3 py-1 rounded-md border cancel-btn-responsive"
               >
                 Cancel
               </button>
