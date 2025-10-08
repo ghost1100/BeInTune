@@ -974,10 +974,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                         <button
                           type="button"
                           onClick={() => {
-                            setIsCancelling(booked.id);
-                            removeBk(booked.id).finally(() =>
-                              setIsCancelling(null),
-                            );
+                            setCancellationBooking(booked);
+                            setCancellationReason("");
                           }}
                           className="px-3 py-1 rounded-md border"
                           disabled={isCancelling === booked.id}
@@ -1050,11 +1048,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     <button
                       type="button"
                       onClick={() => {
-                        setIsCancelling(booked.id);
-                        removeBk(booked.id).finally(() =>
-                          setIsCancelling(null),
-                        );
-                      }}
+                            setCancellationBooking(booked);
+                            setCancellationReason("");
+                          }}
                       className="text-sm rounded-md border px-2 py-1"
                       disabled={isCancelling === booked.id}
                     >
