@@ -964,9 +964,11 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                               e.stopPropagation();
                               setBookingDetail(booked);
                             }}
-                            className="text-xs rounded-md border px-2 py-1 bg-transparent"
+                            className="details-btn-responsive text-xs rounded-md border px-2 py-1 bg-transparent"
                           >
-                            Details
+                            <p>
+                              Details<span className="ql-cursor">{'\uFEFF'}</span>
+                            </p>
                           </button>
                         )}
 
