@@ -122,6 +122,11 @@ export async function ensureDbSetup() {
       created_at timestamptz NOT NULL DEFAULT now()
     )`);
 
+    // Guest booking details (for visitors without a student account)
+    await query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_name text;");
+    await query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_email text;");
+    await query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_phone text;");
+
     // Ensure admin user exists with username Darryle
     const adminIdentifier = process.env.ADMIN_EMAIL || "admin@intune.local";
     const adminUsername = process.env.ADMIN_USERNAME || "Darryle";
