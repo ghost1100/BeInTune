@@ -1,7 +1,16 @@
 import express from "express";
 import { query } from "../db";
+import sgMail from "@sendgrid/mail";
 
 const router = express.Router();
+
+if (process.env.SENDGRID_API_KEY) {
+  try {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  } catch (e) {
+    console.error("Failed to configure SendGrid:", e);
+  }
+}
 
 function isWithinBusinessHours(time: string) {
   if (!time) return false;
