@@ -3057,38 +3057,92 @@ function StudentsManager() {
 
               {isExpanded && (
                 <dl className="grid gap-2 rounded-md bg-muted/40 p-3 text-sm sm:grid-cols-2">
-                  <div>
-                    <dt className="font-medium text-foreground/80">Address</dt>
-                    <dd>{s.address || "—"}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-foreground/80">
-                      Marketing consent
-                    </dt>
-                    <dd>
-                      {s.marketing_consent || s.marketingConsent ? "Yes" : "No"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-foreground/80">
-                      Guardian name
-                    </dt>
-                    <dd>{s.parent_name || s.parentGuardianName || "—"}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-foreground/80">
-                      Guardian email
-                    </dt>
-                    <dd>{s.parent_email || s.parentGuardianEmail || "—"}</dd>
-                  </div>
+                  {s.address ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">Address</dt>
+                      <dd>{s.address}</dd>
+                    </div>
+                  ) : null}
+
+                  {/* Show marketing consent only if explicitly set (true or false) */}
+                  {(s.marketing_consent !== undefined || s.marketingConsent !== undefined) ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">Marketing consent</dt>
+                      <dd>{s.marketing_consent || s.marketingConsent ? "Yes" : "No"}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.parent_name || s.parentGuardianName ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">Guardian name</dt>
+                      <dd>{s.parent_name || s.parentGuardianName}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.parent_email || s.parentGuardianEmail ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">Guardian email</dt>
+                      <dd>{s.parent_email || s.parentGuardianEmail}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.emergency_contacts ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">Emergency contact</dt>
+                      <dd>{s.emergency_contacts}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.phone ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">Phone</dt>
+                      <dd>{s.phone}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.allergies ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">Allergies / issues</dt>
+                      <dd>{s.allergies}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.medications ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">Medications</dt>
+                      <dd>{s.medications}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.instruments ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">Instrument(s)</dt>
+                      <dd>{(() => {
+                        try {
+                          if (Array.isArray(s.instruments)) return s.instruments.join(", ");
+                          const parsed = typeof s.instruments === "string" ? JSON.parse(s.instruments) : s.instruments;
+                          return Array.isArray(parsed) ? parsed.join(", ") : String(parsed);
+                        } catch (e) {
+                          return String(s.instruments);
+                        }
+                      })()}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.band ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">Band</dt>
+                      <dd>{s.band}</dd>
+                    </div>
+                  ) : null}
+
                   <div>
                     <dt className="font-medium text-foreground/80">Created</dt>
                     <dd>{formatDateTime(s.created_at)}</dd>
                   </div>
+
                   <div>
-                    <dt className="font-medium text-foreground/80">
-                      Last updated
-                    </dt>
+                    <dt className="font-medium text-foreground/80">Last updated</dt>
                     <dd>{formatDateTime(s.updated_at)}</dd>
                   </div>
                 </dl>
