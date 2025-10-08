@@ -943,10 +943,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     <div
                       onClick={() => {
                         if (booked) {
-                          setIsCancelling(booked.id);
-                          removeBk(booked.id).finally(() =>
-                            setIsCancelling(null),
-                          );
+                          setCancellationBooking(booked);
+                          setCancellationReason("");
                           return;
                         }
                         if (available) {
