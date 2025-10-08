@@ -149,6 +149,10 @@ router.get("/bookings", async (req, res) => {
         } catch (e) {
           // ignore
         }
+        // Ensure public-facing name/email/phone use decrypted guest values when user values are absent
+        out.name = out.student_name || out.guest_name || out.name;
+        out.email = out.student_email || out.guest_email || out.email;
+        out.phone = out.guest_phone || out.phone;
         return out;
       });
       res.json(rows);
