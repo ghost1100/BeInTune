@@ -42,11 +42,21 @@ export async function ensureDbSetup() {
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS image text;");
 
     // Ensure students table has extended fields used by the admin UI
-    await query("ALTER TABLE students ADD COLUMN IF NOT EXISTS parent_phone text;");
-    await query("ALTER TABLE students ADD COLUMN IF NOT EXISTS emergency_contacts text;");
-    await query("ALTER TABLE students ADD COLUMN IF NOT EXISTS allergies text;");
-    await query("ALTER TABLE students ADD COLUMN IF NOT EXISTS medications text;");
-    await query("ALTER TABLE students ADD COLUMN IF NOT EXISTS instruments jsonb;");
+    await query(
+      "ALTER TABLE students ADD COLUMN IF NOT EXISTS parent_phone text;",
+    );
+    await query(
+      "ALTER TABLE students ADD COLUMN IF NOT EXISTS emergency_contacts text;",
+    );
+    await query(
+      "ALTER TABLE students ADD COLUMN IF NOT EXISTS allergies text;",
+    );
+    await query(
+      "ALTER TABLE students ADD COLUMN IF NOT EXISTS medications text;",
+    );
+    await query(
+      "ALTER TABLE students ADD COLUMN IF NOT EXISTS instruments jsonb;",
+    );
     await query("ALTER TABLE students ADD COLUMN IF NOT EXISTS band text;");
 
     // Ensure comment, reaction, learning and audit tables exist
@@ -131,9 +141,15 @@ export async function ensureDbSetup() {
     )`);
 
     // Guest booking details (for visitors without a student account)
-    await query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_name text;");
-    await query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_email text;");
-    await query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_phone text;");
+    await query(
+      "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_name text;",
+    );
+    await query(
+      "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_email text;",
+    );
+    await query(
+      "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_phone text;",
+    );
 
     // Ensure admin user exists with username Darryle
     const adminIdentifier = process.env.ADMIN_EMAIL || "admin@intune.local";

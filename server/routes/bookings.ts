@@ -124,7 +124,10 @@ router.get("/bookings", async (req, res) => {
         const out = { ...r };
         try {
           if (out.guest_name) {
-            const parsed = typeof out.guest_name === "string" ? JSON.parse(out.guest_name) : out.guest_name;
+            const parsed =
+              typeof out.guest_name === "string"
+                ? JSON.parse(out.guest_name)
+                : out.guest_name;
             const dec = decryptText(parsed);
             out.guest_name = dec || out.guest_name;
           }
@@ -133,7 +136,10 @@ router.get("/bookings", async (req, res) => {
         }
         try {
           if (out.guest_email) {
-            const parsed = typeof out.guest_email === "string" ? JSON.parse(out.guest_email) : out.guest_email;
+            const parsed =
+              typeof out.guest_email === "string"
+                ? JSON.parse(out.guest_email)
+                : out.guest_email;
             const dec = decryptText(parsed);
             out.guest_email = dec || out.guest_email;
           }
@@ -142,7 +148,10 @@ router.get("/bookings", async (req, res) => {
         }
         try {
           if (out.guest_phone) {
-            const parsed = typeof out.guest_phone === "string" ? JSON.parse(out.guest_phone) : out.guest_phone;
+            const parsed =
+              typeof out.guest_phone === "string"
+                ? JSON.parse(out.guest_phone)
+                : out.guest_phone;
             const dec = decryptText(parsed);
             out.guest_phone = dec || out.guest_phone;
           }
@@ -167,7 +176,8 @@ router.get("/bookings", async (req, res) => {
 
 // POST /api/admin/bookings - create booking
 router.post("/bookings", async (req, res) => {
-  const { student_id, slot_id, lesson_type, name, email, phone } = req.body as any;
+  const { student_id, slot_id, lesson_type, name, email, phone } =
+    req.body as any;
   if (!slot_id) return res.status(400).json({ error: "Missing slot_id" });
   const slotRes = await query("SELECT * FROM slots WHERE id = $1", [slot_id]);
   if (!slotRes.rows[0])
@@ -179,16 +189,28 @@ router.post("/bookings", async (req, res) => {
     const nameEnc = name ? encryptText(String(name)) : null;
     const emailEnc = email ? encryptText(String(email)) : null;
     const phoneEnc = phone ? encryptText(String(phone)) : null;
-    const nameToStore = nameEnc && nameEnc.encrypted ? JSON.stringify(nameEnc) : name || null;
-    const emailToStore = emailEnc && emailEnc.encrypted ? JSON.stringify(emailEnc) : email || null;
-    const phoneToStore = phoneEnc && phoneEnc.encrypted ? JSON.stringify(phoneEnc) : phone || null;
+    const nameToStore =
+      nameEnc && nameEnc.encrypted ? JSON.stringify(nameEnc) : name || null;
+    const emailToStore =
+      emailEnc && emailEnc.encrypted ? JSON.stringify(emailEnc) : email || null;
+    const phoneToStore =
+      phoneEnc && phoneEnc.encrypted ? JSON.stringify(phoneEnc) : phone || null;
 
     const ins = await query(
       "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_at",
-      [student_id || null, slot_id, lesson_type || null, nameToStore, emailToStore, phoneToStore],
+      [
+        student_id || null,
+        slot_id,
+        lesson_type || null,
+        nameToStore,
+        emailToStore,
+        phoneToStore,
+      ],
     );
     // mark slot unavailable
-    await query("UPDATE slots SET is_available = false WHERE id = $1", [slot_id]);
+    await query("UPDATE slots SET is_available = false WHERE id = $1", [
+      slot_id,
+    ]);
     res.json({
       ok: true,
       bookingId: ins.rows[0].id,
@@ -246,7 +268,9 @@ router.delete("/bookings/:id", async (req, res) => {
         info.slot_id,
       ]);
     } else {
-      const bRes = await query("SELECT slot_id FROM bookings WHERE id = $1", [id]);
+      const bRes = await query("SELECT slot_id FROM bookings WHERE id = $1", [
+        id,
+      ]);
       if (bRes.rows[0]) {
         const slotId = bRes.rows[0].slot_id;
         if (slotId)

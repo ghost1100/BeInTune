@@ -85,7 +85,10 @@ router.post("/me/update", async (req, res) => {
 
 // DEV: seed sample students (only allowed in non-production or when ALLOW_DEV_SEED=true)
 router.post("/seed-students", async (req, res) => {
-  if (process.env.NODE_ENV === "production" && process.env.ALLOW_DEV_SEED !== "true") {
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.ALLOW_DEV_SEED !== "true"
+  ) {
     return res.status(403).json({ error: "Not allowed in production" });
   }
   try {
@@ -203,7 +206,10 @@ router.post("/seed-students", async (req, res) => {
       // ensure unique email by adding timestamp if exists
       let email = s.email;
       const index = digest(String(email)).toString();
-      const exists = await query("SELECT id FROM users WHERE email_index = $1 LIMIT 1", [index]);
+      const exists = await query(
+        "SELECT id FROM users WHERE email_index = $1 LIMIT 1",
+        [index],
+      );
       if (exists.rows.length) {
         const t = String(Date.now()).slice(-6);
         email = `${email.split("@")[0]}.${t}@${email.split("@")[1]}`;
@@ -213,10 +219,22 @@ router.post("/seed-students", async (req, res) => {
       const emailToStore = enc.encrypted ? JSON.stringify(enc) : email;
       const emailIndex = digest(email);
       const phoneEnc = s.parent_phone ? encryptText(s.parent_phone) : null;
-      const phoneToStore = phoneEnc && phoneEnc.encrypted ? JSON.stringify(phoneEnc) : s.parent_phone || null;
+      const phoneToStore =
+        phoneEnc && phoneEnc.encrypted
+          ? JSON.stringify(phoneEnc)
+          : s.parent_phone || null;
       const u = await query(
         "INSERT INTO users(email, email_encrypted, email_index, phone_encrypted, password_hash, role, name, email_verified) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
-        [email || null, emailToStore, emailIndex, phoneToStore, pwHash, "student", s.name || null, true],
+        [
+          email || null,
+          emailToStore,
+          emailIndex,
+          phoneToStore,
+          pwHash,
+          "student",
+          s.name || null,
+          true,
+        ],
       );
       const userId = u.rows[0].id;
       await query(
@@ -233,7 +251,9 @@ router.post("/seed-students", async (req, res) => {
           s.emergency_contacts || null,
           s.allergies || null,
           s.medications || null,
-          s.instruments && Array.isArray(s.instruments) ? JSON.stringify(s.instruments) : null,
+          s.instruments && Array.isArray(s.instruments)
+            ? JSON.stringify(s.instruments)
+            : null,
           s.band || null,
           false,
         ],

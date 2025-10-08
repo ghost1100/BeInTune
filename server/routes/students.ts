@@ -165,7 +165,9 @@ router.post("/students", async (req, res) => {
       emergency_contacts || null,
       allergies || null,
       medications || null,
-      instruments && Array.isArray(instruments) ? JSON.stringify(instruments) : null,
+      instruments && Array.isArray(instruments)
+        ? JSON.stringify(instruments)
+        : null,
       band || null,
       marketing_consent || false,
     ],
@@ -196,12 +198,19 @@ router.put("/students/:id", async (req, res) => {
   const nextParentEmail =
     patch.parent_email === undefined ? s.parent_email : patch.parent_email;
   const nextPhone = patch.phone === undefined ? s.phone : patch.phone;
-  const nextParentPhone = patch.parent_phone === undefined ? s.parent_phone : patch.parent_phone;
+  const nextParentPhone =
+    patch.parent_phone === undefined ? s.parent_phone : patch.parent_phone;
   const nextAddress = patch.address === undefined ? s.address : patch.address;
-  const nextEmergency = patch.emergency_contacts === undefined ? s.emergency_contacts : patch.emergency_contacts;
-  const nextAllergies = patch.allergies === undefined ? s.allergies : patch.allergies;
-  const nextMedications = patch.medications === undefined ? s.medications : patch.medications;
-  const nextInstruments = patch.instruments === undefined ? s.instruments : patch.instruments;
+  const nextEmergency =
+    patch.emergency_contacts === undefined
+      ? s.emergency_contacts
+      : patch.emergency_contacts;
+  const nextAllergies =
+    patch.allergies === undefined ? s.allergies : patch.allergies;
+  const nextMedications =
+    patch.medications === undefined ? s.medications : patch.medications;
+  const nextInstruments =
+    patch.instruments === undefined ? s.instruments : patch.instruments;
   const nextBand = patch.band === undefined ? s.band : patch.band;
   const nextMarketing =
     patch.marketing_consent === undefined
@@ -221,7 +230,9 @@ router.put("/students/:id", async (req, res) => {
       nextEmergency,
       nextAllergies,
       nextMedications,
-      nextInstruments && Array.isArray(nextInstruments) ? JSON.stringify(nextInstruments) : nextInstruments,
+      nextInstruments && Array.isArray(nextInstruments)
+        ? JSON.stringify(nextInstruments)
+        : nextInstruments,
       nextBand,
       nextMarketing,
       id,
@@ -244,7 +255,13 @@ router.put("/students/:id", async (req, res) => {
       const emailIndex = digest(nextEmail);
       await query(
         "UPDATE users SET email = COALESCE($1, email), email_encrypted = COALESCE($2, email_encrypted), email_index = COALESCE($3, email_index), name = COALESCE($4, name), updated_at = now() WHERE id = $5",
-        [emailToStore ?? null, emailToStore ?? null, emailIndex ?? null, nextUserName ?? null, s.user_id],
+        [
+          emailToStore ?? null,
+          emailToStore ?? null,
+          emailIndex ?? null,
+          nextUserName ?? null,
+          s.user_id,
+        ],
       );
     } catch (e) {
       await query(

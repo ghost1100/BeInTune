@@ -824,7 +824,10 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
     setRefresh((r) => r + 1);
   };
 
-  const removeBk = async (id: string, options?: { reason?: string | null; notify?: boolean }) => {
+  const removeBk = async (
+    id: string,
+    options?: { reason?: string | null; notify?: boolean },
+  ) => {
     await removeBooking(id, options);
     setRefresh((r) => r + 1);
   };
@@ -841,7 +844,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [bookingDetail, setBookingDetail] = useState<any | null>(null);
-  const [cancellationBooking, setCancellationBooking] = useState<any | null>(null);
+  const [cancellationBooking, setCancellationBooking] = useState<any | null>(
+    null,
+  );
   const [cancellationReason, setCancellationReason] = useState<string>("");
   const cancellationReasons = [
     "Teacher unavailable",
@@ -920,7 +925,10 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                 const booked = bookingsState.find((b) => b.time === s);
                 const isGuest = booked && !booked.student_user_id;
                 return (
-                  <div key={s} className="text-sm text-foreground/70 py-2 flex items-center gap-2">
+                  <div
+                    key={s}
+                    className="text-sm text-foreground/70 py-2 flex items-center gap-2"
+                  >
                     <span>{s}</span>
                   </div>
                 );
@@ -967,7 +975,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                             className="details-btn-responsive text-xs rounded-md border px-2 py-1 bg-transparent"
                           >
                             <p>
-                              Details<span className="ql-cursor">{'\uFEFF'}</span>
+                              Details
+                              <span className="ql-cursor">{"\uFEFF"}</span>
                             </p>
                           </button>
                         )}
@@ -1071,11 +1080,15 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                         title="View booking details"
                       >
                         <p>
-                          Details<span className="ql-cursor">{'\uFEFF'}</span>
+                          Details<span className="ql-cursor">{"\uFEFF"}</span>
                         </p>
                       </span>
                     )}
-                    <span>{isCancelling === (booked?.id || "") && booked ? "..." : s}</span>
+                    <span>
+                      {isCancelling === (booked?.id || "") && booked
+                        ? "..."
+                        : s}
+                    </span>
                   </div>
                 </button>
                 {booked ? (
@@ -1083,9 +1096,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     <button
                       type="button"
                       onClick={() => {
-                            setCancellationBooking(booked);
-                            setCancellationReason("");
-                          }}
+                        setCancellationBooking(booked);
+                        setCancellationReason("");
+                      }}
                       className="text-sm rounded-md border px-2 py-1"
                       disabled={isCancelling === booked.id}
                     >
@@ -1137,7 +1150,10 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
             </div>
             <div className="flex gap-2 flex-wrap">
               <button
-                onClick={() => { setCancellationBooking(b); setCancellationReason(""); }}
+                onClick={() => {
+                  setCancellationBooking(b);
+                  setCancellationReason("");
+                }}
                 className="px-3 py-1 rounded-md border cancel-btn-responsive"
               >
                 Cancel
@@ -1167,19 +1183,24 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
             </div>
             <div className="mt-3 space-y-1 text-sm">
               <div>
-                <span className="font-medium">Time:</span> {bookingDetail.time} on {date}
+                <span className="font-medium">Time:</span> {bookingDetail.time}{" "}
+                on {date}
               </div>
               <div>
-                <span className="font-medium">Name:</span> {bookingDetail.student_name || bookingDetail.name || "—"}
+                <span className="font-medium">Name:</span>{" "}
+                {bookingDetail.student_name || bookingDetail.name || "—"}
               </div>
               <div>
-                <span className="font-medium">Email:</span> {bookingDetail.student_email || bookingDetail.email || "—"}
+                <span className="font-medium">Email:</span>{" "}
+                {bookingDetail.student_email || bookingDetail.email || "—"}
               </div>
               <div>
-                <span className="font-medium">Phone:</span> {bookingDetail.phone || "—"}
+                <span className="font-medium">Phone:</span>{" "}
+                {bookingDetail.phone || "—"}
               </div>
               <div>
-                <span className="font-medium">Instrument:</span> {bookingDetail.lessonType || bookingDetail.lesson_type || "—"}
+                <span className="font-medium">Instrument:</span>{" "}
+                {bookingDetail.lessonType || bookingDetail.lesson_type || "—"}
               </div>
             </div>
           </div>
@@ -1199,7 +1220,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
         >
           <div className="bg-card rounded-md p-4 w-full max-w-lg">
             <div className="flex justify-between items-center">
-              <h4 className="font-semibold">Cancel booking for {cancellationBooking.time} on {date}</h4>
+              <h4 className="font-semibold">
+                Cancel booking for {cancellationBooking.time} on {date}
+              </h4>
               <button
                 onClick={() => {
                   setCancellationBooking(null);
@@ -1239,7 +1262,10 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     if (!cancellationBooking) return;
                     setIsCancelling(cancellationBooking.id);
                     try {
-                      await removeBk(cancellationBooking.id, { reason: cancellationReason || null, notify: true });
+                      await removeBk(cancellationBooking.id, {
+                        reason: cancellationReason || null,
+                        notify: true,
+                      });
                       setCancellationBooking(null);
                       setCancellationReason("");
                       setRefresh((r) => r + 1);
@@ -1259,7 +1285,10 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     if (!cancellationBooking) return;
                     setIsCancelling(cancellationBooking.id);
                     try {
-                      await removeBk(cancellationBooking.id, { reason: null, notify: true });
+                      await removeBk(cancellationBooking.id, {
+                        reason: null,
+                        notify: true,
+                      });
                       setCancellationBooking(null);
                       setCancellationReason("");
                       setRefresh((r) => r + 1);
@@ -3059,36 +3088,51 @@ function StudentsManager() {
                 <dl className="grid gap-2 rounded-md bg-muted/40 p-3 text-sm sm:grid-cols-2">
                   {s.address ? (
                     <div>
-                      <dt className="font-medium text-foreground/80">Address</dt>
+                      <dt className="font-medium text-foreground/80">
+                        Address
+                      </dt>
                       <dd>{s.address}</dd>
                     </div>
                   ) : null}
 
                   {/* Show marketing consent only if explicitly set (true or false) */}
-                  {(s.marketing_consent !== undefined || s.marketingConsent !== undefined) ? (
+                  {s.marketing_consent !== undefined ||
+                  s.marketingConsent !== undefined ? (
                     <div>
-                      <dt className="font-medium text-foreground/80">Marketing consent</dt>
-                      <dd>{s.marketing_consent || s.marketingConsent ? "Yes" : "No"}</dd>
+                      <dt className="font-medium text-foreground/80">
+                        Marketing consent
+                      </dt>
+                      <dd>
+                        {s.marketing_consent || s.marketingConsent
+                          ? "Yes"
+                          : "No"}
+                      </dd>
                     </div>
                   ) : null}
 
                   {s.parent_name || s.parentGuardianName ? (
                     <div>
-                      <dt className="font-medium text-foreground/80">Guardian name</dt>
+                      <dt className="font-medium text-foreground/80">
+                        Guardian name
+                      </dt>
                       <dd>{s.parent_name || s.parentGuardianName}</dd>
                     </div>
                   ) : null}
 
                   {s.parent_email || s.parentGuardianEmail ? (
                     <div>
-                      <dt className="font-medium text-foreground/80">Guardian email</dt>
+                      <dt className="font-medium text-foreground/80">
+                        Guardian email
+                      </dt>
                       <dd>{s.parent_email || s.parentGuardianEmail}</dd>
                     </div>
                   ) : null}
 
                   {s.emergency_contacts ? (
                     <div>
-                      <dt className="font-medium text-foreground/80">Emergency contact</dt>
+                      <dt className="font-medium text-foreground/80">
+                        Emergency contact
+                      </dt>
                       <dd>{s.emergency_contacts}</dd>
                     </div>
                   ) : null}
@@ -3102,30 +3146,44 @@ function StudentsManager() {
 
                   {s.allergies ? (
                     <div>
-                      <dt className="font-medium text-foreground/80">Allergies / issues</dt>
+                      <dt className="font-medium text-foreground/80">
+                        Allergies / issues
+                      </dt>
                       <dd>{s.allergies}</dd>
                     </div>
                   ) : null}
 
                   {s.medications ? (
                     <div>
-                      <dt className="font-medium text-foreground/80">Medications</dt>
+                      <dt className="font-medium text-foreground/80">
+                        Medications
+                      </dt>
                       <dd>{s.medications}</dd>
                     </div>
                   ) : null}
 
                   {s.instruments ? (
                     <div>
-                      <dt className="font-medium text-foreground/80">Instrument(s)</dt>
-                      <dd>{(() => {
-                        try {
-                          if (Array.isArray(s.instruments)) return s.instruments.join(", ");
-                          const parsed = typeof s.instruments === "string" ? JSON.parse(s.instruments) : s.instruments;
-                          return Array.isArray(parsed) ? parsed.join(", ") : String(parsed);
-                        } catch (e) {
-                          return String(s.instruments);
-                        }
-                      })()}</dd>
+                      <dt className="font-medium text-foreground/80">
+                        Instrument(s)
+                      </dt>
+                      <dd>
+                        {(() => {
+                          try {
+                            if (Array.isArray(s.instruments))
+                              return s.instruments.join(", ");
+                            const parsed =
+                              typeof s.instruments === "string"
+                                ? JSON.parse(s.instruments)
+                                : s.instruments;
+                            return Array.isArray(parsed)
+                              ? parsed.join(", ")
+                              : String(parsed);
+                          } catch (e) {
+                            return String(s.instruments);
+                          }
+                        })()}
+                      </dd>
                     </div>
                   ) : null}
 
@@ -3142,7 +3200,9 @@ function StudentsManager() {
                   </div>
 
                   <div>
-                    <dt className="font-medium text-foreground/80">Last updated</dt>
+                    <dt className="font-medium text-foreground/80">
+                      Last updated
+                    </dt>
                     <dd>{formatDateTime(s.updated_at)}</dd>
                   </div>
                 </dl>
