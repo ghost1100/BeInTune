@@ -190,21 +190,33 @@ router.put("/students/:id", async (req, res) => {
   const nextParentEmail =
     patch.parent_email === undefined ? s.parent_email : patch.parent_email;
   const nextPhone = patch.phone === undefined ? s.phone : patch.phone;
+  const nextParentPhone = patch.parent_phone === undefined ? s.parent_phone : patch.parent_phone;
   const nextAddress = patch.address === undefined ? s.address : patch.address;
+  const nextEmergency = patch.emergency_contacts === undefined ? s.emergency_contacts : patch.emergency_contacts;
+  const nextAllergies = patch.allergies === undefined ? s.allergies : patch.allergies;
+  const nextMedications = patch.medications === undefined ? s.medications : patch.medications;
+  const nextInstruments = patch.instruments === undefined ? s.instruments : patch.instruments;
+  const nextBand = patch.band === undefined ? s.band : patch.band;
   const nextMarketing =
     patch.marketing_consent === undefined
       ? s.marketing_consent
       : patch.marketing_consent;
 
   await query(
-    "UPDATE students SET name=$1, age=$2, parent_name=$3, parent_email=$4, phone=$5, address=$6, marketing_consent=$7, updated_at=now() WHERE id=$8",
+    "UPDATE students SET name=$1, age=$2, parent_name=$3, parent_email=$4, parent_phone=$5, phone=$6, address=$7, emergency_contacts=$8, allergies=$9, medications=$10, instruments=$11, band=$12, marketing_consent=$13, updated_at=now() WHERE id=$14",
     [
       nextName,
       nextAge,
       nextParentName,
       nextParentEmail,
+      nextParentPhone,
       nextPhone,
       nextAddress,
+      nextEmergency,
+      nextAllergies,
+      nextMedications,
+      nextInstruments && Array.isArray(nextInstruments) ? JSON.stringify(nextInstruments) : nextInstruments,
+      nextBand,
       nextMarketing,
       id,
     ],
@@ -217,10 +229,23 @@ router.put("/students/:id", async (req, res) => {
     const user = userRes.rows[0] || {};
     const nextEmail = patch.email === undefined ? user.email : patch.email;
     const nextUserName = patch.name === undefined ? user.name : patch.name;
-    await query(
-      "UPDATE users SET email = COALESCE($1, email), name = COALESCE($2, name), updated_at = now() WHERE id = $3",
-      [nextEmail ?? null, nextUserName ?? null, s.user_id],
-    );
+
+    // If encryption available, update encrypted fields too
+    try {
+      const { encryptText, digest } = await import("../lib/crypto");
+      const enc = encryptText(nextEmail);
+      const emailToStore = enc.encrypted ? JSON.stringify(enc) : nextEmail;
+      const emailIndex = digest(nextEmail);
+      await query(
+        "UPDATE users SET email = COALESCE($1, email), email_encrypted = COALESCE($2, email_encrypted), email_index = COALESCE($3, email_index), name = COALESCE($4, name), updated_at = now() WHERE id = $5",
+        [emailToStore ?? null, emailToStore ?? null, emailIndex ?? null, nextUserName ?? null, s.user_id],
+      );
+    } catch (e) {
+      await query(
+        "UPDATE users SET email = COALESCE($1, email), name = COALESCE($2, name), updated_at = now() WHERE id = $3",
+        [nextEmail ?? null, nextUserName ?? null, s.user_id],
+      );
+    }
   }
 
   res.json({ ok: true });
