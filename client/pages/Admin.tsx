@@ -1067,10 +1067,12 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                           e.stopPropagation();
                           setBookingDetail(booked);
                         }}
-                        className="text-xs rounded-md border px-2 py-1"
+                        className="details-btn-responsive text-xs rounded-md border px-2 py-1"
                         title="View booking details"
                       >
-                        Details
+                        <p>
+                          Details<span className="ql-cursor">{'\uFEFF'}</span>
+                        </p>
                       </span>
                     )}
                     <span>{isCancelling === (booked?.id || "") && booked ? "..." : s}</span>
