@@ -368,11 +368,25 @@ export default function Admin() {
             <div className="grid md:grid-cols-3 gap-6">
               <div className="md:col-span-1 rounded-lg border p-4">
                 <h2 className="font-semibold">Teachers</h2>
-                <p className="text-sm text-foreground/70 mt-1">Add or edit teachers. Click the button to open the form.</p>
+                <p className="text-sm text-foreground/70 mt-1">
+                  Add or edit teachers. Click the button to open the form.
+                </p>
                 <div className="mt-3">
-                  <Button onClick={() => { setForm({}); setEditingId(null); setTeacherModalOpen(true); }} variant="gradient">Add teacher</Button>
+                  <Button
+                    onClick={() => {
+                      setForm({});
+                      setEditingId(null);
+                      setTeacherModalOpen(true);
+                    }}
+                    variant="gradient"
+                  >
+                    Add teacher
+                  </Button>
                 </div>
-                <div className="mt-4 text-sm text-foreground/70">You can also edit an existing teacher from the list to the right.</div>
+                <div className="mt-4 text-sm text-foreground/70">
+                  You can also edit an existing teacher from the list to the
+                  right.
+                </div>
               </div>
 
               <div className="md:col-span-2">
@@ -393,7 +407,6 @@ export default function Admin() {
                   ))}
                 </div>
               </div>
-
             </div>
           )}
 
@@ -565,8 +578,19 @@ export default function Admin() {
         >
           <div className="bg-card rounded-md p-4 max-w-2xl w-full">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold">{editingId ? "Edit teacher" : "Add teacher"}</h3>
-              <Button variant="ghost" onClick={() => { setTeacherModalOpen(false); setForm({}); setEditingId(null); }}>Close</Button>
+              <h3 className="text-lg font-semibold">
+                {editingId ? "Edit teacher" : "Add teacher"}
+              </h3>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setTeacherModalOpen(false);
+                  setForm({});
+                  setEditingId(null);
+                }}
+              >
+                Close
+              </Button>
             </div>
             <form onSubmit={add} className="grid gap-2">
               <input
@@ -575,7 +599,9 @@ export default function Admin() {
                 className="w-full h-10 rounded-md border px-3"
                 placeholder="Name"
                 value={form.name || ""}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
                 autoComplete="name"
               />
               <input
@@ -584,7 +610,9 @@ export default function Admin() {
                 className="w-full h-10 rounded-md border px-3"
                 placeholder="Email"
                 value={form.email || ""}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, email: e.target.value }))
+                }
                 autoComplete="email"
               />
               <input
@@ -593,7 +621,9 @@ export default function Admin() {
                 className="w-full h-10 rounded-md border px-3"
                 placeholder="Phone"
                 value={form.phone || ""}
-                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, phone: e.target.value }))
+                }
                 autoComplete="tel"
               />
               <input
@@ -602,7 +632,9 @@ export default function Admin() {
                 className="w-full h-10 rounded-md border px-3"
                 placeholder="Years of experience"
                 value={form.years || ""}
-                onChange={(e) => setForm((f) => ({ ...f, years: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, years: e.target.value }))
+                }
                 autoComplete="off"
               />
               <textarea
@@ -611,25 +643,62 @@ export default function Admin() {
                 className="w-full rounded-md border px-3"
                 placeholder="About"
                 value={form.about || ""}
-                onChange={(e) => setForm((f) => ({ ...f, about: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, about: e.target.value }))
+                }
               />
 
               <div className="mb-2">
-                <label htmlFor="teacherImage" className="block text-sm font-medium mb-2">Profile picture (drop file or choose)</label>
-                <div onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} className="border-dashed border-2 border-gray-300 rounded-md p-3 text-sm text-center">
+                <label
+                  htmlFor="teacherImage"
+                  className="block text-sm font-medium mb-2"
+                >
+                  Profile picture (drop file or choose)
+                </label>
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                  className="border-dashed border-2 border-gray-300 rounded-md p-3 text-sm text-center"
+                >
                   {form.image ? (
-                    <img src={form.image as string} alt="preview" className="mx-auto h-24 object-cover rounded-md" />
+                    <img
+                      src={form.image as string}
+                      alt="preview"
+                      className="mx-auto h-24 object-cover rounded-md"
+                    />
                   ) : (
-                    <div className="text-foreground/70">Drop image here or use choose file</div>
+                    <div className="text-foreground/70">
+                      Drop image here or use choose file
+                    </div>
                   )}
-                  <input id="teacherImage" name="image" type="file" accept="image/*" onChange={handleFileChange} className="mt-2 w-full" />
+                  <input
+                    id="teacherImage"
+                    name="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="mt-2 w-full"
+                  />
                 </div>
               </div>
 
               <div className="flex gap-2 flex-wrap">
-                <Button type="submit" className="px-4 py-2" variant="primary">{editingId ? "Save" : "Add"}</Button>
-                <Button type="button" onClick={() => { setForm({}); setEditingId(null); }} variant="outline">Clear</Button>
-                <Button type="button" onClick={pickRandom} variant="ghost">{loadingImg ? "Loading..." : "Random"}</Button>
+                <Button type="submit" className="px-4 py-2" variant="primary">
+                  {editingId ? "Save" : "Add"}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setForm({});
+                    setEditingId(null);
+                  }}
+                  variant="outline"
+                >
+                  Clear
+                </Button>
+                <Button type="button" onClick={pickRandom} variant="ghost">
+                  {loadingImg ? "Loading..." : "Random"}
+                </Button>
               </div>
             </form>
           </div>
