@@ -1102,7 +1102,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
             </div>
             <div className="flex gap-2 flex-wrap">
               <button
-                onClick={() => removeBk(b.id)}
+                onClick={() => { setCancellationBooking(b); setCancellationReason(""); }}
                 className="px-3 py-1 rounded-md border"
               >
                 Cancel
