@@ -920,16 +920,6 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                 const isGuest = booked && !booked.student_user_id;
                 return (
                   <div key={s} className="text-sm text-foreground/70 py-2 flex items-center gap-2">
-                    {isGuest && (
-                      <button
-                        type="button"
-                        className="text-xs rounded-md border px-2 py-1"
-                        onClick={() => setBookingDetail(booked)}
-                        title="View booking details"
-                      >
-                        Details
-                      </button>
-                    )}
                     <span>{s}</span>
                   </div>
                 );
