@@ -238,7 +238,7 @@ export default function ChatsPanel({ className }: { className?: string }) {
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-semibold">Chats</h2>
         <p className="text-sm text-foreground/70">
-          Directly message your tutors and classmates to stay in sync.
+          <p>Directly message your Students and stay in sync.</p>
         </p>
       </div>
 

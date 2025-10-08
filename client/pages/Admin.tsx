@@ -67,15 +67,42 @@ export default function Admin() {
   const [loadingImg, setLoadingImg] = useState(false);
   const [form, setForm] = useState<Partial<Teacher>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [siteContent, setSiteContentState] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("inTuneContent") || "null");
-    } catch {
-      return null;
-    }
-  });
+  const [teacherModalOpen, setTeacherModalOpen] = useState(false);
   const navigate = useNavigate();
   const [showNewsletter, setShowNewsletter] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickSubject, setQuickSubject] = useState("");
+  const [quickHtml, setQuickHtml] = useState("");
+  const { toast } = useToast();
+
+  const sendQuick = async () => {
+    if (!quickSubject || !quickHtml) {
+      toast({
+        title: "Missing fields",
+        description: "Subject and message are required",
+      });
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/newsletters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: quickSubject,
+          html: quickHtml,
+          plain: quickHtml.replace(/<[^>]+>/g, ""),
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to send newsletter");
+      toast({ title: "Sent", description: "Newsletter queued/sent" });
+      setQuickSubject("");
+      setQuickHtml("");
+      setQuickOpen(false);
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Error", description: err?.message || "Unable to send" });
+    }
+  };
 
   useEffect(() => {
     const auth = localStorage.getItem("inTuneAdmin");
@@ -106,6 +133,7 @@ export default function Admin() {
         });
         setForm({});
         setEditingId(null);
+        setTeacherModalOpen(false);
         const ts = await loadTeachersFromDb();
         setTeachers(ts);
         return;
@@ -124,6 +152,7 @@ export default function Admin() {
         }),
       });
       setForm({});
+      setTeacherModalOpen(false);
       const ts = await loadTeachersFromDb();
       setTeachers(ts);
     } catch (e) {
@@ -146,7 +175,7 @@ export default function Admin() {
   const edit = (t: Teacher) => {
     setEditingId(t.id);
     setForm({ ...t });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTeacherModalOpen(true);
   };
 
   const pickRandom = async () => {
@@ -173,11 +202,6 @@ export default function Admin() {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0];
     if (file) onDropImage(file);
-  };
-
-  const saveContent = () => {
-    localStorage.setItem("inTuneContent", JSON.stringify(siteContent || {}));
-    alert("Content saved");
   };
 
   const logout = async () => {
@@ -249,7 +273,7 @@ export default function Admin() {
   return (
     <div className="container mx-auto py-12">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Admin — Teachers & Site</h1>
+        <h1 className="text-2xl font-bold">Admin page</h1>
         <div className="flex gap-2 flex-wrap">
           <NotificationBell />
           <button onClick={logout} className="px-3 py-2 rounded-md border">
@@ -279,7 +303,7 @@ export default function Admin() {
             aria-selected={activeTab === "site"}
             className={`px-4 py-2 rounded-md ${activeTab === "site" ? "bg-card shadow" : "bg-muted"} text-foreground`}
           >
-            Site
+            <p>Newsletter&More</p>
           </button>
           <button
             onClick={() => setActiveTab("schedule")}
@@ -343,135 +367,26 @@ export default function Admin() {
           {activeTab === "teachers" && (
             <div className="grid md:grid-cols-3 gap-6">
               <div className="md:col-span-1 rounded-lg border p-4">
-                <h2 className="font-semibold">Add / edit teacher</h2>
-                <form className="mt-3" onSubmit={add}>
-                  <label htmlFor="teacherName" className="sr-only">
-                    Name
-                  </label>
-                  <input
-                    id="teacherName"
-                    name="name"
-                    className="w-full h-10 rounded-md border px-3 mb-2"
-                    placeholder="Name"
-                    value={form.name || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, name: e.target.value }))
-                    }
-                    autoComplete="name"
-                  />
-                  <label htmlFor="teacherEmail" className="sr-only">
-                    Email
-                  </label>
-                  <input
-                    id="teacherEmail"
-                    name="email"
-                    className="w-full h-10 rounded-md border px-3 mb-2"
-                    placeholder="Email"
-                    value={form.email || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, email: e.target.value }))
-                    }
-                    autoComplete="email"
-                  />
-                  <label htmlFor="teacherPhone" className="sr-only">
-                    Phone
-                  </label>
-                  <input
-                    id="teacherPhone"
-                    name="phone"
-                    className="w-full h-10 rounded-md border px-3 mb-2"
-                    placeholder="Phone"
-                    value={form.phone || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, phone: e.target.value }))
-                    }
-                    autoComplete="tel"
-                  />
-                  <label htmlFor="teacherYears" className="sr-only">
-                    Years of experience
-                  </label>
-                  <input
-                    id="teacherYears"
-                    name="years"
-                    className="w-full h-10 rounded-md border px-3 mb-2"
-                    placeholder="Years of experience"
-                    value={form.years || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, years: e.target.value }))
-                    }
-                    autoComplete="off"
-                  />
-                  <label htmlFor="teacherAbout" className="sr-only">
-                    About
-                  </label>
-                  <textarea
-                    id="teacherAbout"
-                    name="about"
-                    className="w-full rounded-md border px-3 mb-2"
-                    placeholder="About"
-                    value={form.about || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, about: e.target.value }))
-                    }
-                  />
-
-                  <div className="mb-2">
-                    <label
-                      htmlFor="teacherImage"
-                      className="block text-sm font-medium mb-2"
-                    >
-                      Profile picture (drop file or choose)
-                    </label>
-                    <div
-                      onDrop={handleDrop}
-                      onDragOver={(e) => e.preventDefault()}
-                      className="border-dashed border-2 border-gray-300 rounded-md p-3 text-sm text-center"
-                    >
-                      {form.image ? (
-                        <img
-                          src={form.image as string}
-                          alt="preview"
-                          className="mx-auto h-24 object-cover rounded-md"
-                        />
-                      ) : (
-                        <div className="text-foreground/70">
-                          Drop image here or use choose file
-                        </div>
-                      )}
-                      <input
-                        id="teacherImage"
-                        name="image"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="mt-2 w-full"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 flex-wrap">
-                    <button className="px-4 py-2 rounded-md bg-primary text-primary-foreground">
-                      {editingId ? "Save" : "Add"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setForm({});
-                        setEditingId(null);
-                      }}
-                      className="px-4 py-2 rounded-md border"
-                    >
-                      Clear
-                    </button>
-                    <button
-                      type="button"
-                      onClick={pickRandom}
-                      className="px-4 py-2 rounded-md border"
-                    >
-                      {loadingImg ? "Loading..." : "Random"}
-                    </button>
-                  </div>
-                </form>
+                <h2 className="font-semibold">Teachers</h2>
+                <p className="text-sm text-foreground/70 mt-1">
+                  Add or edit teachers. Click the button to open the form.
+                </p>
+                <div className="mt-3">
+                  <Button
+                    onClick={() => {
+                      setForm({});
+                      setEditingId(null);
+                      setTeacherModalOpen(true);
+                    }}
+                    variant="gradient"
+                  >
+                    Add teacher
+                  </Button>
+                </div>
+                <div className="mt-4 text-sm text-foreground/70">
+                  You can also edit an existing teacher from the list to the
+                  right.
+                </div>
               </div>
 
               <div className="md:col-span-2">
@@ -479,7 +394,7 @@ export default function Admin() {
                 <div className="mt-4 grid sm:grid-cols-2 gap-4">
                   {teachers.length === 0 && (
                     <div className="text-foreground/70">
-                      No teachers yet. Use the form to add one.
+                      No teachers yet. Use the button to add one.
                     </div>
                   )}
                   {teachers.map((t) => (
@@ -497,190 +412,70 @@ export default function Admin() {
 
           {activeTab === "site" && (
             <div className="rounded-lg border p-4">
-              <h2 className="font-semibold">Site content</h2>
-              <div className="mt-4 space-y-2">
-                <input
-                  name="siteTitle"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Site title"
-                  value={(siteContent && siteContent.siteTitle) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      siteTitle: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="heroHeading" className="sr-only">
-                  Hero heading
-                </label>
-                <input
-                  id="heroHeading"
-                  name="heroHeading"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Hero heading"
-                  value={(siteContent && siteContent.heroHeading) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      heroHeading: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="heroSubheading" className="sr-only">
-                  Hero subheading
-                </label>
-                <input
-                  id="heroSubheading"
-                  name="heroSubheading"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Hero subheading"
-                  value={(siteContent && siteContent.heroSubheading) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      heroSubheading: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="ctaPrimary" className="sr-only">
-                  Primary CTA
-                </label>
-                <input
-                  id="ctaPrimary"
-                  name="ctaPrimary"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Primary CTA"
-                  value={(siteContent && siteContent.ctaPrimary) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      ctaPrimary: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="ctaSecondary" className="sr-only">
-                  Secondary CTA
-                </label>
-                <input
-                  id="ctaSecondary"
-                  name="ctaSecondary"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Secondary CTA"
-                  value={(siteContent && siteContent.ctaSecondary) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      ctaSecondary: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="programsIntro" className="sr-only">
-                  Programs intro
-                </label>
-                <textarea
-                  id="programsIntro"
-                  name="programsIntro"
-                  className="w-full rounded-md border px-3"
-                  placeholder="Programs intro"
-                  value={(siteContent && siteContent.programsIntro) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      programsIntro: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="aboutHtml" className="sr-only">
-                  About HTML
-                </label>
-                <textarea
-                  id="aboutHtml"
-                  name="aboutHtml"
-                  className="w-full rounded-md border px-3"
-                  placeholder="About HTML"
-                  value={(siteContent && siteContent.aboutHtml) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      aboutHtml: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="siteAddress" className="sr-only">
-                  Address
-                </label>
-                <input
-                  id="siteAddress"
-                  name="address"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Address"
-                  value={(siteContent && siteContent.address) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      address: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="siteEmail" className="sr-only">
-                  Email
-                </label>
-                <input
-                  id="siteEmail"
-                  name="email"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Email"
-                  value={(siteContent && siteContent.email) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      email: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="sitePhone" className="sr-only">
-                  Phone
-                </label>
-                <input
-                  id="sitePhone"
-                  name="phone"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Phone"
-                  value={(siteContent && siteContent.phone) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      phone: e.target.value,
-                    }))
-                  }
-                />
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={saveContent}
-                    className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground"
-                  >
-                    Save content
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      localStorage.removeItem("inTuneContent");
-                      setSiteContentState(null);
-                      alert("Reset");
-                    }}
-                    className="px-4 py-2 rounded-md border"
-                  >
-                    Reset
-                  </button>
-                  <button
-                    type="button"
+              <h2 className="font-semibold">Newsletter &amp; more</h2>
+              <div className="mt-4">
+                <div className="flex gap-2 flex-wrap">
+                  <Button
                     onClick={() => setShowNewsletter(true)}
-                    className="px-4 py-2 rounded-md bg-primary text-primary-foreground"
+                    className="px-4 py-2"
+                    variant="gradient"
                   >
                     Compose newsletter
-                  </button>
+                  </Button>
+                  <Button
+                    onClick={() => setQuickOpen((v) => !v)}
+                    className="px-4 py-2"
+                    variant="outline"
+                  >
+                    {quickOpen ? "Hide quick send" : "Quick send"}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      // navigate to students/subscriptions management (reuse existing Students tab)
+                      setActiveTab("students");
+                    }}
+                    className="px-4 py-2"
+                    variant="ghost"
+                  >
+                    Manage subscribers
+                  </Button>
                 </div>
+
+                {quickOpen && (
+                  <div className="mt-4 grid gap-2">
+                    <input
+                      value={quickSubject}
+                      onChange={(e) => setQuickSubject(e.target.value)}
+                      placeholder="Subject"
+                      className="h-10 rounded-md border px-3"
+                    />
+                    <textarea
+                      value={quickHtml}
+                      onChange={(e) => setQuickHtml(e.target.value)}
+                      placeholder="Message (HTML allowed)"
+                      className="rounded-md border px-3 py-2 min-h-[120px]"
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={sendQuick} variant="gradient" size="lg">
+                        Send to subscribers
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setQuickSubject("");
+                          setQuickHtml("");
+                        }}
+                        variant="outline"
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-sm text-foreground/70 mt-3">
+                  Use Compose for rich newsletters, Quick send for short
+                  announcements.
+                </p>
               </div>
             </div>
           )}
@@ -768,6 +563,147 @@ export default function Admin() {
           </div>
         </div>
       )}
+
+      {/* Teacher modal */}
+      {teacherModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setTeacherModalOpen(false);
+              setForm({});
+              setEditingId(null);
+            }
+          }}
+        >
+          <div className="bg-card rounded-md p-4 max-w-2xl w-full">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">
+                {editingId ? "Edit teacher" : "Add teacher"}
+              </h3>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setTeacherModalOpen(false);
+                  setForm({});
+                  setEditingId(null);
+                }}
+              >
+                Close
+              </Button>
+            </div>
+            <form onSubmit={add} className="grid gap-2">
+              <input
+                id="teacherName"
+                name="name"
+                className="w-full h-10 rounded-md border px-3"
+                placeholder="Name"
+                value={form.name || ""}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
+                autoComplete="name"
+              />
+              <input
+                id="teacherEmail"
+                name="email"
+                className="w-full h-10 rounded-md border px-3"
+                placeholder="Email"
+                value={form.email || ""}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, email: e.target.value }))
+                }
+                autoComplete="email"
+              />
+              <input
+                id="teacherPhone"
+                name="phone"
+                className="w-full h-10 rounded-md border px-3"
+                placeholder="Phone"
+                value={form.phone || ""}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, phone: e.target.value }))
+                }
+                autoComplete="tel"
+              />
+              <input
+                id="teacherYears"
+                name="years"
+                className="w-full h-10 rounded-md border px-3"
+                placeholder="Years of experience"
+                value={form.years || ""}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, years: e.target.value }))
+                }
+                autoComplete="off"
+              />
+              <textarea
+                id="teacherAbout"
+                name="about"
+                className="w-full rounded-md border px-3"
+                placeholder="About"
+                value={form.about || ""}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, about: e.target.value }))
+                }
+              />
+
+              <div className="mb-2">
+                <label
+                  htmlFor="teacherImage"
+                  className="block text-sm font-medium mb-2"
+                >
+                  Profile picture (drop file or choose)
+                </label>
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                  className="border-dashed border-2 border-gray-300 rounded-md p-3 text-sm text-center"
+                >
+                  {form.image ? (
+                    <img
+                      src={form.image as string}
+                      alt="preview"
+                      className="mx-auto h-24 object-cover rounded-md"
+                    />
+                  ) : (
+                    <div className="text-foreground/70">
+                      Drop image here or use choose file
+                    </div>
+                  )}
+                  <input
+                    id="teacherImage"
+                    name="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="mt-2 w-full"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 flex-wrap">
+                <Button type="submit" className="px-4 py-2" variant="primary">
+                  {editingId ? "Save" : "Add"}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setForm({});
+                    setEditingId(null);
+                  }}
+                  variant="outline"
+                >
+                  Clear
+                </Button>
+                <Button type="button" onClick={pickRandom} variant="ghost">
+                  {loadingImg ? "Loading..." : "Random"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -824,8 +760,11 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
     setRefresh((r) => r + 1);
   };
 
-  const removeBk = async (id: string) => {
-    await removeBooking(id);
+  const removeBk = async (
+    id: string,
+    options?: { reason?: string | null; notify?: boolean },
+  ) => {
+    await removeBooking(id, options);
     setRefresh((r) => r + 1);
   };
 
@@ -840,6 +779,17 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
   const [isCancelling, setIsCancelling] = useState<string | null>(null);
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [bookingDetail, setBookingDetail] = useState<any | null>(null);
+  const [cancellationBooking, setCancellationBooking] = useState<any | null>(
+    null,
+  );
+  const [cancellationReason, setCancellationReason] = useState<string>("");
+  const cancellationReasons = [
+    "Teacher unavailable",
+    "Illness / emergency",
+    "Rescheduling needed",
+    "Other",
+  ];
 
   const refreshStudents = async () => {
     try {
@@ -882,6 +832,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
 
   return (
     <div className="mt-4">
+      <style>{`@media (max-width: 991px) { .details-btn-responsive{margin-right:490px;background-color:rgba(208,2,27,1);padding:0 8px;} .cancel-btn-responsive{color:rgba(208,2,27,1);} }`}</style>
       <div className="flex items-center gap-2">
         <input
           type="date"
@@ -906,11 +857,18 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
           <div className="col-span-1">
             <div className="text-sm font-medium mb-2">Time</div>
             <div className="space-y-2">
-              {slots.map((s) => (
-                <div key={s} className="text-sm text-foreground/70 py-2">
-                  {s}
-                </div>
-              ))}
+              {slots.map((s) => {
+                const booked = bookingsState.find((b) => b.time === s);
+                const isGuest = booked && !booked.student_user_id;
+                return (
+                  <div
+                    key={s}
+                    className="text-sm text-foreground/70 py-2 flex items-center gap-2"
+                  >
+                    <span>{s}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
           <div className="col-span-5">
@@ -928,10 +886,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     <div
                       onClick={() => {
                         if (booked) {
-                          setIsCancelling(booked.id);
-                          removeBk(booked.id).finally(() =>
-                            setIsCancelling(null),
-                          );
+                          setCancellationBooking(booked);
+                          setCancellationReason("");
                           return;
                         }
                         if (available) {
@@ -943,16 +899,35 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                       }}
                       className={`w-full rounded-md py-2 px-3 text-sm cursor-pointer ${booked ? "bg-destructive text-destructive-foreground" : available ? "bg-primary text-primary-foreground" : "bg-card text-foreground/80 border"}`}
                     >
-                      <div className="flex justify-between">
-                        <div>{s}</div>
-                        <div>
-                          {booked
-                            ? `Booked: ${booked.student_name || booked.student_email || booked.name || booked.email || "Unknown"}`
-                            : available
-                              ? "Available"
-                              : meta && meta.is_available === false
-                                ? "Unavailable"
-                                : "Available"}
+                      <div className="flex flex-col lg:flex-row items-center justify-between gap-2">
+                        {booked && (
+                          <button
+                            type="button"
+                            title="View booking details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBookingDetail(booked);
+                            }}
+                            className="details-btn-responsive text-xs rounded-md border px-2 py-1 bg-transparent"
+                          >
+                            <p>
+                              Details
+                              <span className="ql-cursor">{"\uFEFF"}</span>
+                            </p>
+                          </button>
+                        )}
+
+                        <div className="flex justify-between items-center w-full">
+                          <div>{s}</div>
+                          <div>
+                            {booked
+                              ? `Booked: ${booked.student_name || booked.student_email || booked.name || booked.email || "Unknown"}`
+                              : available
+                                ? "Available"
+                                : meta && meta.is_available === false
+                                  ? "Unavailable"
+                                  : "Available"}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -961,10 +936,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                         <button
                           type="button"
                           onClick={() => {
-                            setIsCancelling(booked.id);
-                            removeBk(booked.id).finally(() =>
-                              setIsCancelling(null),
-                            );
+                            setCancellationBooking(booked);
+                            setCancellationReason("");
                           }}
                           className="px-3 py-1 rounded-md border"
                           disabled={isCancelling === booked.id}
@@ -1030,17 +1003,37 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                           : "Available - tap to add"
                   }
                 >
-                  {isCancelling === (booked?.id || "") && booked ? "..." : s}
+                  <div className="flex items-center justify-center gap-2 w-full">
+                    {booked && (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setBookingDetail(booked);
+                        }}
+                        className="details-btn-responsive text-xs rounded-md border px-2 py-1"
+                        title="View booking details"
+                      >
+                        <p>
+                          Details<span className="ql-cursor">{"\uFEFF"}</span>
+                        </p>
+                      </span>
+                    )}
+                    <span>
+                      {isCancelling === (booked?.id || "") && booked
+                        ? "..."
+                        : s}
+                    </span>
+                  </div>
                 </button>
                 {booked ? (
                   <div className="mt-1">
                     <button
                       type="button"
                       onClick={() => {
-                        setIsCancelling(booked.id);
-                        removeBk(booked.id).finally(() =>
-                          setIsCancelling(null),
-                        );
+                        setCancellationBooking(booked);
+                        setCancellationReason("");
                       }}
                       className="text-sm rounded-md border px-2 py-1"
                       disabled={isCancelling === booked.id}
@@ -1093,8 +1086,11 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
             </div>
             <div className="flex gap-2 flex-wrap">
               <button
-                onClick={() => removeBk(b.id)}
-                className="px-3 py-1 rounded-md border"
+                onClick={() => {
+                  setCancellationBooking(b);
+                  setCancellationReason("");
+                }}
+                className="px-3 py-1 rounded-md border cancel-btn-responsive"
               >
                 Cancel
               </button>
@@ -1102,6 +1098,160 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
           </div>
         ))}
       </div>
+
+      {/* Booking details modal for guest bookings */}
+      {bookingDetail && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-40"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setBookingDetail(null);
+          }}
+        >
+          <div className="bg-card rounded-md p-4 w-full max-w-md">
+            <div className="flex justify-between items-center">
+              <h4 className="font-semibold">Booking details</h4>
+              <button
+                onClick={() => setBookingDetail(null)}
+                className="px-2 py-1 border rounded-md"
+              >
+                Close
+              </button>
+            </div>
+            <div className="mt-3 space-y-1 text-sm">
+              <div>
+                <span className="font-medium">Time:</span> {bookingDetail.time}{" "}
+                on {date}
+              </div>
+              <div>
+                <span className="font-medium">Name:</span>{" "}
+                {bookingDetail.student_name || bookingDetail.name || "—"}
+              </div>
+              <div>
+                <span className="font-medium">Email:</span>{" "}
+                {bookingDetail.student_email || bookingDetail.email || "—"}
+              </div>
+              <div>
+                <span className="font-medium">Phone:</span>{" "}
+                {bookingDetail.phone || "—"}
+              </div>
+              <div>
+                <span className="font-medium">Instrument:</span>{" "}
+                {bookingDetail.lessonType || bookingDetail.lesson_type || "—"}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancellation modal */}
+      {cancellationBooking && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-40"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setCancellationBooking(null);
+              setCancellationReason("");
+            }
+          }}
+        >
+          <div className="bg-card rounded-md p-4 w-full max-w-lg">
+            <div className="flex justify-between items-center">
+              <h4 className="font-semibold">
+                Cancel booking for {cancellationBooking.time} on {date}
+              </h4>
+              <button
+                onClick={() => {
+                  setCancellationBooking(null);
+                  setCancellationReason("");
+                }}
+                className="px-2 py-1 border rounded-md"
+              >
+                Close
+              </button>
+            </div>
+            <div className="mt-3">
+              <div className="text-sm mb-2">Choose a reason</div>
+              <div className="space-y-2">
+                {cancellationReasons.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setCancellationReason(r)}
+                    className={`w-full text-left p-2 rounded-md border ${cancellationReason === r ? "bg-primary/10 border-primary" : ""}`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3">
+                <textarea
+                  className="w-full border rounded-md p-2"
+                  placeholder="Or write a custom reason"
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button
+                  className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground"
+                  onClick={async () => {
+                    if (!cancellationBooking) return;
+                    setIsCancelling(cancellationBooking.id);
+                    try {
+                      await removeBk(cancellationBooking.id, {
+                        reason: cancellationReason || null,
+                        notify: true,
+                      });
+                      setCancellationBooking(null);
+                      setCancellationReason("");
+                      setRefresh((r) => r + 1);
+                    } catch (e) {
+                      console.error(e);
+                      alert("Failed to cancel booking");
+                    } finally {
+                      setIsCancelling(null);
+                    }
+                  }}
+                >
+                  Send cancellation & remove booking
+                </button>
+                <button
+                  className="px-4 py-2 rounded-md border"
+                  onClick={async () => {
+                    if (!cancellationBooking) return;
+                    setIsCancelling(cancellationBooking.id);
+                    try {
+                      await removeBk(cancellationBooking.id, {
+                        reason: null,
+                        notify: true,
+                      });
+                      setCancellationBooking(null);
+                      setCancellationReason("");
+                      setRefresh((r) => r + 1);
+                    } catch (e) {
+                      console.error(e);
+                      alert("Failed to cancel booking");
+                    } finally {
+                      setIsCancelling(null);
+                    }
+                  }}
+                >
+                  Send notification without reason
+                </button>
+                <button
+                  className="px-4 py-2 rounded-md border"
+                  onClick={() => {
+                    setCancellationBooking(null);
+                    setCancellationReason("");
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Student selection modal */}
       {showStudentModal && selectedSlot && (
@@ -2422,6 +2572,10 @@ function StudentsManager() {
       marketing_consent: !!form.marketingConsent,
       email: contactEmail,
       emergency_contacts: emergencyContact,
+      allergies: form.allergies?.trim() || null,
+      medications: form.medications?.trim() || null,
+      instruments: form.instruments || [],
+      band: form.bandName?.trim() || null,
     };
     try {
       if (editing) {
@@ -2467,7 +2621,7 @@ function StudentsManager() {
       marketingConsent: !!(s.marketing_consent ?? s.marketingConsent),
       allergies: s.allergies || "",
       instruments: s.instruments || [],
-      bandName: s.bandName || "",
+      bandName: s.band || "",
       email: s.email || "",
       phone: minor ? "" : s.phone || "",
       address: s.address || "",
@@ -2592,17 +2746,7 @@ function StudentsManager() {
 
   return (
     <div>
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-start">
-        <Button
-          type="button"
-          variant="secondary"
-          className="w-full sm:w-auto"
-          onClick={openResourceModal}
-          disabled={students.length === 0}
-        >
-          Upload learning resources
-        </Button>
-      </div>
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-start" />
       {resourceModal}
       {viewResourcesModal}
       <form onSubmit={save} className="grid gap-2">
@@ -2862,7 +3006,7 @@ function StudentsManager() {
                   <span className="font-medium">
                     {s.name}
                     {s.age ? ` • ${s.age}` : ""}
-                    {s.isElderly ? " �� Elderly" : ""}
+                    {s.isElderly ? " ���� Elderly" : ""}
                   </span>
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 transition-transform ${
@@ -2878,34 +3022,119 @@ function StudentsManager() {
 
               {isExpanded && (
                 <dl className="grid gap-2 rounded-md bg-muted/40 p-3 text-sm sm:grid-cols-2">
-                  <div>
-                    <dt className="font-medium text-foreground/80">Address</dt>
-                    <dd>{s.address || "—"}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-foreground/80">
-                      Marketing consent
-                    </dt>
-                    <dd>
-                      {s.marketing_consent || s.marketingConsent ? "Yes" : "No"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-foreground/80">
-                      Guardian name
-                    </dt>
-                    <dd>{s.parent_name || s.parentGuardianName || "—"}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-foreground/80">
-                      Guardian email
-                    </dt>
-                    <dd>{s.parent_email || s.parentGuardianEmail || "—"}</dd>
-                  </div>
+                  {s.address ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">
+                        Address
+                      </dt>
+                      <dd>{s.address}</dd>
+                    </div>
+                  ) : null}
+
+                  {/* Show marketing consent only if explicitly set (true or false) */}
+                  {s.marketing_consent !== undefined ||
+                  s.marketingConsent !== undefined ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">
+                        Marketing consent
+                      </dt>
+                      <dd>
+                        {s.marketing_consent || s.marketingConsent
+                          ? "Yes"
+                          : "No"}
+                      </dd>
+                    </div>
+                  ) : null}
+
+                  {s.parent_name || s.parentGuardianName ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">
+                        Guardian name
+                      </dt>
+                      <dd>{s.parent_name || s.parentGuardianName}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.parent_email || s.parentGuardianEmail ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">
+                        Guardian email
+                      </dt>
+                      <dd>{s.parent_email || s.parentGuardianEmail}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.emergency_contacts ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">
+                        Emergency contact
+                      </dt>
+                      <dd>{s.emergency_contacts}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.phone ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">Phone</dt>
+                      <dd>{s.phone}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.allergies ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">
+                        Allergies / issues
+                      </dt>
+                      <dd>{s.allergies}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.medications ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">
+                        Medications
+                      </dt>
+                      <dd>{s.medications}</dd>
+                    </div>
+                  ) : null}
+
+                  {s.instruments ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">
+                        Instrument(s)
+                      </dt>
+                      <dd>
+                        {(() => {
+                          try {
+                            if (Array.isArray(s.instruments))
+                              return s.instruments.join(", ");
+                            const parsed =
+                              typeof s.instruments === "string"
+                                ? JSON.parse(s.instruments)
+                                : s.instruments;
+                            return Array.isArray(parsed)
+                              ? parsed.join(", ")
+                              : String(parsed);
+                          } catch (e) {
+                            return String(s.instruments);
+                          }
+                        })()}
+                      </dd>
+                    </div>
+                  ) : null}
+
+                  {s.band ? (
+                    <div>
+                      <dt className="font-medium text-foreground/80">Band</dt>
+                      <dd>{s.band}</dd>
+                    </div>
+                  ) : null}
+
                   <div>
                     <dt className="font-medium text-foreground/80">Created</dt>
                     <dd>{formatDateTime(s.created_at)}</dd>
                   </div>
+
                   <div>
                     <dt className="font-medium text-foreground/80">
                       Last updated

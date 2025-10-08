@@ -118,6 +118,17 @@ Recent additions in this codebase
 - E2E tests scaffolding: Playwright config and a basic test were added under e2e/ (requires Playwright to be installed to run).
 - DB migration: server/db/migrations/002_group_chats.sql adds `students.band`, `rooms`, and `room_members`.
 
+Recent admin UI updates:
+
+- Newsletter & more: Admin dashboard now includes a "Newsletter & more" panel with:
+  - Compose newsletter modal (rich HTML, Unsplash header image, attachments) which sends via the existing server endpoint POST /api/admin/newsletters.
+  - Quick send: inline subject + HTML message to rapidly broadcast announcements to subscribed users.
+  - Manage subscribers shortcut that navigates to the Students tab for managing subscriptions.
+
+- Teachers modal: The Add / Edit teacher form is now a responsive modal. "Add teacher" opens the modal; editing a teacher opens the modal prefilled. The modal supports image upload (drag/drop), random Unsplash image fetch, and responsive layout.
+
+- Booking CTA & call improvements: The header "Book a free trial" now anchors to the booking card on the homepage. The Call button on the booking form asks for confirmation on desktop and opens the phone app directly on mobile devices.
+
 Please review these changes and confirm whether you want me to:
 
 - Run the group-chat sync automatically on startup

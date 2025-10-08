@@ -88,6 +88,8 @@ async function readBookings(date?: string): Promise<Booking[]> {
       slot_id: r.slot_id || r.slotId || null,
       student_name: r.student_name || r.name,
       student_email: r.student_email || r.email,
+      phone: r.phone || null,
+      lessonType: r.lesson_type || r.lessonType || null,
     }));
   } catch (e) {
     console.error("readBookings error", e);
@@ -199,11 +201,17 @@ export async function addBooking(
       match = { id: create.id };
     }
 
-    const payload = {
+    const payload: any = {
       slot_id: match.id,
       student_id: booking.studentId || (booking as any).student_id || null,
       lesson_type: booking.lessonType || (booking as any).lesson_type || null,
     };
+    // Include guest details when booking without a student
+    if (!payload.student_id) {
+      if ((booking as any).name) payload.name = (booking as any).name;
+      if ((booking as any).email) payload.email = (booking as any).email;
+      if ((booking as any).phone) payload.phone = (booking as any).phone;
+    }
     const res = await api(`/api/admin/bookings`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -216,12 +224,24 @@ export async function addBooking(
   }
 }
 
-export async function removeBooking(id: string) {
+export async function removeBooking(
+  id: string,
+  options?: { reason?: string | null; notify?: boolean },
+) {
   try {
     const api = (await import("@/lib/api")).apiFetch;
-    await api(`/api/admin/bookings/${id}`, { method: "DELETE" });
+    const opts: any = { method: "DELETE" };
+    if (options) {
+      opts.headers = { "Content-Type": "application/json" };
+      opts.body = JSON.stringify({
+        reason: options.reason || null,
+        notify: options.notify !== false,
+      });
+    }
+    await api(`/api/admin/bookings/${id}`, opts);
   } catch (e) {
     console.error(e);
+    throw e;
   }
 }
 

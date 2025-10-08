@@ -141,7 +141,25 @@ export default function BookingForm() {
           <Button size="lg" variant="gradient">
             Enquire
           </Button>
-          <a href={`tel:${getSiteContent().phone}`} className="inline-block">
+          <a
+            href={`tel:${getSiteContent().phone}`}
+            className="inline-block"
+            onClick={(e) => {
+              e.preventDefault();
+              const tel = `tel:${getSiteContent().phone}`;
+              const isMobile =
+                /Mobi|Android|iPhone|iPad|iPod|Windows Phone/.test(
+                  navigator.userAgent,
+                );
+              if (isMobile) {
+                window.location.href = tel;
+              } else {
+                if (window.confirm(`Call ${getSiteContent().phone}?`)) {
+                  window.location.href = tel;
+                }
+              }
+            }}
+          >
             <Button size="lg" variant="ghost">
               Call
             </Button>
