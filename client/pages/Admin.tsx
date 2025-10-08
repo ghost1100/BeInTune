@@ -824,8 +824,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
     setRefresh((r) => r + 1);
   };
 
-  const removeBk = async (id: string) => {
-    await removeBooking(id);
+  const removeBk = async (id: string, options?: { reason?: string | null; notify?: boolean }) => {
+    await removeBooking(id, options);
     setRefresh((r) => r + 1);
   };
 
