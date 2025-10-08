@@ -1,4 +1,5 @@
 import express from "express";
+import express from "express";
 import { query } from "../db";
 import sgMail from "@sendgrid/mail";
 
