@@ -10,7 +10,6 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { getRandomImage } from "@/lib/unsplash";
-import { getSiteContent, setSiteContent } from "@/lib/siteContent";
 import {
   getSlotsForDay,
   getAvailability,
@@ -68,13 +67,6 @@ export default function Admin() {
   const [loadingImg, setLoadingImg] = useState(false);
   const [form, setForm] = useState<Partial<Teacher>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [siteContent, setSiteContentState] = useState(() => {
-    try {
-      return getSiteContent();
-    } catch {
-      return null;
-    }
-  });
   const navigate = useNavigate();
   const [showNewsletter, setShowNewsletter] = useState(false);
 
@@ -176,10 +168,6 @@ export default function Admin() {
     if (file) onDropImage(file);
   };
 
-  const saveContent = () => {
-    setSiteContent(siteContent || {});
-    alert("Content saved");
-  };
 
   const logout = async () => {
     try {
@@ -280,7 +268,7 @@ export default function Admin() {
             aria-selected={activeTab === "site"}
             className={`px-4 py-2 rounded-md ${activeTab === "site" ? "bg-card shadow" : "bg-muted"} text-foreground`}
           >
-            Site
+            <p>Newsletter&More</p>
           </button>
           <button
             onClick={() => setActiveTab("schedule")}
@@ -491,196 +479,6 @@ export default function Admin() {
                       onRemove={() => remove(t.id)}
                     />
                   ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "site" && (
-            <div className="rounded-lg border p-4">
-              <h2 className="font-semibold">Site content</h2>
-              <div className="mt-4 space-y-2">
-                <input
-                  name="siteTitle"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Site title"
-                  value={(siteContent && siteContent.siteTitle) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      siteTitle: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="heroHeading" className="sr-only">
-                  Hero heading
-                </label>
-                <input
-                  id="heroHeading"
-                  name="heroHeading"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Hero heading"
-                  value={(siteContent && siteContent.heroHeading) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      heroHeading: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="heroSubheading" className="sr-only">
-                  Hero subheading
-                </label>
-                <input
-                  id="heroSubheading"
-                  name="heroSubheading"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Hero subheading"
-                  value={(siteContent && siteContent.heroSubheading) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      heroSubheading: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="ctaPrimary" className="sr-only">
-                  Primary CTA
-                </label>
-                <input
-                  id="ctaPrimary"
-                  name="ctaPrimary"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Primary CTA"
-                  value={(siteContent && siteContent.ctaPrimary) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      ctaPrimary: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="ctaSecondary" className="sr-only">
-                  Secondary CTA
-                </label>
-                <input
-                  id="ctaSecondary"
-                  name="ctaSecondary"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Secondary CTA"
-                  value={(siteContent && siteContent.ctaSecondary) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      ctaSecondary: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="programsIntro" className="sr-only">
-                  Programs intro
-                </label>
-                <textarea
-                  id="programsIntro"
-                  name="programsIntro"
-                  className="w-full rounded-md border px-3"
-                  placeholder="Programs intro"
-                  value={(siteContent && siteContent.programsIntro) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      programsIntro: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="aboutHtml" className="sr-only">
-                  About HTML
-                </label>
-                <textarea
-                  id="aboutHtml"
-                  name="aboutHtml"
-                  className="w-full rounded-md border px-3"
-                  placeholder="About HTML"
-                  value={(siteContent && siteContent.aboutHtml) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      aboutHtml: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="siteAddress" className="sr-only">
-                  Address
-                </label>
-                <input
-                  id="siteAddress"
-                  name="address"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Address"
-                  value={(siteContent && siteContent.address) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      address: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="siteEmail" className="sr-only">
-                  Email
-                </label>
-                <input
-                  id="siteEmail"
-                  name="email"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Email"
-                  value={(siteContent && siteContent.email) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      email: e.target.value,
-                    }))
-                  }
-                />
-                <label htmlFor="sitePhone" className="sr-only">
-                  Phone
-                </label>
-                <input
-                  id="sitePhone"
-                  name="phone"
-                  className="w-full h-10 rounded-md border px-3"
-                  placeholder="Phone"
-                  value={(siteContent && siteContent.phone) || ""}
-                  onChange={(e) =>
-                    setSiteContentState((s) => ({
-                      ...s,
-                      phone: e.target.value,
-                    }))
-                  }
-                />
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={saveContent}
-                    className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground"
-                  >
-                    Save content
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      localStorage.removeItem("inTuneContent");
-                      setSiteContentState(getSiteContent());
-                      alert("Reset");
-                    }}
-                    className="px-4 py-2 rounded-md border"
-                  >
-                    Reset
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowNewsletter(true)}
-                    className="px-4 py-2 rounded-md bg-primary text-primary-foreground"
-                  >
-                    Compose newsletter
-                  </button>
                 </div>
               </div>
             </div>
