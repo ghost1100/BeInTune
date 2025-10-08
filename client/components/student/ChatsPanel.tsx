@@ -108,7 +108,7 @@ export default function ChatsPanel({ className }: { className?: string }) {
         const admin = {
           id: list[0].user_id || list[0].id,
           user_id: list[0].user_id || list[0].id,
-          name: `${list[0].name || "Admin"} (Me)`,
+          name: list[0].name || "Admin",
           email: list[0].email || "admin@local",
           isAdmin: true,
         } as any as StudentRecord & { isAdmin?: boolean };
