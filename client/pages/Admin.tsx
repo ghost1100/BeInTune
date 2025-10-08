@@ -1065,7 +1065,23 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                           : "Available - tap to add"
                   }
                 >
-                  {isCancelling === (booked?.id || "") && booked ? "..." : s}
+                  <div className="flex items-center justify-center gap-2 w-full">
+                    {booked && (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setBookingDetail(booked);
+                        }}
+                        className="text-xs rounded-md border px-2 py-1"
+                        title="View booking details"
+                      >
+                        Details
+                      </span>
+                    )}
+                    <span>{isCancelling === (booked?.id || "") && booked ? "..." : s}</span>
+                  </div>
                 </button>
                 {booked ? (
                   <div className="mt-1">
