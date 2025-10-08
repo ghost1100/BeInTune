@@ -146,15 +146,21 @@ router.post("/students", async (req, res) => {
   }
 
   const studentRes = await query(
-    "INSERT INTO students(user_id, name, age, parent_name, parent_email, phone, address, marketing_consent) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
+    "INSERT INTO students(user_id, name, age, parent_name, parent_email, parent_phone, phone, address, emergency_contacts, allergies, medications, instruments, band, marketing_consent) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id",
     [
       userId,
       name || null,
       age || null,
       parent_name || null,
       parent_email || null,
+      parent_phone || null,
       phone || null,
       address || null,
+      emergency_contacts || null,
+      allergies || null,
+      medications || null,
+      instruments && Array.isArray(instruments) ? JSON.stringify(instruments) : null,
+      band || null,
       marketing_consent || false,
     ],
   );
