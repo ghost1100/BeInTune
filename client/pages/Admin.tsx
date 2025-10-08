@@ -840,6 +840,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
   const [isCancelling, setIsCancelling] = useState<string | null>(null);
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [bookingDetail, setBookingDetail] = useState<any | null>(null);
 
   const refreshStudents = async () => {
     try {
