@@ -2607,6 +2607,10 @@ function StudentsManager() {
       marketing_consent: !!form.marketingConsent,
       email: contactEmail,
       emergency_contacts: emergencyContact,
+      allergies: form.allergies?.trim() || null,
+      medications: form.medications?.trim() || null,
+      instruments: form.instruments || [],
+      band: form.bandName?.trim() || null,
     };
     try {
       if (editing) {
