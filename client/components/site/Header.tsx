@@ -45,9 +45,9 @@ export function Header() {
           <Link to="/contact" className="hidden sm:block">
             <Button variant="ghost">Contact</Button>
           </Link>
-          <Link to="/lessons">
+          <a href="/#book">
             <Button variant="gradient">Book a free trial</Button>
-          </Link>
+          </a>
         </div>
       </div>
     </header>
