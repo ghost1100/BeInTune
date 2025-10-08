@@ -2777,17 +2777,7 @@ function StudentsManager() {
 
   return (
     <div>
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-start">
-        <Button
-          type="button"
-          variant="secondary"
-          className="w-full sm:w-auto"
-          onClick={openResourceModal}
-          disabled={students.length === 0}
-        >
-          Upload learning resources
-        </Button>
-      </div>
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-start" />
       {resourceModal}
       {viewResourcesModal}
       <form onSubmit={save} className="grid gap-2">
@@ -3079,7 +3069,7 @@ function StudentsManager() {
                     <dt className="font-medium text-foreground/80">
                       Guardian name
                     </dt>
-                    <dd>{s.parent_name || s.parentGuardianName || "—"}</dd>
+                    <dd>{s.parent_name || s.parentGuardianName || "��"}</dd>
                   </div>
                   <div>
                     <dt className="font-medium text-foreground/80">
