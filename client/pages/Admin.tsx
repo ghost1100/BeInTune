@@ -69,6 +69,32 @@ export default function Admin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const navigate = useNavigate();
   const [showNewsletter, setShowNewsletter] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickSubject, setQuickSubject] = useState("");
+  const [quickHtml, setQuickHtml] = useState("");
+  const { toast } = useToast();
+
+  const sendQuick = async () => {
+    if (!quickSubject || !quickHtml) {
+      toast({ title: "Missing fields", description: "Subject and message are required" });
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/newsletters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject: quickSubject, html: quickHtml, plain: quickHtml.replace(/<[^>]+>/g, "") }),
+      });
+      if (!res.ok) throw new Error("Failed to send newsletter");
+      toast({ title: "Sent", description: "Newsletter queued/sent" });
+      setQuickSubject("");
+      setQuickHtml("");
+      setQuickOpen(false);
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Error", description: err?.message || "Unable to send" });
+    }
+  };
 
   useEffect(() => {
     const auth = localStorage.getItem("inTuneAdmin");
