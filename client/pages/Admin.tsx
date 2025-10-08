@@ -249,7 +249,7 @@ export default function Admin() {
   return (
     <div className="container mx-auto py-12">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Admin — Teachers & Site</h1>
+        <h1 className="text-2xl font-bold">Admin page</h1>
         <div className="flex gap-2 flex-wrap">
           <NotificationBell />
           <button onClick={logout} className="px-3 py-2 rounded-md border">
