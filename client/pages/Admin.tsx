@@ -964,16 +964,32 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                       }}
                       className={`w-full rounded-md py-2 px-3 text-sm cursor-pointer ${booked ? "bg-destructive text-destructive-foreground" : available ? "bg-primary text-primary-foreground" : "bg-card text-foreground/80 border"}`}
                     >
-                      <div className="flex justify-between">
-                        <div>{s}</div>
-                        <div>
-                          {booked
-                            ? `Booked: ${booked.student_name || booked.student_email || booked.name || booked.email || "Unknown"}`
-                            : available
-                              ? "Available"
-                              : meta && meta.is_available === false
-                                ? "Unavailable"
-                                : "Available"}
+                      <div className="flex flex-col lg:flex-row items-center justify-between gap-2">
+                        {booked && (
+                          <button
+                            type="button"
+                            title="View booking details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBookingDetail(booked);
+                            }}
+                            className="text-xs rounded-md border px-2 py-1 bg-transparent"
+                          >
+                            Details
+                          </button>
+                        )}
+
+                        <div className="flex justify-between items-center w-full">
+                          <div>{s}</div>
+                          <div>
+                            {booked
+                              ? `Booked: ${booked.student_name || booked.student_email || booked.name || booked.email || "Unknown"}`
+                              : available
+                                ? "Available"
+                                : meta && meta.is_available === false
+                                  ? "Unavailable"
+                                  : "Available"}
+                          </div>
                         </div>
                       </div>
                     </div>
