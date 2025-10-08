@@ -841,6 +841,14 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [bookingDetail, setBookingDetail] = useState<any | null>(null);
+  const [cancellationBooking, setCancellationBooking] = useState<any | null>(null);
+  const [cancellationReason, setCancellationReason] = useState<string>("");
+  const cancellationReasons = [
+    "Teacher unavailable",
+    "Illness / emergency",
+    "Rescheduling needed",
+    "Other",
+  ];
 
   const refreshStudents = async () => {
     try {
