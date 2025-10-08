@@ -123,8 +123,9 @@ router.post("/students", async (req, res) => {
     const phoneToStore =
       phoneEnc && phoneEnc.encrypted ? JSON.stringify(phoneEnc) : phone || null;
     const userRes = await query(
-      "INSERT INTO users(email_encrypted, email_index, phone_encrypted, password_hash, role, name, email_verified) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id",
+      "INSERT INTO users(email, email_encrypted, email_index, phone_encrypted, password_hash, role, name, email_verified) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
       [
+        email || null,
         emailToStore,
         emailIndex,
         phoneToStore,
