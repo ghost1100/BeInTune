@@ -141,17 +141,65 @@ router.post("/bookings", async (req, res) => {
 // DELETE /api/admin/bookings/:id
 router.delete("/bookings/:id", async (req, res) => {
   const { id } = req.params;
-  // free the slot if exists
-  const bRes = await query("SELECT slot_id FROM bookings WHERE id = $1", [id]);
-  if (bRes.rows[0]) {
-    const slotId = bRes.rows[0].slot_id;
-    if (slotId)
+  const { reason = null, notify = true } = req.body || {};
+
+  try {
+    // load booking details for notification
+    const infoQ = await query(
+      `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, s.user_id as student_user_id, u.email as user_email, u.name as user_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
+       FROM bookings b
+       LEFT JOIN slots sl ON b.slot_id = sl.id
+       LEFT JOIN students s ON b.student_id = s.id
+       LEFT JOIN users u ON s.user_id = u.id
+       WHERE b.id = $1 LIMIT 1`,
+      [id],
+    );
+    const info = infoQ.rows[0];
+
+    // send notification if requested
+    if (notify && info) {
+      const toEmail = info.user_email || info.guest_email || null;
+      const toName = info.user_name || info.guest_name || "";
+      if (toEmail && process.env.SENDGRID_API_KEY) {
+        try {
+          const subject = `Lesson cancelled: ${info.date} ${info.time}`;
+          const plain = `Hello ${toName},\n\nYour lesson scheduled for ${info.date} at ${info.time} has been cancelled.${reason ? `\n\nReason: ${reason}` : ""}\n\nWe apologise for the inconvenience.`;
+          const html = `<p>Hello ${toName},</p><p>Your lesson scheduled for <strong>${info.date} at ${info.time}</strong> has been cancelled.</p>${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ""}<p>We apologise for the inconvenience.</p>`;
+          await sgMail.send({
+            to: toEmail,
+            from: process.env.FROM_EMAIL || "no-reply@example.com",
+            subject,
+            text: plain,
+            html,
+          });
+        } catch (e) {
+          console.error("Failed to send cancellation email", e);
+        }
+      }
+    }
+
+    // free the slot if exists
+    if (info && info.slot_id) {
       await query("UPDATE slots SET is_available = true WHERE id = $1", [
-        slotId,
+        info.slot_id,
       ]);
+    } else {
+      const bRes = await query("SELECT slot_id FROM bookings WHERE id = $1", [id]);
+      if (bRes.rows[0]) {
+        const slotId = bRes.rows[0].slot_id;
+        if (slotId)
+          await query("UPDATE slots SET is_available = true WHERE id = $1", [
+            slotId,
+          ]);
+      }
+    }
+
+    await query("DELETE FROM bookings WHERE id = $1", [id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Failed to cancel booking:", err);
+    res.status(500).json({ error: "Failed to cancel booking" });
   }
-  await query("DELETE FROM bookings WHERE id = $1", [id]);
-  res.json({ ok: true });
 });
 
 export default router;
