@@ -225,7 +225,13 @@ router.post("/bookings/cancel-all", requireAdmin, async (req, res) => {
       const plain = `Hello,\n\nThe following session(s) scheduled for ${date} have been cancelled:\n\n${linesText}\n\nReason: ${reason || "Not specified"}\n\nWe apologise for the inconvenience.`;
       const html = `<p>Hello,</p><p>The following session(s) scheduled for <strong>${date}</strong> have been cancelled:</p>${linesHtml}<p><strong>Reason:</strong> ${reason || "Not specified"}</p><p>We apologise for the inconvenience.</p>`;
       try {
-        await sendMail({ to: email, from: process.env.FROM_EMAIL || "no-reply@example.com", subject, text: plain, html });
+        await sendMail({
+          to: email,
+          from: process.env.FROM_EMAIL || "no-reply@example.com",
+          subject,
+          text: plain,
+          html,
+        });
       } catch (e) {
         console.error("Failed to send cancellation summary to", email, e);
       }
@@ -235,7 +241,9 @@ router.post("/bookings/cancel-all", requireAdmin, async (req, res) => {
       const uniq = Array.from(new Set(slotIdsToFree));
       for (const sid of uniq) {
         try {
-          await query("UPDATE slots SET is_available = true WHERE id = $1", [sid]);
+          await query("UPDATE slots SET is_available = true WHERE id = $1", [
+            sid,
+          ]);
         } catch (e) {
           console.error("Failed to free slot", sid, e);
         }
@@ -246,7 +254,10 @@ router.post("/bookings/cancel-all", requireAdmin, async (req, res) => {
       const uniqB = Array.from(new Set(bookingIds));
       const placeholders = uniqB.map((_, i) => `$${i + 1}`).join(",");
       try {
-        await query(`DELETE FROM bookings WHERE id IN (${placeholders})`, uniqB);
+        await query(
+          `DELETE FROM bookings WHERE id IN (${placeholders})`,
+          uniqB,
+        );
       } catch (e) {
         console.error("Failed to delete bookings in bulk", e);
       }
@@ -379,11 +390,17 @@ router.post("/bookings", async (req, res) => {
             const hh = tParts[0] || 0;
             const mm = tParts[1] || 0;
             const start = new Date(y, (m || 1) - 1, day, hh, mm, 0, 0);
-            if (isNaN(start.getTime())) throw new Error("Invalid constructed date");
+            if (isNaN(start.getTime()))
+              throw new Error("Invalid constructed date");
             const end = new Date(start.getTime() + (durMin || 30) * 60 * 1000);
             return { startIso: start.toISOString(), endIso: end.toISOString() };
           } catch (err) {
-            console.error("Failed to construct ISO timestamps for", dStr, tStr, err);
+            console.error(
+              "Failed to construct ISO timestamps for",
+              dStr,
+              tStr,
+              err,
+            );
             throw err;
           }
         };
@@ -510,11 +527,17 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
           const hh = tParts[0] || 0;
           const mm = tParts[1] || 0;
           const start = new Date(y, (m || 1) - 1, day, hh, mm, 0, 0);
-          if (isNaN(start.getTime())) throw new Error("Invalid constructed date");
+          if (isNaN(start.getTime()))
+            throw new Error("Invalid constructed date");
           const end = new Date(start.getTime() + (durMin || 30) * 60 * 1000);
           return { startIso: start.toISOString(), endIso: end.toISOString() };
         } catch (err) {
-          console.error("Failed to construct ISO timestamps for", dStr, tStr, err);
+          console.error(
+            "Failed to construct ISO timestamps for",
+            dStr,
+            tStr,
+            err,
+          );
           throw err;
         }
       };

@@ -43,7 +43,10 @@ async function initAuth() {
     try {
       attempts.push("strip wrapping quotes");
       if (s.startsWith('"') && s.endsWith('"')) {
-        const stripped = s.slice(1, -1).replace(/\\"/g, '"').replace(/\\n/g, "\\n");
+        const stripped = s
+          .slice(1, -1)
+          .replace(/\\"/g, '"')
+          .replace(/\\n/g, "\\n");
         return JSON.parse(stripped);
       }
     } catch (e) {
@@ -69,7 +72,12 @@ async function initAuth() {
   try {
     serviceAccount = tryParse(raw);
   } catch (err) {
-    console.error("Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON (raw length", String(raw).length, ")", err);
+    console.error(
+      "Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON (raw length",
+      String(raw).length,
+      ")",
+      err,
+    );
     throw err;
   }
 

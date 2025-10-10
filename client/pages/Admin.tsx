@@ -1297,7 +1297,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
               </button>
             </div>
             <div className="mt-3">
-              <div className="text-sm mb-2">Choose a reason (this will be included in the summary email)</div>
+              <div className="text-sm mb-2">
+                Choose a reason (this will be included in the summary email)
+              </div>
               <div className="space-y-2">
                 {cancellationReasons.map((r) => (
                   <button
@@ -1324,7 +1326,10 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                   onClick={async () => {
                     setIsCancelling("all");
                     try {
-                      await cancelAllBookingsForDate(date, cancellationReason || null);
+                      await cancelAllBookingsForDate(
+                        date,
+                        cancellationReason || null,
+                      );
                       setCancellationAll(false);
                       setCancellationReason("");
                       setRefresh((r) => r + 1);
