@@ -17,6 +17,7 @@ import {
   getBookings,
   addBooking,
   removeBooking,
+  cancelAllBookingsForDate,
   isSlotBooked,
   getSlotsWithMeta,
 } from "@/lib/schedule";
