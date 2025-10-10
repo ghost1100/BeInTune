@@ -93,6 +93,21 @@ async function initAuth() {
       "Google service account authorized:",
       serviceAccount.client_email,
     );
+
+    // Log which service account and calendar the server will use (safe preview)
+    try {
+      console.log('Using Google SA', {
+        clientEmail: serviceAccount.client_email,
+        calendarId: process.env.GOOGLE_CALENDAR_ID || serviceAccount.client_email,
+        keyPreview: serviceAccount.private_key
+          ? (serviceAccount.private_key.slice(0, 40).replace(/\r?\n/g, '\\n') + '...')
+          : undefined,
+        rawEnvLength: (process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '').length,
+      });
+    } catch (e) {
+      // swallow logging errors to avoid impacting auth flow
+      console.warn('Failed to log Google SA preview', e);
+    }
   } catch (err) {
     console.error("Failed to authorize Google service account:", err);
     throw err;
