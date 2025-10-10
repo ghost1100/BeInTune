@@ -156,6 +156,20 @@ router.get("/bookings", async (req, res) => {
         out.name = out.student_name || out.guest_name || out.name;
         out.email = out.student_email || out.guest_email || out.email;
         out.phone = out.guest_phone || out.phone;
+        // Include student instruments when available (students.instruments may be JSON)
+        try {
+          if (out.student_instruments) {
+            if (Array.isArray(out.student_instruments)) {
+              out.instruments = out.student_instruments;
+            } else if (typeof out.student_instruments === "string") {
+              out.instruments = JSON.parse(out.student_instruments);
+            } else {
+              out.instruments = out.student_instruments;
+            }
+          }
+        } catch (e) {
+          out.instruments = out.student_instruments || null;
+        }
         return out;
       });
       res.json(rows);
