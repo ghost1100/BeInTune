@@ -478,7 +478,7 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
   const { id } = req.params;
   try {
     const infoQ = await query(
-      `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, s.user_id as student_user_id, u.email as user_email, u.name as user_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
+      `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, s.user_id as student_user_id, u.email as user_email, u.name as user_name, s.instruments as student_instruments, u.phone as user_phone, s.phone as student_phone, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
        FROM bookings b
        LEFT JOIN slots sl ON b.slot_id = sl.id
        LEFT JOIN students s ON b.student_id = s.id
