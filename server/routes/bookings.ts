@@ -272,10 +272,26 @@ router.post("/bookings", async (req, res) => {
         const date = slot.slot_date; // YYYY-MM-DD
         const time = slot.slot_time; // HH:MM
         const duration = slot.duration_minutes || 30;
-        const startIso = new Date(`${date}T${time}:00`).toISOString();
-        const endDt = new Date(
-          new Date(`${date}T${time}:00`).getTime() + duration * 60 * 1000,
-        ).toISOString();
+        // Construct start/end ISO timestamps more robustly to avoid Invalid Date errors
+        const makeIso = (dStr: string, tStr: string, durMin: number) => {
+          try {
+            if (!dStr || !tStr) throw new Error("Missing date or time");
+            const dParts = String(dStr).split("-").map(Number);
+            const tParts = String(tStr).split(":").map(Number);
+            if (dParts.length !== 3 || tParts.length < 2) throw new Error("Invalid date/time format");
+            const [y, m, day] = dParts;
+            const [hh, mm] = tParts;
+            const start = new Date(y, (m || 1) - 1, day, hh || 0, mm || 0, 0, 0);
+            if (isNaN(start.getTime())) throw new Error("Invalid constructed date");
+            const end = new Date(start.getTime() + (durMin || 30) * 60 * 1000);
+            return { startIso: start.toISOString(), endIso: end.toISOString() };
+          } catch (err) {
+            console.error("Failed to construct ISO timestamps for", dStr, tStr, err);
+            throw err;
+          }
+        };
+        const { startIso, endIso } = makeIso(date, time, duration);
+        const endDt = endIso;
         const attendees: string[] = [];
         if (info?.guest_email) attendees.push(info.guest_email);
         if (info?.user_email && !attendees.includes(info.user_email))
