@@ -2632,12 +2632,21 @@ function StudentsManager() {
   const edit = (s: any) => {
     const studentId = s.student_id || s.id;
     if (!studentId) return;
-    const minor = typeof s.age === "number" && s.age < 16;
+    // determine age from available data
+    let dob: string | undefined = undefined;
+    if (s.dob) {
+      dob = s.dob;
+    } else if (typeof s.age === "number") {
+      const d = new Date();
+      d.setFullYear(d.getFullYear() - s.age);
+      dob = d.toISOString().slice(0, 10);
+    }
+    const age = calculateAgeFromDob(dob);
+    const minor = typeof age === "number" && age < 16;
     setEditing(studentId);
     setForm({
       name: s.name || "",
-      age: typeof s.age === "number" ? s.age : 16,
-      isElderly: !!s.isElderly,
+      dob: dob || defaultDob,
       medications: s.medications || "",
       marketingConsent: !!(s.marketing_consent ?? s.marketingConsent),
       allergies: s.allergies || "",
