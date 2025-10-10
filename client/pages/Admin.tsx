@@ -850,6 +850,18 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
         >
           Refresh
         </button>
+        <button
+          onClick={() => {
+            // open cancel-all modal
+            setCancellationBooking(null);
+            setCancellationReason("");
+            setCancellationAll(true);
+          }}
+          className="px-3 py-2 rounded-md border bg-destructive text-destructive-foreground"
+          title="Cancel all sessions on selected date"
+        >
+          Cancel all sessions today
+        </button>
       </div>
 
       {visual ? (
