@@ -13,7 +13,16 @@ async function initAuth() {
     const s = String(input);
     const attempts: string[] = [];
 
-    // 1) direct JSON.parse
+    // 1) try base64 decode first (common when env var is single-line base64)
+    try {
+      attempts.push("base64 decode");
+      const decoded = Buffer.from(s, "base64").toString("utf-8");
+      return JSON.parse(decoded);
+    } catch (e) {
+      // continue
+    }
+
+    // 2) direct JSON.parse
     try {
       attempts.push("direct JSON.parse");
       return JSON.parse(s);
@@ -21,7 +30,7 @@ async function initAuth() {
       // continue
     }
 
-    // 2) raw may contain literal \n sequences that need to be unescaped
+    // 3) raw may contain literal \n sequences that need to be unescaped
     try {
       attempts.push("unescape \\n");
       const unescaped = s.replace(/\\n/g, "\n");
@@ -30,7 +39,7 @@ async function initAuth() {
       // continue
     }
 
-    // 3) raw may contain actual newlines which should be escaped
+    // 4) raw may contain actual newlines which should be escaped
     try {
       attempts.push("escape newlines");
       const escaped = s.replace(/\r?\n/g, "\\n");
@@ -39,7 +48,7 @@ async function initAuth() {
       // continue
     }
 
-    // 4) raw might be wrapped in quotes (stringified twice)
+    // 5) raw might be wrapped in quotes (stringified twice)
     try {
       attempts.push("strip wrapping quotes");
       if (s.startsWith('"') && s.endsWith('"')) {
@@ -49,15 +58,6 @@ async function initAuth() {
           .replace(/\\n/g, "\\n");
         return JSON.parse(stripped);
       }
-    } catch (e) {
-      // continue
-    }
-
-    // 5) try base64 decode
-    try {
-      attempts.push("base64 decode");
-      const decoded = Buffer.from(s, "base64").toString("utf-8");
-      return JSON.parse(decoded);
     } catch (e) {
       // continue
     }
