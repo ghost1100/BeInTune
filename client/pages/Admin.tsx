@@ -1136,7 +1136,12 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
               </div>
               <div>
                 <span className="font-medium">Instrument:</span>{" "}
-                {bookingDetail.lessonType || bookingDetail.lesson_type || "—"}
+                {bookingDetail.lessonType ||
+                  bookingDetail.lesson_type ||
+                  (Array.isArray(bookingDetail.instruments)
+                    ? bookingDetail.instruments.join(", ")
+                    : bookingDetail.instruments) ||
+                  "—"}
               </div>
             </div>
           </div>
@@ -1871,10 +1876,26 @@ function StudentsManager() {
     "Flute",
   ];
   const [students, setStudents] = useState<any[]>([]);
+  const defaultDob = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 16);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  function calculateAgeFromDob(dob?: string | null) {
+    if (!dob) return undefined;
+    const b = new Date(dob);
+    if (Number.isNaN(b.getTime())) return undefined;
+    const now = new Date();
+    let age = now.getFullYear() - b.getFullYear();
+    const m = now.getMonth() - b.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+    return age;
+  }
+
   const [form, setForm] = useState<Partial<any>>({
     name: "",
-    age: 16,
-    isElderly: false,
+    dob: defaultDob,
     medications: "",
     marketingConsent: false,
     allergies: "",
@@ -2521,8 +2542,11 @@ function StudentsManager() {
       return;
     }
 
+    const ageFromDob = calculateAgeFromDob(form.dob as string | undefined);
     const normalizedAge =
-      typeof form.age === "number" && !Number.isNaN(form.age) ? form.age : null;
+      typeof ageFromDob === "number" && !Number.isNaN(ageFromDob)
+        ? ageFromDob
+        : null;
 
     const emergencyContact = form.emergencyContacts?.trim() || "";
     if (!emergencyContact) {
@@ -2585,8 +2609,7 @@ function StudentsManager() {
       }
       setForm({
         name: "",
-        age: 16,
-        isElderly: false,
+        dob: defaultDob,
         medications: "",
         marketingConsent: false,
         allergies: "",
@@ -2611,12 +2634,21 @@ function StudentsManager() {
   const edit = (s: any) => {
     const studentId = s.student_id || s.id;
     if (!studentId) return;
-    const minor = typeof s.age === "number" && s.age < 16;
+    // determine age from available data
+    let dob: string | undefined = undefined;
+    if (s.dob) {
+      dob = s.dob;
+    } else if (typeof s.age === "number") {
+      const d = new Date();
+      d.setFullYear(d.getFullYear() - s.age);
+      dob = d.toISOString().slice(0, 10);
+    }
+    const age = calculateAgeFromDob(dob);
+    const minor = typeof age === "number" && age < 16;
     setEditing(studentId);
     setForm({
       name: s.name || "",
-      age: typeof s.age === "number" ? s.age : 16,
-      isElderly: !!s.isElderly,
+      dob: dob || defaultDob,
       medications: s.medications || "",
       marketingConsent: !!(s.marketing_consent ?? s.marketingConsent),
       allergies: s.allergies || "",
@@ -2740,9 +2772,9 @@ function StudentsManager() {
       instruments: (f.instruments || []).filter((i: any) => i !== ins),
     }));
 
-  const isUnder16 = form.age !== undefined && form.age < 16;
-  const isElderly =
-    form.isElderly || (form.age !== undefined && form.age >= 65);
+  const computedAge = calculateAgeFromDob(form.dob as string | undefined);
+  const isUnder16 = computedAge !== undefined && computedAge < 16;
+  const isElderly = computedAge !== undefined && computedAge >= 65;
 
   return (
     <div>
@@ -2757,24 +2789,19 @@ function StudentsManager() {
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
         />
         <div className="flex gap-2 flex-wrap">
-          <input
-            type="number"
-            className="h-10 rounded-md border px-3 flex-1"
-            placeholder="Age"
-            value={form.age === undefined ? "" : String(form.age)}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, age: parseInt(e.target.value || "0") }))
-            }
-          />
-          <label className="flex items-center gap-2">
+          <label className="flex flex-col">
+            <span className="text-sm text-foreground/70">Date of birth</span>
             <input
-              type="checkbox"
-              checked={!!form.isElderly}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, isElderly: e.target.checked }))
-              }
-            />{" "}
-            Elderly
+              type="date"
+              className="h-10 rounded-md border px-3"
+              value={form.dob || ""}
+              onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))}
+            />
+            <span className="text-xs text-foreground/60 mt-1">
+              {computedAge !== undefined
+                ? `${computedAge} years`
+                : "Age not set"}
+            </span>
           </label>
         </div>
 
@@ -2937,8 +2964,7 @@ function StudentsManager() {
             onClick={() => {
               setForm({
                 name: "",
-                age: 16,
-                isElderly: false,
+                dob: defaultDob,
                 medications: "",
                 marketingConsent: false,
                 allergies: "",

@@ -1,10 +1,8 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import sgMail from "@sendgrid/mail";
+import { sendMail } from "../lib/mailer";
 import { query } from "../db";
-
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || "");
 
 const router = express.Router();
 
@@ -182,9 +180,9 @@ router.post("/send-reset", async (req, res) => {
   };
 
   try {
-    await sgMail.send(msg);
+    await sendMail(msg as any);
   } catch (err) {
-    console.error("SendGrid error:", err);
+    console.error("Mail send error:", err);
   }
 
   return res.json({ ok: true });

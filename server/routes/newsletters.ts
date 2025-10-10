@@ -1,8 +1,6 @@
 import express from "express";
-import sgMail from "@sendgrid/mail";
+import { sendMail } from "../lib/mailer";
 import { query } from "../db";
-
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || "");
 
 const router = express.Router();
 
@@ -48,9 +46,18 @@ router.post("/newsletters", async (req, res) => {
     } as any;
 
     try {
-      await sgMail.send(msg as any);
+      // Use our mailer which will send via SMTP or SendGrid fallback
+      await sendMail({
+        personalizations: batch.map((email: string) => ({ to: [{ email }] })),
+        from: process.env.FROM_EMAIL || "no-reply@example.com",
+        subject,
+        content: [
+          { type: "text/plain", value: plain || "" },
+          { type: "text/html", value: html },
+        ],
+      } as any);
     } catch (err) {
-      console.error("SendGrid send error:", err);
+      console.error("Mail send error:", err);
     }
   }
 
