@@ -28,12 +28,12 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
     typeof window !== "undefined"
   ) {
     const candidates = [
-      // prefer absolute origin first
+      // try original relative path first (works with reverse proxies / dev proxies)
+      input,
+      // then absolute origin
       `${window.location.origin}${input}`,
       // netlify functions mapping
       `/.netlify/functions/api${input.slice(4)}`,
-      // original relative path as last resort
-      input,
     ];
 
     for (const url of candidates) {
