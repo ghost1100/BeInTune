@@ -452,12 +452,12 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
         endIso,
         attendees,
       });
+      // Resend: create event without attendees to avoid service account invitation restrictions
       const ev = await createCalendarEvent({
         summary: `Lesson: ${info.lesson_type || "Lesson"}`,
         description: `Booking for ${info.guest_name || info.user_name || "guest"}`,
         startDateTime: startIso,
         endDateTime: endIso,
-        attendees,
       });
       console.log("Resend: Calendar event created for booking", id, {
         eventId: ev && ev.id,
