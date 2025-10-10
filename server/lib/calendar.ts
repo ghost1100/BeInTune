@@ -7,18 +7,70 @@ async function initAuth() {
   if (authClient) return authClient;
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
   if (!raw) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON env var");
-  try {
-    serviceAccount = typeof raw === "string" ? JSON.parse(raw) : raw;
-  } catch (err) {
-    // Try to be tolerant of env values that contain actual newlines which break JSON.parse
+  const tryParse = (input: any) => {
+    if (!input) throw new Error("Empty GOOGLE_SERVICE_ACCOUNT_JSON");
+    if (typeof input === "object") return input;
+    const s = String(input);
+    const attempts: string[] = [];
+
+    // 1) direct JSON.parse
     try {
-      const fixed = String(raw).replace(/\r?\n/g, "\\n");
-      serviceAccount = JSON.parse(fixed);
-      console.warn("Parsed GOOGLE_SERVICE_ACCOUNT_JSON via newline-escape fallback");
-    } catch (err2) {
-      console.error("Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON (raw length", String(raw).length, ")", err);
-      throw err;
+      attempts.push("direct JSON.parse");
+      return JSON.parse(s);
+    } catch (e) {
+      // continue
     }
+
+    // 2) raw may contain literal \n sequences that need to be unescaped
+    try {
+      attempts.push("unescape \\n");
+      const unescaped = s.replace(/\\n/g, "\n");
+      return JSON.parse(unescaped);
+    } catch (e) {
+      // continue
+    }
+
+    // 3) raw may contain actual newlines which should be escaped
+    try {
+      attempts.push("escape newlines");
+      const escaped = s.replace(/\r?\n/g, "\\n");
+      return JSON.parse(escaped);
+    } catch (e) {
+      // continue
+    }
+
+    // 4) raw might be wrapped in quotes (stringified twice)
+    try {
+      attempts.push("strip wrapping quotes");
+      if (s.startsWith('"') && s.endsWith('"')) {
+        const stripped = s.slice(1, -1).replace(/\\"/g, '"').replace(/\\n/g, "\\n");
+        return JSON.parse(stripped);
+      }
+    } catch (e) {
+      // continue
+    }
+
+    // 5) try base64 decode
+    try {
+      attempts.push("base64 decode");
+      const decoded = Buffer.from(s, "base64").toString("utf-8");
+      return JSON.parse(decoded);
+    } catch (e) {
+      // continue
+    }
+
+    const err = new Error(
+      `Unable to parse GOOGLE_SERVICE_ACCOUNT_JSON. Attempts: ${attempts.join(", ")}`,
+    );
+    (err as any).details = { attempts, length: s.length };
+    throw err;
+  };
+
+  try {
+    serviceAccount = tryParse(raw);
+  } catch (err) {
+    console.error("Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON (raw length", String(raw).length, ")", err);
+    throw err;
   }
 
   authClient = new google.auth.JWT({
