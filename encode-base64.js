@@ -1,4 +1,3 @@
-const fs = require('fs');
 const json = {
   "type": "service_account",
   "project_id": "calendar-access-474717",
