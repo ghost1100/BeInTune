@@ -452,6 +452,16 @@ router.post("/bookings", async (req, res) => {
             ins.rows[0].id,
             { eventId: ev && ev.id },
           );
+          try {
+            if (ev && ev.id) {
+              await query(
+                "UPDATE bookings SET calendar_event_id = $1 WHERE id = $2",
+                [ev.id, ins.rows[0].id],
+              );
+            }
+          } catch (e) {
+            console.error('Failed to persist calendar_event_id on booking', e);
+          }
         } catch (err) {
           console.error("Failed to create calendar event:", err);
         }
