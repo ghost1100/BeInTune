@@ -228,7 +228,9 @@ router.post("/bookings", async (req, res) => {
       const time = slot.slot_time; // HH:MM
       const duration = slot.duration_minutes || 30;
       const startIso = new Date(`${date}T${time}:00`).toISOString();
-      const endDt = new Date(new Date(`${date}T${time}:00`).getTime() + duration * 60 * 1000).toISOString();
+      const endDt = new Date(
+        new Date(`${date}T${time}:00`).getTime() + duration * 60 * 1000,
+      ).toISOString();
       const attendees: string[] = [];
       if (email) attendees.push(email);
       try {
@@ -285,7 +287,13 @@ router.delete("/bookings/:id", async (req, res) => {
           const plain = `Hello ${toName},\n\nYour lesson scheduled for ${info.date} at ${info.time} has been cancelled.${reason ? `\n\nReason: ${reason}` : ""}\n\nWe apologise for the inconvenience.`;
           const html = `<p>Hello ${toName},</p><p>Your lesson scheduled for <strong>${info.date} at ${info.time}</strong> has been cancelled.</p>${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ""}<p>We apologise for the inconvenience.</p>`;
           try {
-            await sendMail({ to: toEmail, from: process.env.FROM_EMAIL || "no-reply@example.com", subject, text: plain, html });
+            await sendMail({
+              to: toEmail,
+              from: process.env.FROM_EMAIL || "no-reply@example.com",
+              subject,
+              text: plain,
+              html,
+            });
           } catch (e) {
             console.error("Failed to send cancellation email", e);
           }

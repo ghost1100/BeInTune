@@ -2,7 +2,9 @@ import nodemailer from "nodemailer";
 import sgMail from "@sendgrid/mail";
 
 const SMTP_HOST = process.env.SMTP_HOST || "";
-const SMTP_PORT = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined;
+const SMTP_PORT = process.env.SMTP_PORT
+  ? Number(process.env.SMTP_PORT)
+  : undefined;
 const SMTP_USER = process.env.SMTP_USER || "";
 const SMTP_PASS = process.env.SMTP_PASS || "";
 
@@ -84,7 +86,9 @@ export async function sendMail(msg: any) {
       }
       // Otherwise, map to SendGrid format
       const sgMsg: any = {
-        personalizations: (toList || []).map((email: string) => ({ to: [{ email }] })),
+        personalizations: (toList || []).map((email: string) => ({
+          to: [{ email }],
+        })),
         from,
         subject: msg.subject || "",
         content: [

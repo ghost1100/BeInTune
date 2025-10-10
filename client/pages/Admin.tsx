@@ -1136,7 +1136,12 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
               </div>
               <div>
                 <span className="font-medium">Instrument:</span>{" "}
-                {bookingDetail.lessonType || bookingDetail.lesson_type || (Array.isArray(bookingDetail.instruments) ? bookingDetail.instruments.join(", ") : bookingDetail.instruments) || "—"}
+                {bookingDetail.lessonType ||
+                  bookingDetail.lesson_type ||
+                  (Array.isArray(bookingDetail.instruments)
+                    ? bookingDetail.instruments.join(", ")
+                    : bookingDetail.instruments) ||
+                  "—"}
               </div>
             </div>
           </div>

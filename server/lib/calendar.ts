@@ -27,7 +27,8 @@ export async function createCalendarEvent(opts: {
   try {
     const auth = initAuth();
     const calendar = google.calendar({ version: "v3", auth });
-    const calendarId = process.env.GOOGLE_CALENDAR_ID || serviceAccount.client_email;
+    const calendarId =
+      process.env.GOOGLE_CALENDAR_ID || serviceAccount.client_email;
     const timezone = process.env.GOOGLE_CALENDAR_TIMEZONE || "Europe/London";
     const event: any = {
       summary: opts.summary,
@@ -38,7 +39,10 @@ export async function createCalendarEvent(opts: {
     if (opts.attendees && opts.attendees.length) {
       event.attendees = opts.attendees.map((email) => ({ email }));
     }
-    const res = await calendar.events.insert({ calendarId, requestBody: event });
+    const res = await calendar.events.insert({
+      calendarId,
+      requestBody: event,
+    });
     return res.data;
   } catch (err) {
     console.error("createCalendarEvent error:", err);
