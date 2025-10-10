@@ -180,9 +180,9 @@ router.post("/send-reset", async (req, res) => {
   };
 
   try {
-    await sgMail.send(msg);
+    await sendMail(msg as any);
   } catch (err) {
-    console.error("SendGrid error:", err);
+    console.error("Mail send error:", err);
   }
 
   return res.json({ ok: true });
