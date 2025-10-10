@@ -7,7 +7,20 @@ async function initAuth() {
   if (authClient) return authClient;
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
   if (!raw) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON env var");
-  serviceAccount = typeof raw === "string" ? JSON.parse(raw) : raw;
+  try {
+    serviceAccount = typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch (err) {
+    // Try to be tolerant of env values that contain actual newlines which break JSON.parse
+    try {
+      const fixed = String(raw).replace(/\r?\n/g, "\\n");
+      serviceAccount = JSON.parse(fixed);
+      console.warn("Parsed GOOGLE_SERVICE_ACCOUNT_JSON via newline-escape fallback");
+    } catch (err2) {
+      console.error("Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON (raw length", String(raw).length, ")", err);
+      throw err;
+    }
+  }
+
   authClient = new google.auth.JWT({
     email: serviceAccount.client_email,
     key: serviceAccount.private_key,
