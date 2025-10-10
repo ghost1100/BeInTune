@@ -575,9 +575,27 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
         attendees,
       });
       // Resend: create event without attendees to avoid service account invitation restrictions
+      // build description with name, instruments, and phone
+      let instrumentsText = "";
+      try {
+        if (info && info.student_instruments) {
+          if (Array.isArray(info.student_instruments)) instrumentsText = info.student_instruments.join(", ");
+          else if (typeof info.student_instruments === "string") instrumentsText = JSON.parse(info.student_instruments || "[]").join(", ");
+        }
+      } catch (e) {
+        instrumentsText = String(info.student_instruments || "");
+      }
+      const contactPhone = info?.guest_phone || info?.student_phone || info?.user_phone || "";
+      const who = info?.guest_name || info?.user_name || "guest";
+      const descParts = [
+        `Booking for ${who}`,
+        instrumentsText ? `Instruments: ${instrumentsText}` : null,
+        contactPhone ? `Phone: ${contactPhone}` : null,
+      ].filter(Boolean);
+
       const ev = await createCalendarEvent({
         summary: `Lesson: ${info.lesson_type || "Lesson"}`,
-        description: `Booking for ${info.guest_name || info.user_name || "guest"}`,
+        description: descParts.join("\n"),
         startDateTime: startIso,
         endDateTime: endIso,
       });
