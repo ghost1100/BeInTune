@@ -2960,8 +2960,7 @@ function StudentsManager() {
             onClick={() => {
               setForm({
                 name: "",
-                age: 16,
-                isElderly: false,
+                dob: defaultDob,
                 medications: "",
                 marketingConsent: false,
                 allergies: "",
