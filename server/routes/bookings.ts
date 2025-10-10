@@ -72,7 +72,8 @@ router.get("/bookings", async (req, res) => {
            b.guest_phone as guest_phone,
            COALESCE(u.name, b.guest_name) as name,
            COALESCE(u.email, b.guest_email) as email,
-           COALESCE(u.phone, b.guest_phone) as phone,
+           COALESCE(u.phone, s.phone, b.guest_phone) as phone,
+           s.instruments as student_instruments,
            sl.id as slot_id,
            sl.slot_time as time,
            sl.slot_date as date
@@ -98,7 +99,8 @@ router.get("/bookings", async (req, res) => {
            b.guest_phone as guest_phone,
            COALESCE(u.name, b.guest_name) as name,
            COALESCE(u.email, b.guest_email) as email,
-           COALESCE(u.phone, b.guest_phone) as phone,
+           COALESCE(u.phone, s.phone, b.guest_phone) as phone,
+           s.instruments as student_instruments,
            sl.id as slot_id,
            sl.slot_time as time,
            sl.slot_date as date
