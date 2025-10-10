@@ -6,8 +6,12 @@ let serviceAccount: any = null;
 async function initAuth() {
   if (authClient) return authClient;
   // Prefer single-line base64 (GOOGLE_CREDS_BASE64) to avoid dashboard truncation; fallback to GOOGLE_SERVICE_ACCOUNT_JSON
-  const raw = process.env.GOOGLE_CREDS_BASE64 || process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (!raw) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON or GOOGLE_CREDS_BASE64 env var");
+  const raw =
+    process.env.GOOGLE_CREDS_BASE64 || process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (!raw)
+    throw new Error(
+      "Missing GOOGLE_SERVICE_ACCOUNT_JSON or GOOGLE_CREDS_BASE64 env var",
+    );
   const tryParse = (input: any) => {
     if (!input) throw new Error("Empty GOOGLE_SERVICE_ACCOUNT_JSON");
     if (typeof input === "object") return input;
@@ -97,20 +101,24 @@ async function initAuth() {
 
     // Log which service account and calendar the server will use (safe preview)
     try {
-      console.log('Using Google SA', {
+      console.log("Using Google SA", {
         clientEmail: serviceAccount.client_email,
-        calendarId: process.env.GOOGLE_CALENDAR_ID || serviceAccount.client_email,
+        calendarId:
+          process.env.GOOGLE_CALENDAR_ID || serviceAccount.client_email,
         keyPreview: serviceAccount.private_key
-          ? (serviceAccount.private_key.slice(0, 40).replace(/\r?\n/g, '\\n') + '...')
+          ? serviceAccount.private_key.slice(0, 40).replace(/\r?\n/g, "\\n") +
+            "..."
           : undefined,
         rawEnvLength: {
-          GOOGLE_SERVICE_ACCOUNT_JSON: (process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '').length,
-          GOOGLE_CREDS_BASE64: (process.env.GOOGLE_CREDS_BASE64 || '').length,
+          GOOGLE_SERVICE_ACCOUNT_JSON: (
+            process.env.GOOGLE_SERVICE_ACCOUNT_JSON || ""
+          ).length,
+          GOOGLE_CREDS_BASE64: (process.env.GOOGLE_CREDS_BASE64 || "").length,
         },
       });
     } catch (e) {
       // swallow logging errors to avoid impacting auth flow
-      console.warn('Failed to log Google SA preview', e);
+      console.warn("Failed to log Google SA preview", e);
     }
   } catch (err) {
     console.error("Failed to authorize Google service account:", err);

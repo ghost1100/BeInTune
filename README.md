@@ -28,7 +28,7 @@ New integrations and configuration
 
 Email (SMTP / Gmail)
 
-This project now supports sending mail through SMTP (nodemailer) with an optional SendGrid fallback. A helper lives at server/lib/mailer.ts which will use SMTP when SMTP_* environment variables are provided.
+This project now supports sending mail through SMTP (nodemailer) with an optional SendGrid fallback. A helper lives at server/lib/mailer.ts which will use SMTP when SMTP\_\* environment variables are provided.
 
 Required environment variables for Gmail SMTP:
 
@@ -103,26 +103,25 @@ What I changed in the codebase
 
 Quick actionable fixes (apply in order)
 
-1) Use base64 env var (recommended for Netlify/Vercel)
+1. Use base64 env var (recommended for Netlify/Vercel)
    - Locally: base64 -w 0 service-account.json > service-account.b64
    - In deployment UI: set GOOGLE_CREDS_BASE64 to the contents of service-account.b64 (single line)
    - In server code (already implemented): credentials = JSON.parse(Buffer.from(process.env.GOOGLE_CREDS_BASE64, 'base64').toString('utf8'))
 
-2) Alternatively, set raw JSON as an environment variable only if your provider preserves multiline values (many DO NOT). If the field truncates, switch to base64 or use a secret manager/file.
+2. Alternatively, set raw JSON as an environment variable only if your provider preserves multiline values (many DO NOT). If the field truncates, switch to base64 or use a secret manager/file.
 
-3) File path option (safer): Upload the JSON to the server filesystem outside source control and set GOOGLE_APPLICATION_CREDENTIALS to that file path, or use your provider's secret manager to mount the file.
+3. File path option (safer): Upload the JSON to the server filesystem outside source control and set GOOGLE_APPLICATION_CREDENTIALS to that file path, or use your provider's secret manager to mount the file.
 
-4) Share calendar & permissions:
+4. Share calendar & permissions:
    - Open Google Calendar (sanddtuition@gmail.com) -> Settings and sharing -> Share with specific people -> add the service account email (intune@calendar-access-474717.iam.gserviceaccount.com) and give Editor.
 
-5) Remove attendees in test requests (service accounts cannot invite attendees without domain-wide delegation). The server code will include attendees only if provided; for debugging, try creating events without attendees.
+5. Remove attendees in test requests (service accounts cannot invite attendees without domain-wide delegation). The server code will include attendees only if provided; for debugging, try creating events without attendees.
 
 How to reproduce and capture errors (what to paste here)
 
 - Run the local auth test (we added tmp/auth-test.mjs):
 
   node tmp/auth-test.mjs
-
   - On success you will see: ✅ Created: https://calendar.google.com/calendar/event?eid=...
   - On failure paste the full ❌ Error: output here.
 
