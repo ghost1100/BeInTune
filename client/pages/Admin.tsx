@@ -2761,9 +2761,9 @@ function StudentsManager() {
       instruments: (f.instruments || []).filter((i: any) => i !== ins),
     }));
 
-  const isUnder16 = form.age !== undefined && form.age < 16;
-  const isElderly =
-    form.isElderly || (form.age !== undefined && form.age >= 65);
+  const computedAge = calculateAgeFromDob(form.dob as string | undefined);
+  const isUnder16 = computedAge !== undefined && computedAge < 16;
+  const isElderly = computedAge !== undefined && computedAge >= 65;
 
   return (
     <div>
