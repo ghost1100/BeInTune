@@ -389,11 +389,13 @@ router.post("/bookings", async (req, res) => {
             if (tParts.length < 2) throw new Error("Invalid time format");
             const hh = tParts[0] || 0;
             const mm = tParts[1] || 0;
-            const start = new Date(y, (m || 1) - 1, day, hh, mm, 0, 0);
-            if (isNaN(start.getTime()))
-              throw new Error("Invalid constructed date");
-            const end = new Date(start.getTime() + (durMin || 30) * 60 * 1000);
-            return { startIso: start.toISOString(), endIso: end.toISOString() };
+            // Construct local date/time strings (no Z) so Google can apply the provided timezone correctly
+            const pad = (n: number) => String(n).padStart(2, "0");
+            const startLocal = `${y}-${pad(m)}-${pad(day)}T${pad(hh)}:${pad(mm)}:00`;
+            const endDate = new Date(y, (m || 1) - 1, day, hh, mm, 0, 0);
+            endDate.setMinutes(endDate.getMinutes() + (durMin || 30));
+            const endLocal = `${endDate.getFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}T${pad(endDate.getHours())}:${pad(endDate.getMinutes())}:00`;
+            return { startIso: startLocal, endIso: endLocal };
           } catch (err) {
             console.error(
               "Failed to construct ISO timestamps for",
@@ -410,6 +412,24 @@ router.post("/bookings", async (req, res) => {
         if (info?.guest_email) attendees.push(info.guest_email);
         if (info?.user_email && !attendees.includes(info.user_email))
           attendees.push(info.user_email);
+        // Build a richer description with name, instruments and phone where available
+        let instrumentsText = "";
+        try {
+          if (info && info.student_instruments) {
+            if (Array.isArray(info.student_instruments)) instrumentsText = info.student_instruments.join(", ");
+            else if (typeof info.student_instruments === "string") instrumentsText = JSON.parse(info.student_instruments || "[]").join(", ");
+          }
+        } catch (e) {
+          instrumentsText = String(info.student_instruments || "");
+        }
+        const contactPhone = info?.guest_phone || info?.student_phone || info?.user_phone || "";
+        const who = info?.guest_name || info?.user_name || email || "guest";
+        const descParts = [
+          `Booking for ${who}`,
+          instrumentsText ? `Instruments: ${instrumentsText}` : null,
+          contactPhone ? `Phone: ${contactPhone}` : null,
+        ].filter(Boolean);
+
         console.log("Booking created, preparing calendar event", {
           bookingId: ins.rows[0].id,
           slotId: slot.id,
@@ -423,7 +443,7 @@ router.post("/bookings", async (req, res) => {
           // Create event without attendees to avoid service account invitation restrictions
           const ev = await createCalendarEvent({
             summary: `Lesson: ${info?.lesson_type || lesson_type || "Lesson"}`,
-            description: `Booking for ${info?.guest_name || info?.user_name || email || "guest"}`,
+            description: descParts.join("\n"),
             startDateTime: startIso,
             endDateTime: endDt,
           });
@@ -526,11 +546,13 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
           if (tParts.length < 2) throw new Error("Invalid time format");
           const hh = tParts[0] || 0;
           const mm = tParts[1] || 0;
-          const start = new Date(y, (m || 1) - 1, day, hh, mm, 0, 0);
-          if (isNaN(start.getTime()))
-            throw new Error("Invalid constructed date");
-          const end = new Date(start.getTime() + (durMin || 30) * 60 * 1000);
-          return { startIso: start.toISOString(), endIso: end.toISOString() };
+          // Construct local date/time strings (no Z) so Google can apply the provided timezone correctly
+          const pad = (n: number) => String(n).padStart(2, "0");
+          const startLocal = `${y}-${pad(m)}-${pad(day)}T${pad(hh)}:${pad(mm)}:00`;
+          const endDate = new Date(y, (m || 1) - 1, day, hh, mm, 0, 0);
+          endDate.setMinutes(endDate.getMinutes() + (durMin || 30));
+          const endLocal = `${endDate.getFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}T${pad(endDate.getHours())}:${pad(endDate.getMinutes())}:00`;
+          return { startIso: startLocal, endIso: endLocal };
         } catch (err) {
           console.error(
             "Failed to construct ISO timestamps for",
