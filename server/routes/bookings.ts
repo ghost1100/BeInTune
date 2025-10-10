@@ -667,6 +667,21 @@ router.delete("/bookings/:id", async (req, res) => {
       }
     }
 
+    // delete calendar event if exists
+    try {
+      if (info && info.calendar_event_id) {
+        try {
+          const { deleteCalendarEvent } = await import("../lib/calendar");
+          await deleteCalendarEvent(info.calendar_event_id);
+          console.log('Deleted calendar event for booking', id, info.calendar_event_id);
+        } catch (e) {
+          console.warn('Failed to delete calendar event for booking', id, e);
+        }
+      }
+    } catch (e) {
+      console.warn('Error while attempting to delete calendar event', e);
+    }
+
     // free the slot if exists
     if (info && info.slot_id) {
       await query("UPDATE slots SET is_available = true WHERE id = $1", [
