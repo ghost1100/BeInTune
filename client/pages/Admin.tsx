@@ -2542,8 +2542,9 @@ function StudentsManager() {
       return;
     }
 
+    const ageFromDob = calculateAgeFromDob(form.dob as string | undefined);
     const normalizedAge =
-      typeof form.age === "number" && !Number.isNaN(form.age) ? form.age : null;
+      typeof ageFromDob === "number" && !Number.isNaN(ageFromDob) ? ageFromDob : null;
 
     const emergencyContact = form.emergencyContacts?.trim() || "";
     if (!emergencyContact) {
@@ -2606,8 +2607,7 @@ function StudentsManager() {
       }
       setForm({
         name: "",
-        age: 16,
-        isElderly: false,
+        dob: defaultDob,
         medications: "",
         marketingConsent: false,
         allergies: "",
