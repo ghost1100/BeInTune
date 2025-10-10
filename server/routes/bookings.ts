@@ -203,6 +203,33 @@ router.post("/bookings", async (req, res) => {
     await query("UPDATE slots SET is_available = false WHERE id = $1", [
       slot_id,
     ]);
+
+    // Create calendar event (if configured)
+    try {
+      const { createCalendarEvent } = await import("../lib/calendar");
+      const slot = slotRes.rows[0];
+      const date = slot.slot_date; // YYYY-MM-DD
+      const time = slot.slot_time; // HH:MM
+      const duration = slot.duration_minutes || 30;
+      const startIso = new Date(`${date}T${time}:00`).toISOString();
+      const endDt = new Date(new Date(`${date}T${time}:00`).getTime() + duration * 60 * 1000).toISOString();
+      const attendees: string[] = [];
+      if (email) attendees.push(email);
+      try {
+        await createCalendarEvent({
+          summary: `Lesson: ${lesson_type || "Lesson"}`,
+          description: `Booking for ${name || email || "guest"}`,
+          startDateTime: startIso,
+          endDateTime: endDt,
+          attendees,
+        });
+      } catch (err) {
+        console.error("Failed to create calendar event:", err);
+      }
+    } catch (err) {
+      // ignore if calendar module not present or misconfigured
+    }
+
     res.json({
       ok: true,
       bookingId: ins.rows[0].id,
