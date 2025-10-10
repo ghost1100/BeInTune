@@ -273,15 +273,35 @@ router.post("/bookings", async (req, res) => {
         const time = slot.slot_time; // HH:MM
         const duration = slot.duration_minutes || 30;
         // Construct start/end ISO timestamps more robustly to avoid Invalid Date errors
-        const makeIso = (dStr: string, tStr: string, durMin: number) => {
+        const makeIso = (dStr: any, tStr: string, durMin: number) => {
           try {
             if (!dStr || !tStr) throw new Error("Missing date or time");
-            const dParts = String(dStr).split("-").map(Number);
+            let y: number, m: number, day: number;
+            if (dStr instanceof Date) {
+              const dt = dStr as Date;
+              y = dt.getFullYear();
+              m = dt.getMonth() + 1;
+              day = dt.getDate();
+            } else if (typeof dStr === "string") {
+              if (dStr.includes("T")) {
+                const dt = new Date(dStr);
+                if (isNaN(dt.getTime())) throw new Error("Invalid date string");
+                y = dt.getFullYear();
+                m = dt.getMonth() + 1;
+                day = dt.getDate();
+              } else {
+                const parts = dStr.split("-").map(Number);
+                if (parts.length !== 3) throw new Error("Invalid date format");
+                [y, m, day] = parts;
+              }
+            } else {
+              throw new Error("Unsupported date type");
+            }
             const tParts = String(tStr).split(":").map(Number);
-            if (dParts.length !== 3 || tParts.length < 2) throw new Error("Invalid date/time format");
-            const [y, m, day] = dParts;
-            const [hh, mm] = tParts;
-            const start = new Date(y, (m || 1) - 1, day, hh || 0, mm || 0, 0, 0);
+            if (tParts.length < 2) throw new Error("Invalid time format");
+            const hh = tParts[0] || 0;
+            const mm = tParts[1] || 0;
+            const start = new Date(y, (m || 1) - 1, day, hh, mm, 0, 0);
             if (isNaN(start.getTime())) throw new Error("Invalid constructed date");
             const end = new Date(start.getTime() + (durMin || 30) * 60 * 1000);
             return { startIso: start.toISOString(), endIso: end.toISOString() };
@@ -384,15 +404,35 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
     try {
       const { createCalendarEvent } = await import("../lib/calendar");
       // Construct start/end ISO timestamps safely
-      const makeIso = (dStr: string, tStr: string, durMin: number) => {
+      const makeIso = (dStr: any, tStr: string, durMin: number) => {
         try {
           if (!dStr || !tStr) throw new Error("Missing date or time");
-          const dParts = String(dStr).split("-").map(Number);
+          let y: number, m: number, day: number;
+          if (dStr instanceof Date) {
+            const dt = dStr as Date;
+            y = dt.getFullYear();
+            m = dt.getMonth() + 1;
+            day = dt.getDate();
+          } else if (typeof dStr === "string") {
+            if (dStr.includes("T")) {
+              const dt = new Date(dStr);
+              if (isNaN(dt.getTime())) throw new Error("Invalid date string");
+              y = dt.getFullYear();
+              m = dt.getMonth() + 1;
+              day = dt.getDate();
+            } else {
+              const parts = dStr.split("-").map(Number);
+              if (parts.length !== 3) throw new Error("Invalid date format");
+              [y, m, day] = parts;
+            }
+          } else {
+            throw new Error("Unsupported date type");
+          }
           const tParts = String(tStr).split(":").map(Number);
-          if (dParts.length !== 3 || tParts.length < 2) throw new Error("Invalid date/time format");
-          const [y, m, day] = dParts;
-          const [hh, mm] = tParts;
-          const start = new Date(y, (m || 1) - 1, day, hh || 0, mm || 0, 0, 0);
+          if (tParts.length < 2) throw new Error("Invalid time format");
+          const hh = tParts[0] || 0;
+          const mm = tParts[1] || 0;
+          const start = new Date(y, (m || 1) - 1, day, hh, mm, 0, 0);
           if (isNaN(start.getTime())) throw new Error("Invalid constructed date");
           const end = new Date(start.getTime() + (durMin || 30) * 60 * 1000);
           return { startIso: start.toISOString(), endIso: end.toISOString() };
