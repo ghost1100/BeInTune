@@ -245,6 +245,21 @@ export async function removeBooking(
   }
 }
 
+export async function cancelAllBookingsForDate(date: string, reason?: string) {
+  try {
+    const api = (await import("@/lib/api")).apiFetch;
+    const res = await api(`/api/admin/bookings/cancel-all`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, reason }),
+    });
+    return res;
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
+}
+
 export function isSlotBooked(date: string, time: string): boolean {
   // synchronous check not supported for API-backed storage
   return false;
