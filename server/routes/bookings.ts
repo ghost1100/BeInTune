@@ -326,12 +326,12 @@ router.post("/bookings", async (req, res) => {
           attendees,
         });
         try {
+          // Create event without attendees to avoid service account invitation restrictions
           const ev = await createCalendarEvent({
             summary: `Lesson: ${info?.lesson_type || lesson_type || "Lesson"}`,
             description: `Booking for ${info?.guest_name || info?.user_name || email || "guest"}`,
             startDateTime: startIso,
             endDateTime: endDt,
-            attendees,
           });
           console.log(
             "Calendar event created successfully for booking",
