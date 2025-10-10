@@ -183,6 +183,82 @@ router.get("/bookings", async (req, res) => {
   }
 });
 
+// POST /api/admin/bookings/cancel-all - cancel all bookings on a date (admin only)
+router.post("/bookings/cancel-all", requireAdmin, async (req, res) => {
+  const { date, reason } = req.body || {};
+  if (!date) return res.status(400).json({ error: "Missing date" });
+  try {
+    const q = await query(
+      `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, s.user_id as student_user_id, u.email as student_email, u.name as student_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
+         FROM bookings b
+         LEFT JOIN slots sl ON b.slot_id = sl.id
+         LEFT JOIN students s ON b.student_id = s.id
+         LEFT JOIN users u ON s.user_id = u.id
+         WHERE sl.slot_date = $1`,
+      [date],
+    );
+    const rows = q.rows || [];
+    if (!rows.length) return res.json({ ok: true, cancelled: 0 });
+
+    const byEmail: Record<string, any[]> = {};
+    const slotIdsToFree: string[] = [];
+    const bookingIds: string[] = [];
+    for (const r of rows) {
+      const email = r.student_email || r.guest_email || null;
+      if (email) {
+        byEmail[email] = byEmail[email] || [];
+        byEmail[email].push(r);
+      }
+      if (r.slot_id) slotIdsToFree.push(r.slot_id);
+      if (r.id) bookingIds.push(r.id);
+    }
+
+    for (const email of Object.keys(byEmail)) {
+      const list = byEmail[email];
+      const linesText = list
+        .map((it: any) => `- ${it.time} — ${it.lesson_type || "Lesson"}`)
+        .join("\n");
+      const linesHtml = `<ul>${list
+        .map((it: any) => `<li>${it.time} — ${it.lesson_type || "Lesson"}</li>`)
+        .join("")}</ul>`;
+      const subject = `All sessions on ${date} cancelled`;
+      const plain = `Hello,\n\nThe following session(s) scheduled for ${date} have been cancelled:\n\n${linesText}\n\nReason: ${reason || "Not specified"}\n\nWe apologise for the inconvenience.`;
+      const html = `<p>Hello,</p><p>The following session(s) scheduled for <strong>${date}</strong> have been cancelled:</p>${linesHtml}<p><strong>Reason:</strong> ${reason || "Not specified"}</p><p>We apologise for the inconvenience.</p>`;
+      try {
+        await sendMail({ to: email, from: process.env.FROM_EMAIL || "no-reply@example.com", subject, text: plain, html });
+      } catch (e) {
+        console.error("Failed to send cancellation summary to", email, e);
+      }
+    }
+
+    if (slotIdsToFree.length) {
+      const uniq = Array.from(new Set(slotIdsToFree));
+      for (const sid of uniq) {
+        try {
+          await query("UPDATE slots SET is_available = true WHERE id = $1", [sid]);
+        } catch (e) {
+          console.error("Failed to free slot", sid, e);
+        }
+      }
+    }
+
+    if (bookingIds.length) {
+      const uniqB = Array.from(new Set(bookingIds));
+      const placeholders = uniqB.map((_, i) => `$${i + 1}`).join(",");
+      try {
+        await query(`DELETE FROM bookings WHERE id IN (${placeholders})`, uniqB);
+      } catch (e) {
+        console.error("Failed to delete bookings in bulk", e);
+      }
+    }
+
+    return res.json({ ok: true, cancelled: rows.length });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Failed to cancel bookings" });
+  }
+});
+
 // POST /api/admin/bookings - create booking
 router.post("/bookings", async (req, res) => {
   const { student_id, slot_id, lesson_type, name, email, phone } =
