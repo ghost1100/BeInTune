@@ -16,7 +16,10 @@ async function initAuth() {
   try {
     // Ensure the JWT obtains an access token before use
     await (authClient as any).authorize();
-    console.log("Google service account authorized:", serviceAccount.client_email);
+    console.log(
+      "Google service account authorized:",
+      serviceAccount.client_email,
+    );
   } catch (err) {
     console.error("Failed to authorize Google service account:", err);
     throw err;
@@ -49,12 +52,22 @@ export async function createCalendarEvent(opts: {
       event.attendees = opts.attendees.map((email) => ({ email }));
     }
 
-    console.log("Creating calendar event", { calendarId, timezone, eventSummary: event.summary, attendees: event.attendees });
+    console.log("Creating calendar event", {
+      calendarId,
+      timezone,
+      eventSummary: event.summary,
+      attendees: event.attendees,
+    });
     const res = await calendar.events.insert({
       calendarId,
       requestBody: event,
     });
-    console.log("Calendar event inserted, status:", (res && (res as any).status) || "unknown", "id:", res && (res as any).data && (res as any).data.id);
+    console.log(
+      "Calendar event inserted, status:",
+      (res && (res as any).status) || "unknown",
+      "id:",
+      res && (res as any).data && (res as any).data.id,
+    );
     return res.data;
   } catch (err) {
     console.error("createCalendarEvent error:", err);

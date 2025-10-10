@@ -18,17 +18,17 @@ Key features
 
 Development commands
 
-- pnpm dev        # Start dev server (client + server)
-- pnpm build      # Production build (client + server)
-- pnpm start      # Start production server
-- pnpm test       # Run Vitest tests
-- pnpm typecheck  # TypeScript validation
+- pnpm dev # Start dev server (client + server)
+- pnpm build # Production build (client + server)
+- pnpm start # Start production server
+- pnpm test # Run Vitest tests
+- pnpm typecheck # TypeScript validation
 
 New integrations and configuration
 
 Email (SMTP / Gmail)
 
-This project now supports sending mail through SMTP (nodemailer) with an optional SendGrid fallback. A helper lives at server/lib/mailer.ts which will use SMTP when SMTP_* environment variables are provided.
+This project now supports sending mail through SMTP (nodemailer) with an optional SendGrid fallback. A helper lives at server/lib/mailer.ts which will use SMTP when SMTP\_\* environment variables are provided.
 
 Required environment variables for Gmail SMTP:
 
@@ -39,6 +39,7 @@ Required environment variables for Gmail SMTP:
 - FROM_EMAIL (address used in From header)
 
 Important security notes:
+
 - Use a Gmail "App password" (from Google account security) rather than your account password.
 - Rotate any keys if they are exposed and never commit secrets to source control.
 
@@ -65,20 +66,21 @@ Files added / updated
 
 How to test email + calendar locally (example)
 
-1) Ensure environment variables are set (see list above) and run:
+1. Ensure environment variables are set (see list above) and run:
 
    pnpm install
    pnpm dev
 
-2) Create a test slot (replace HOST with your dev server URL or use the running preview) using the API:
+2. Create a test slot (replace HOST with your dev server URL or use the running preview) using the API:
 
    curl -s -X POST "$HOST/api/admin/slots" -H "Content-Type: application/json" -d '{"slot_date":"2025-10-10","slot_time":"10:00","duration_minutes":30}'
 
-3) Create a booking to trigger email + calendar event (replace SLOT_ID with the id returned in step 2):
+3. Create a booking to trigger email + calendar event (replace SLOT_ID with the id returned in step 2):
 
    curl -s -X POST "$HOST/api/admin/bookings" -H "Content-Type: application/json" -d '{"slot_id":SLOT_ID,"lesson_type":"Guitar","name":"Test User","email":"you@example.com","phone":"+447359224618"}'
 
-4) Verify results:
+4. Verify results:
+
 - Email: check the inbox for FROM_EMAIL and the recipient address.
 - Calendar: open the calendar specified by GOOGLE_CALENDAR_ID and confirm an event at the booked time.
 
@@ -94,6 +96,7 @@ Security reminders
 - Ensure the service account only has necessary permissions and the calendar is shared only with that service account if used for a dedicated calendar.
 
 If you'd like, I can:
+
 - Add an Admin UI control to connect additional calendars or to list created events for a booking.
 - Implement per-teacher calendar support.
 - Add Playwright E2E tests that create a slot + booking and assert an event exists in the Calendar API (requires service account credentials in CI).

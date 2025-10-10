@@ -2544,7 +2544,9 @@ function StudentsManager() {
 
     const ageFromDob = calculateAgeFromDob(form.dob as string | undefined);
     const normalizedAge =
-      typeof ageFromDob === "number" && !Number.isNaN(ageFromDob) ? ageFromDob : null;
+      typeof ageFromDob === "number" && !Number.isNaN(ageFromDob)
+        ? ageFromDob
+        : null;
 
     const emergencyContact = form.emergencyContacts?.trim() || "";
     if (!emergencyContact) {
@@ -2796,7 +2798,9 @@ function StudentsManager() {
               onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))}
             />
             <span className="text-xs text-foreground/60 mt-1">
-              {computedAge !== undefined ? `${computedAge} years` : "Age not set"}
+              {computedAge !== undefined
+                ? `${computedAge} years`
+                : "Age not set"}
             </span>
           </label>
         </div>

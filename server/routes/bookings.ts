@@ -220,7 +220,7 @@ router.post("/bookings", async (req, res) => {
       slot_id,
     ]);
 
-        // Fetch booking details joined to users/students for notification
+    // Fetch booking details joined to users/students for notification
     try {
       const infoQ = await query(
         `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, s.user_id as student_user_id, u.email as user_email, u.name as user_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
@@ -244,13 +244,22 @@ router.post("/bookings", async (req, res) => {
           try {
             const { sendMail } = await import("../lib/mailer");
             console.log("Sending booking confirmation to", toEmail);
-            await sendMail({ to: toEmail, from: process.env.FROM_EMAIL || "no-reply@example.com", subject, text: plain, html });
+            await sendMail({
+              to: toEmail,
+              from: process.env.FROM_EMAIL || "no-reply@example.com",
+              subject,
+              text: plain,
+              html,
+            });
             console.log("Booking confirmation sent to", toEmail);
           } catch (err) {
             console.error("Failed to send booking confirmation", err);
           }
         } else {
-          console.warn("No recipient email available for booking", ins.rows[0].id);
+          console.warn(
+            "No recipient email available for booking",
+            ins.rows[0].id,
+          );
         }
       } catch (err) {
         console.error("Booking notification error:", err);
@@ -264,11 +273,22 @@ router.post("/bookings", async (req, res) => {
         const time = slot.slot_time; // HH:MM
         const duration = slot.duration_minutes || 30;
         const startIso = new Date(`${date}T${time}:00`).toISOString();
-        const endDt = new Date(new Date(`${date}T${time}:00`).getTime() + duration * 60 * 1000).toISOString();
+        const endDt = new Date(
+          new Date(`${date}T${time}:00`).getTime() + duration * 60 * 1000,
+        ).toISOString();
         const attendees: string[] = [];
         if (info?.guest_email) attendees.push(info.guest_email);
-        if (info?.user_email && !attendees.includes(info.user_email)) attendees.push(info.user_email);
-        console.log("Booking created, preparing calendar event", { bookingId: ins.rows[0].id, slotId: slot.id, date, time, startIso, endDt, attendees });
+        if (info?.user_email && !attendees.includes(info.user_email))
+          attendees.push(info.user_email);
+        console.log("Booking created, preparing calendar event", {
+          bookingId: ins.rows[0].id,
+          slotId: slot.id,
+          date,
+          time,
+          startIso,
+          endDt,
+          attendees,
+        });
         try {
           const ev = await createCalendarEvent({
             summary: `Lesson: ${info?.lesson_type || lesson_type || "Lesson"}`,
@@ -277,7 +297,11 @@ router.post("/bookings", async (req, res) => {
             endDateTime: endDt,
             attendees,
           });
-          console.log("Calendar event created successfully for booking", ins.rows[0].id, { eventId: ev && ev.id });
+          console.log(
+            "Calendar event created successfully for booking",
+            ins.rows[0].id,
+            { eventId: ev && ev.id },
+          );
         } catch (err) {
           console.error("Failed to create calendar event:", err);
         }
@@ -312,11 +336,15 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
        WHERE b.id = $1 LIMIT 1`,
       [id],
     );
-    if (!infoQ.rows[0]) return res.status(404).json({ error: "Booking not found" });
+    if (!infoQ.rows[0])
+      return res.status(404).json({ error: "Booking not found" });
     const info = infoQ.rows[0];
     const toEmail = info.user_email || info.guest_email || null;
     const toName = info.user_name || info.guest_name || "";
-    if (!toEmail) return res.status(400).json({ error: "No recipient email for this booking" });
+    if (!toEmail)
+      return res
+        .status(400)
+        .json({ error: "No recipient email for this booking" });
 
     const subject = `Lesson booked: ${info.date} ${info.time}`;
     const plain = `Hello ${toName},\n\nYour lesson has been booked for ${info.date} at ${info.time}.\n\nDetails:\n- Lesson: ${info.lesson_type || "Lesson"}\n\nSee you then.`;
@@ -325,7 +353,13 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
     try {
       const { sendMail } = await import("../lib/mailer");
       console.log("Resend: Sending booking confirmation to", toEmail);
-      await sendMail({ to: toEmail, from: process.env.FROM_EMAIL || "no-reply@example.com", subject, text: plain, html });
+      await sendMail({
+        to: toEmail,
+        from: process.env.FROM_EMAIL || "no-reply@example.com",
+        subject,
+        text: plain,
+        html,
+      });
       console.log("Resend: Booking confirmation sent to", toEmail);
     } catch (err) {
       console.error("Resend: Failed to send booking confirmation", err);
@@ -335,11 +369,19 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
       const { createCalendarEvent } = await import("../lib/calendar");
       const startIso = new Date(`${info.date}T${info.time}:00`).toISOString();
       const duration = 30;
-      const endIso = new Date(new Date(startIso).getTime() + duration * 60 * 1000).toISOString();
+      const endIso = new Date(
+        new Date(startIso).getTime() + duration * 60 * 1000,
+      ).toISOString();
       const attendees: string[] = [];
       if (info.guest_email) attendees.push(info.guest_email);
-      if (info.user_email && !attendees.includes(info.user_email)) attendees.push(info.user_email);
-      console.log("Resend: creating calendar event", { bookingId: id, startIso, endIso, attendees });
+      if (info.user_email && !attendees.includes(info.user_email))
+        attendees.push(info.user_email);
+      console.log("Resend: creating calendar event", {
+        bookingId: id,
+        startIso,
+        endIso,
+        attendees,
+      });
       const ev = await createCalendarEvent({
         summary: `Lesson: ${info.lesson_type || "Lesson"}`,
         description: `Booking for ${info.guest_name || info.user_name || "guest"}`,
@@ -347,7 +389,9 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
         endDateTime: endIso,
         attendees,
       });
-      console.log("Resend: Calendar event created for booking", id, { eventId: ev && ev.id });
+      console.log("Resend: Calendar event created for booking", id, {
+        eventId: ev && ev.id,
+      });
     } catch (err) {
       console.error("Resend: Failed to create calendar event for booking", err);
     }
