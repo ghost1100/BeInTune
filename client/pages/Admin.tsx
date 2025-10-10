@@ -2778,24 +2778,17 @@ function StudentsManager() {
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
         />
         <div className="flex gap-2 flex-wrap">
-          <input
-            type="number"
-            className="h-10 rounded-md border px-3 flex-1"
-            placeholder="Age"
-            value={form.age === undefined ? "" : String(form.age)}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, age: parseInt(e.target.value || "0") }))
-            }
-          />
-          <label className="flex items-center gap-2">
+          <label className="flex flex-col">
+            <span className="text-sm text-foreground/70">Date of birth</span>
             <input
-              type="checkbox"
-              checked={!!form.isElderly}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, isElderly: e.target.checked }))
-              }
-            />{" "}
-            Elderly
+              type="date"
+              className="h-10 rounded-md border px-3"
+              value={form.dob || ""}
+              onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))}
+            />
+            <span className="text-xs text-foreground/60 mt-1">
+              {computedAge !== undefined ? `${computedAge} years` : "Age not set"}
+            </span>
           </label>
         </div>
 
