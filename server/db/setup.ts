@@ -150,6 +150,10 @@ export async function ensureDbSetup() {
     await query(
       "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_phone text;",
     );
+    // Store calendar event ID for cleanup
+    await query(
+      "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS calendar_event_id text;",
+    );
 
     // Ensure admin user exists with username Darryle
     const adminIdentifier = process.env.ADMIN_EMAIL || "admin@intune.local";
