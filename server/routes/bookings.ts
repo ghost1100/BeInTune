@@ -220,32 +220,70 @@ router.post("/bookings", async (req, res) => {
       slot_id,
     ]);
 
-    // Create calendar event (if configured)
+        // Fetch booking details joined to users/students for notification
     try {
-      const { createCalendarEvent } = await import("../lib/calendar");
-      const slot = slotRes.rows[0];
-      const date = slot.slot_date; // YYYY-MM-DD
-      const time = slot.slot_time; // HH:MM
-      const duration = slot.duration_minutes || 30;
-      const startIso = new Date(`${date}T${time}:00`).toISOString();
-      const endDt = new Date(
-        new Date(`${date}T${time}:00`).getTime() + duration * 60 * 1000,
-      ).toISOString();
-      const attendees: string[] = [];
-      if (email) attendees.push(email);
+      const infoQ = await query(
+        `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, s.user_id as student_user_id, u.email as user_email, u.name as user_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
+         FROM bookings b
+         LEFT JOIN slots sl ON b.slot_id = sl.id
+         LEFT JOIN students s ON b.student_id = s.id
+         LEFT JOIN users u ON s.user_id = u.id
+         WHERE b.id = $1 LIMIT 1`,
+        [ins.rows[0].id],
+      );
+      const info = infoQ.rows[0];
+
+      // send confirmation email to booking recipient
       try {
-        await createCalendarEvent({
-          summary: `Lesson: ${lesson_type || "Lesson"}`,
-          description: `Booking for ${name || email || "guest"}`,
-          startDateTime: startIso,
-          endDateTime: endDt,
-          attendees,
-        });
+        const toEmail = info?.user_email || info?.guest_email || null;
+        const toName = info?.user_name || info?.guest_name || "";
+        if (toEmail) {
+          const subject = `Lesson booked: ${info.date} ${info.time}`;
+          const plain = `Hello ${toName},\n\nYour lesson has been booked for ${info.date} at ${info.time}.\n\nDetails:\n- Lesson: ${info.lesson_type || "Lesson"}\n\nSee you then.`;
+          const html = `<p>Hello ${toName},</p><p>Your lesson has been booked for <strong>${info.date} at ${info.time}</strong>.</p><p><strong>Lesson:</strong> ${info.lesson_type || "Lesson"}</p><p>See you then.</p>`;
+          try {
+            const { sendMail } = await import("../lib/mailer");
+            console.log("Sending booking confirmation to", toEmail);
+            await sendMail({ to: toEmail, from: process.env.FROM_EMAIL || "no-reply@example.com", subject, text: plain, html });
+            console.log("Booking confirmation sent to", toEmail);
+          } catch (err) {
+            console.error("Failed to send booking confirmation", err);
+          }
+        } else {
+          console.warn("No recipient email available for booking", ins.rows[0].id);
+        }
       } catch (err) {
-        console.error("Failed to create calendar event:", err);
+        console.error("Booking notification error:", err);
+      }
+
+      // Create calendar event (if configured)
+      try {
+        const { createCalendarEvent } = await import("../lib/calendar");
+        const slot = slotRes.rows[0];
+        const date = slot.slot_date; // YYYY-MM-DD
+        const time = slot.slot_time; // HH:MM
+        const duration = slot.duration_minutes || 30;
+        const startIso = new Date(`${date}T${time}:00`).toISOString();
+        const endDt = new Date(new Date(`${date}T${time}:00`).getTime() + duration * 60 * 1000).toISOString();
+        const attendees: string[] = [];
+        if (info?.guest_email) attendees.push(info.guest_email);
+        if (info?.user_email && !attendees.includes(info.user_email)) attendees.push(info.user_email);
+        try {
+          await createCalendarEvent({
+            summary: `Lesson: ${info?.lesson_type || lesson_type || "Lesson"}`,
+            description: `Booking for ${info?.guest_name || info?.user_name || email || "guest"}`,
+            startDateTime: startIso,
+            endDateTime: endDt,
+            attendees,
+          });
+        } catch (err) {
+          console.error("Failed to create calendar event:", err);
+        }
+      } catch (err) {
+        // ignore if calendar module not present or misconfigured
       }
     } catch (err) {
-      // ignore if calendar module not present or misconfigured
+      console.error("Failed to load booking info for notification:", err);
     }
 
     res.json({
