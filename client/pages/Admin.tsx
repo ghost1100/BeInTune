@@ -778,6 +778,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
     null,
   );
   const [isCancelling, setIsCancelling] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [bookingDetail, setBookingDetail] = useState<any | null>(null);
