@@ -784,6 +784,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
     null,
   );
   const [cancellationReason, setCancellationReason] = useState<string>("");
+  const [cancellationAll, setCancellationAll] = useState<boolean>(false);
   const cancellationReasons = [
     "Teacher unavailable",
     "Illness / emergency",
