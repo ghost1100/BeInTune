@@ -757,16 +757,28 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
   }, [date, refresh]);
 
   const toggle = async (time: string) => {
-    await toggleAvailability(date, time);
-    setRefresh((r) => r + 1);
+    try {
+      setIsLoading(true);
+      await toggleAvailability(date, time);
+      setRefresh((r) => r + 1);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const removeBk = async (
     id: string,
     options?: { reason?: string | null; notify?: boolean },
   ) => {
-    await removeBooking(id, options);
-    setRefresh((r) => r + 1);
+    try {
+      setIsCancelling(id);
+      setIsLoading(true);
+      await removeBooking(id, options);
+      setRefresh((r) => r + 1);
+    } finally {
+      setIsCancelling(null);
+      setIsLoading(false);
+    }
   };
 
   const [bookingsState, setBookingsState] = useState<any[]>([]);
