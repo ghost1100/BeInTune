@@ -1,17 +1,9 @@
 import express from "express";
 import express from "express";
 import { query } from "../db";
-import sgMail from "@sendgrid/mail";
+import { sendMail } from "../lib/mailer";
 
 const router = express.Router();
-
-if (process.env.SENDGRID_API_KEY) {
-  try {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-  } catch (e) {
-    console.error("Failed to configure SendGrid:", e);
-  }
-}
 
 function isWithinBusinessHours(time: string) {
   if (!time) return false;
@@ -249,13 +241,11 @@ router.delete("/bookings/:id", async (req, res) => {
           const subject = `Lesson cancelled: ${info.date} ${info.time}`;
           const plain = `Hello ${toName},\n\nYour lesson scheduled for ${info.date} at ${info.time} has been cancelled.${reason ? `\n\nReason: ${reason}` : ""}\n\nWe apologise for the inconvenience.`;
           const html = `<p>Hello ${toName},</p><p>Your lesson scheduled for <strong>${info.date} at ${info.time}</strong> has been cancelled.</p>${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ""}<p>We apologise for the inconvenience.</p>`;
-          await sgMail.send({
-            to: toEmail,
-            from: process.env.FROM_EMAIL || "no-reply@example.com",
-            subject,
-            text: plain,
-            html,
-          });
+          try {
+            await sendMail({ to: toEmail, from: process.env.FROM_EMAIL || "no-reply@example.com", subject, text: plain, html });
+          } catch (e) {
+            console.error("Failed to send cancellation email", e);
+          }
         } catch (e) {
           console.error("Failed to send cancellation email", e);
         }

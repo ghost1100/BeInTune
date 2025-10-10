@@ -1,10 +1,8 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import sgMail from "@sendgrid/mail";
+import { sendMail } from "../lib/mailer";
 import { query } from "../db";
-
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || "");
 
 const router = express.Router();
 
