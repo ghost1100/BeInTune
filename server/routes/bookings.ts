@@ -383,11 +383,25 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
 
     try {
       const { createCalendarEvent } = await import("../lib/calendar");
-      const startIso = new Date(`${info.date}T${info.time}:00`).toISOString();
-      const duration = 30;
-      const endIso = new Date(
-        new Date(startIso).getTime() + duration * 60 * 1000,
-      ).toISOString();
+      // Construct start/end ISO timestamps safely
+      const makeIso = (dStr: string, tStr: string, durMin: number) => {
+        try {
+          if (!dStr || !tStr) throw new Error("Missing date or time");
+          const dParts = String(dStr).split("-").map(Number);
+          const tParts = String(tStr).split(":").map(Number);
+          if (dParts.length !== 3 || tParts.length < 2) throw new Error("Invalid date/time format");
+          const [y, m, day] = dParts;
+          const [hh, mm] = tParts;
+          const start = new Date(y, (m || 1) - 1, day, hh || 0, mm || 0, 0, 0);
+          if (isNaN(start.getTime())) throw new Error("Invalid constructed date");
+          const end = new Date(start.getTime() + (durMin || 30) * 60 * 1000);
+          return { startIso: start.toISOString(), endIso: end.toISOString() };
+        } catch (err) {
+          console.error("Failed to construct ISO timestamps for", dStr, tStr, err);
+          throw err;
+        }
+      };
+      const { startIso, endIso } = makeIso(info.date, info.time, 30);
       const attendees: string[] = [];
       if (info.guest_email) attendees.push(info.guest_email);
       if (info.user_email && !attendees.includes(info.user_email))
