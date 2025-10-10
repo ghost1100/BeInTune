@@ -27,8 +27,11 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
     input.startsWith("/api/") &&
     typeof window !== "undefined"
   ) {
+    const apiBase = (import.meta && (import.meta.env && import.meta.env.VITE_API_BASE)) || (window as any).__API_BASE__ || null;
     const candidates = [
-      // try original relative path first (works with reverse proxies / dev proxies)
+      // if explicit API base is set (Vite env), try it first
+      ...(apiBase ? [`${apiBase.replace(/\/$/, '')}${input}`] : []),
+      // try original relative path (works with reverse proxies / dev proxies)
       input,
       // then absolute origin
       `${window.location.origin}${input}`,
