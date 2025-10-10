@@ -5,8 +5,9 @@ let serviceAccount: any = null;
 
 async function initAuth() {
   if (authClient) return authClient;
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (!raw) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON env var");
+  // Prefer single-line base64 (GOOGLE_CREDS_BASE64) to avoid dashboard truncation; fallback to GOOGLE_SERVICE_ACCOUNT_JSON
+  const raw = process.env.GOOGLE_CREDS_BASE64 || process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (!raw) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON or GOOGLE_CREDS_BASE64 env var");
   const tryParse = (input: any) => {
     if (!input) throw new Error("Empty GOOGLE_SERVICE_ACCOUNT_JSON");
     if (typeof input === "object") return input;
@@ -63,7 +64,7 @@ async function initAuth() {
     }
 
     const err = new Error(
-      `Unable to parse GOOGLE_SERVICE_ACCOUNT_JSON. Attempts: ${attempts.join(", ")}`,
+      `Unable to parse Google service account JSON. Attempts: ${attempts.join(", ")}`,
     );
     (err as any).details = { attempts, length: s.length };
     throw err;
@@ -73,7 +74,7 @@ async function initAuth() {
     serviceAccount = tryParse(raw);
   } catch (err) {
     console.error(
-      "Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON (raw length",
+      "Failed to parse service account JSON (raw length",
       String(raw).length,
       ")",
       err,
@@ -102,7 +103,10 @@ async function initAuth() {
         keyPreview: serviceAccount.private_key
           ? (serviceAccount.private_key.slice(0, 40).replace(/\r?\n/g, '\\n') + '...')
           : undefined,
-        rawEnvLength: (process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '').length,
+        rawEnvLength: {
+          GOOGLE_SERVICE_ACCOUNT_JSON: (process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '').length,
+          GOOGLE_CREDS_BASE64: (process.env.GOOGLE_CREDS_BASE64 || '').length,
+        },
       });
     } catch (e) {
       // swallow logging errors to avoid impacting auth flow
