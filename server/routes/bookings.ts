@@ -2,6 +2,7 @@ import express from "express";
 import express from "express";
 import { query } from "../db";
 import { sendMail } from "../lib/mailer";
+import { requireAdmin } from "../middleware/auth";
 
 const router = express.Router();
 
