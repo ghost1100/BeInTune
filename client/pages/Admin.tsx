@@ -1272,6 +1272,87 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
         </div>
       )}
 
+      {/* Cancel all modal */}
+      {cancellationAll && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-40"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setCancellationAll(false);
+              setCancellationReason("");
+            }
+          }}
+        >
+          <div className="bg-card rounded-md p-4 w-full max-w-lg">
+            <div className="flex justify-between items-center">
+              <h4 className="font-semibold">Cancel ALL bookings on {date}</h4>
+              <button
+                onClick={() => {
+                  setCancellationAll(false);
+                  setCancellationReason("");
+                }}
+                className="px-2 py-1 border rounded-md"
+              >
+                Close
+              </button>
+            </div>
+            <div className="mt-3">
+              <div className="text-sm mb-2">Choose a reason (this will be included in the summary email)</div>
+              <div className="space-y-2">
+                {cancellationReasons.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setCancellationReason(r)}
+                    className={`w-full text-left p-2 rounded-md border ${cancellationReason === r ? "bg-primary/10 border-primary" : ""}`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3">
+                <textarea
+                  className="w-full border rounded-md p-2"
+                  placeholder="Or write a custom reason"
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button
+                  className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground"
+                  onClick={async () => {
+                    setIsCancelling("all");
+                    try {
+                      await cancelAllBookingsForDate(date, cancellationReason || null);
+                      setCancellationAll(false);
+                      setCancellationReason("");
+                      setRefresh((r) => r + 1);
+                    } catch (e) {
+                      console.error(e);
+                      alert("Failed to cancel bookings");
+                    } finally {
+                      setIsCancelling(null);
+                    }
+                  }}
+                >
+                  Send broadcast cancellation & remove bookings
+                </button>
+                <button
+                  className="px-4 py-2 rounded-md border"
+                  onClick={() => {
+                    setCancellationAll(false);
+                    setCancellationReason("");
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Student selection modal */}
       {showStudentModal && selectedSlot && (
         <div
