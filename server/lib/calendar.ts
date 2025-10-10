@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import fs from 'fs';
+import fs from "fs";
 
 let authClient: any = null;
 let serviceAccount: any = null;
@@ -7,14 +7,17 @@ let serviceAccount: any = null;
 async function initAuth() {
   if (authClient) return authClient;
   // Prefer single-line base64 (GOOGLE_CREDS_BASE64) to avoid dashboard truncation; fallback to GOOGLE_SERVICE_ACCOUNT_JSON
-  let raw = process.env.GOOGLE_CREDS_BASE64 || process.env.GOOGLE_SERVICE_ACCOUNT_JSON || '';
+  let raw =
+    process.env.GOOGLE_CREDS_BASE64 ||
+    process.env.GOOGLE_SERVICE_ACCOUNT_JSON ||
+    "";
   // For local debugging: if the env var is missing or appears truncated, allow reading from tmp/service-account-full.json
   try {
     if (!raw || raw.length < 2000) {
-      const p = 'tmp/service-account-full.json';
+      const p = "tmp/service-account-full.json";
       if (fs.existsSync(p)) {
-        raw = fs.readFileSync(p, 'utf8');
-        console.log('Loaded service account JSON from', p);
+        raw = fs.readFileSync(p, "utf8");
+        console.log("Loaded service account JSON from", p);
       }
     }
   } catch (e) {
