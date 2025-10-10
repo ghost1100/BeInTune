@@ -145,8 +145,8 @@ async function initAuth() {
 export async function createCalendarEvent(opts: {
   summary: string;
   description?: string;
-  startDateTime: string; // ISO
-  endDateTime: string; // ISO
+  startDateTime: string; // ISO or local 'YYYY-MM-DDTHH:mm:ss'
+  endDateTime: string; // ISO or local
   timezone?: string;
   attendees?: string[];
 }) {
@@ -186,6 +186,20 @@ export async function createCalendarEvent(opts: {
     return res.data;
   } catch (err) {
     console.error("createCalendarEvent error:", err);
+    throw err;
+  }
+}
+
+export async function deleteCalendarEvent(eventId: string, calendarId?: string) {
+  try {
+    const auth = await initAuth();
+    const calendar = google.calendar({ version: "v3", auth });
+    const cid = calendarId || process.env.GOOGLE_CALENDAR_ID || serviceAccount.client_email;
+    console.log('Deleting calendar event', { eventId, calendarId: cid });
+    await calendar.events.delete({ calendarId: cid, eventId });
+    return true;
+  } catch (err) {
+    console.error('deleteCalendarEvent error:', err);
     throw err;
   }
 }
