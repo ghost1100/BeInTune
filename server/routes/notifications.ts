@@ -6,7 +6,11 @@ const router = express.Router();
 // GET /api/notifications - list notifications for current user
 router.get("/notifications", async (req, res) => {
   try {
-    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    // If unauthenticated, return an empty array instead of 401 so client components
+    // that poll notifications (e.g. NotificationBell) don't throw unhandled errors.
+    if (!req.user) {
+      return res.json([]);
+    }
     const limit = parseInt(String(req.query.limit || "50"), 10);
     const r = await query(
       "SELECT n.*, u.name as actor_name FROM notifications n LEFT JOIN users u ON n.actor_id = u.id WHERE n.user_id = $1 ORDER BY n.created_at DESC LIMIT $2",
