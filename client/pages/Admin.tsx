@@ -1876,10 +1876,26 @@ function StudentsManager() {
     "Flute",
   ];
   const [students, setStudents] = useState<any[]>([]);
+  const defaultDob = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 16);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  function calculateAgeFromDob(dob?: string | null) {
+    if (!dob) return undefined;
+    const b = new Date(dob);
+    if (Number.isNaN(b.getTime())) return undefined;
+    const now = new Date();
+    let age = now.getFullYear() - b.getFullYear();
+    const m = now.getMonth() - b.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+    return age;
+  }
+
   const [form, setForm] = useState<Partial<any>>({
     name: "",
-    age: 16,
-    isElderly: false,
+    dob: defaultDob,
     medications: "",
     marketingConsent: false,
     allergies: "",
