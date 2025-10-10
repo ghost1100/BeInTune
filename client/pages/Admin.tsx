@@ -830,19 +830,24 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
 
   const createBookingForStudent = async () => {
     if (!selectedSlot || !selectedStudentId) return;
-    const bk = await addBooking({
-      date,
-      time: selectedSlot,
-      studentId: selectedStudentId,
-    });
-    if (!bk) {
-      alert("Unable to create booking (slot unavailable)");
-      return;
+    try {
+      setIsLoading(true);
+      const bk = await addBooking({
+        date,
+        time: selectedSlot,
+        studentId: selectedStudentId,
+      });
+      if (!bk) {
+        alert("Unable to create booking (slot unavailable)");
+        return;
+      }
+      setSelectedSlot(null);
+      setSelectedStudentId(null);
+      setShowStudentModal(false);
+      setRefresh((r) => r + 1);
+    } finally {
+      setIsLoading(false);
     }
-    setSelectedSlot(null);
-    setSelectedStudentId(null);
-    setShowStudentModal(false);
-    setRefresh((r) => r + 1);
   };
 
   return (
