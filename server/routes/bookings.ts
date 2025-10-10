@@ -297,6 +297,65 @@ router.post("/bookings", async (req, res) => {
   }
 });
 
+// POST /api/admin/bookings/:id/resend-notification - resend email/calendar for booking
+router.post("/bookings/:id/resend-notification", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const infoQ = await query(
+      `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, s.user_id as student_user_id, u.email as user_email, u.name as user_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
+       FROM bookings b
+       LEFT JOIN slots sl ON b.slot_id = sl.id
+       LEFT JOIN students s ON b.student_id = s.id
+       LEFT JOIN users u ON s.user_id = u.id
+       WHERE b.id = $1 LIMIT 1`,
+      [id],
+    );
+    if (!infoQ.rows[0]) return res.status(404).json({ error: "Booking not found" });
+    const info = infoQ.rows[0];
+    const toEmail = info.user_email || info.guest_email || null;
+    const toName = info.user_name || info.guest_name || "";
+    if (!toEmail) return res.status(400).json({ error: "No recipient email for this booking" });
+
+    const subject = `Lesson booked: ${info.date} ${info.time}`;
+    const plain = `Hello ${toName},\n\nYour lesson has been booked for ${info.date} at ${info.time}.\n\nDetails:\n- Lesson: ${info.lesson_type || "Lesson"}\n\nSee you then.`;
+    const html = `<p>Hello ${toName},</p><p>Your lesson has been booked for <strong>${info.date} at ${info.time}</strong>.</p><p><strong>Lesson:</strong> ${info.lesson_type || "Lesson"}</p><p>See you then.</p>`;
+
+    try {
+      const { sendMail } = await import("../lib/mailer");
+      console.log("Resend: Sending booking confirmation to", toEmail);
+      await sendMail({ to: toEmail, from: process.env.FROM_EMAIL || "no-reply@example.com", subject, text: plain, html });
+      console.log("Resend: Booking confirmation sent to", toEmail);
+    } catch (err) {
+      console.error("Resend: Failed to send booking confirmation", err);
+    }
+
+    try {
+      const { createCalendarEvent } = await import("../lib/calendar");
+      const startIso = new Date(`${info.date}T${info.time}:00`).toISOString();
+      const duration = 30;
+      const endIso = new Date(new Date(startIso).getTime() + duration * 60 * 1000).toISOString();
+      const attendees: string[] = [];
+      if (info.guest_email) attendees.push(info.guest_email);
+      if (info.user_email && !attendees.includes(info.user_email)) attendees.push(info.user_email);
+      await createCalendarEvent({
+        summary: `Lesson: ${info.lesson_type || "Lesson"}`,
+        description: `Booking for ${info.guest_name || info.user_name || "guest"}`,
+        startDateTime: startIso,
+        endDateTime: endIso,
+        attendees,
+      });
+      console.log("Resend: Calendar event created for booking", id);
+    } catch (err) {
+      console.error("Resend: Failed to create calendar event for booking", err);
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to resend notification" });
+  }
+});
+
 // DELETE /api/admin/bookings/:id
 router.delete("/bookings/:id", async (req, res) => {
   const { id } = req.params;
