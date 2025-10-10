@@ -268,19 +268,21 @@ router.post("/bookings", async (req, res) => {
         const attendees: string[] = [];
         if (info?.guest_email) attendees.push(info.guest_email);
         if (info?.user_email && !attendees.includes(info.user_email)) attendees.push(info.user_email);
+        console.log("Booking created, preparing calendar event", { bookingId: ins.rows[0].id, slotId: slot.id, date, time, startIso, endDt, attendees });
         try {
-          await createCalendarEvent({
+          const ev = await createCalendarEvent({
             summary: `Lesson: ${info?.lesson_type || lesson_type || "Lesson"}`,
             description: `Booking for ${info?.guest_name || info?.user_name || email || "guest"}`,
             startDateTime: startIso,
             endDateTime: endDt,
             attendees,
           });
+          console.log("Calendar event created successfully for booking", ins.rows[0].id, { eventId: ev && ev.id });
         } catch (err) {
           console.error("Failed to create calendar event:", err);
         }
       } catch (err) {
-        // ignore if calendar module not present or misconfigured
+        console.error("Calendar module load/create skipped or failed:", err);
       }
     } catch (err) {
       console.error("Failed to load booking info for notification:", err);
@@ -337,14 +339,15 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
       const attendees: string[] = [];
       if (info.guest_email) attendees.push(info.guest_email);
       if (info.user_email && !attendees.includes(info.user_email)) attendees.push(info.user_email);
-      await createCalendarEvent({
+      console.log("Resend: creating calendar event", { bookingId: id, startIso, endIso, attendees });
+      const ev = await createCalendarEvent({
         summary: `Lesson: ${info.lesson_type || "Lesson"}`,
         description: `Booking for ${info.guest_name || info.user_name || "guest"}`,
         startDateTime: startIso,
         endDateTime: endIso,
         attendees,
       });
-      console.log("Resend: Calendar event created for booking", id);
+      console.log("Resend: Calendar event created for booking", id, { eventId: ev && ev.id });
     } catch (err) {
       console.error("Resend: Failed to create calendar event for booking", err);
     }
