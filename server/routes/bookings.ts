@@ -429,8 +429,10 @@ router.post("/bookings", async (req, res) => {
       try {
         const { createCalendarEvent } = await import("../lib/calendar");
         const slot = slotRes.rows[0];
-        const date = slot.slot_date; // YYYY-MM-DD
-        const time = slot.slot_time; // HH:MM
+        const rawSlotDate = slot.slot_date;
+        const date = typeof rawSlotDate === 'string' && rawSlotDate.includes('T') ? rawSlotDate.split('T')[0] : rawSlotDate; // normalized YYYY-MM-DD
+        const rawSlotTime = slot.slot_time;
+        const time = typeof rawSlotTime === 'string' ? rawSlotTime.split(':').slice(0,2).join(':') : rawSlotTime; // normalized HH:MM
         const duration = slot.duration_minutes || 30;
         // Construct start/end ISO timestamps more robustly to avoid Invalid Date errors
         const makeIso = (dStr: any, tStr: string, durMin: number) => {
