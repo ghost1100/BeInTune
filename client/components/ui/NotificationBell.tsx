@@ -47,7 +47,9 @@ export default function NotificationBell() {
       try {
         const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
         const host = window.location.host;
-        ws = new WebSocket(`${proto}://${host}/ws`);
+        const token = typeof window !== 'undefined' ? window.localStorage.getItem('inTuneToken') : null;
+        const url = `${proto}://${host}/ws${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+        ws = new WebSocket(url);
         ws.addEventListener('open', () => {
           wsConnected = true;
           // when WS connected, do an immediate fetch to ensure state
