@@ -854,7 +854,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
       recurrence = undefined;
     }
 
-    const { toast } = await import("@/hooks/use-toast").then(m => m.useToast ? { toast: m.useToast().toast } : m.useToast());
+    const { toast } = useToast();
     try {
       const bk = await addBooking({
         date,
