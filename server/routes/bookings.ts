@@ -1486,4 +1486,46 @@ router.post("/bookings/demo-add", requireAdmin, async (req, res) => {
   }
 });
 
+// Admin-only helper: map Google calendar instance IDs to bookings missing calendar_instance_id
+router.post('/bookings/map-instances', requireAdmin, async (req, res) => {
+  try {
+    const { listInstances } = await import('../lib/calendar');
+    const rows = await query("SELECT b.id as booking_id, b.recurrence_id, s.slot_date, s.slot_time FROM bookings b LEFT JOIN slots s ON b.slot_id = s.id WHERE b.recurrence_id IS NOT NULL AND b.calendar_instance_id IS NULL");
+    const list = rows && rows.rows ? rows.rows : [];
+    const results: any[] = [];
+    for (const r of list) {
+      try {
+        const bookingId = r.booking_id;
+        const eventId = r.recurrence_id;
+        const slotDate = r.slot_date && r.slot_date.toISOString ? r.slot_date.toISOString().slice(0,10) : (typeof r.slot_date === 'string' && r.slot_date.includes('T') ? r.slot_date.split('T')[0] : r.slot_date);
+        const slotTime = typeof r.slot_time === 'string' ? r.slot_time.split(':').slice(0,2).join(':') : r.slot_time;
+        const startIso = `${slotDate}T${slotTime}:00`;
+        const end = new Date(startIso);
+        end.setSeconds(end.getSeconds()+1);
+        const instances = await listInstances(eventId, startIso, end.toISOString());
+        let found = null;
+        for (const it of instances) {
+          const s = it.start && (it.start.dateTime || it.start.date);
+          if (!s) continue;
+          if (s.startsWith(startIso.slice(0,19))) { found = it; break; }
+          try { if (new Date(s).toISOString() === startIso) { found = it; break; } } catch(e){}
+        }
+        if (found && found.id) {
+          await query('UPDATE bookings SET calendar_instance_id = $1 WHERE id = $2', [found.id, bookingId]);
+          results.push({ bookingId, instance: found.id, status: 'mapped' });
+        } else {
+          results.push({ bookingId, instance: null, status: 'not_found' });
+        }
+      } catch (err) {
+        console.warn('map-instances: failed for row', r, err);
+        results.push({ row: r, error: String(err) });
+      }
+    }
+    res.json({ ok: true, mapped: results.length, results });
+  } catch (err) {
+    console.error('map-instances failed', err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 export default router;
