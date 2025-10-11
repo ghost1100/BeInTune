@@ -27,9 +27,17 @@ function normalizeTime(value: any): string {
 const AV_KEY = "inTuneAvailability";
 const BK_KEY = "inTuneBookings";
 
+const _availCache: Map<string, {ts:number, data:string[]}> = new Map();
+const _bookingsCache: Map<string, {ts:number, data:any[]}> = new Map();
+const CACHE_TTL = 5000; // ms
+
 async function readAvail(date?: string): Promise<Record<string, string[]>> {
   try {
     const d = date || new Date().toISOString().slice(0, 10);
+    const cached = _availCache.get(d);
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      return { [d]: cached.data };
+    }
     const api = (await import("@/lib/api")).apiFetch;
     const rows = await api(`/api/admin/slots?date=${d}`);
     const map: Record<string, string[]> = {};
