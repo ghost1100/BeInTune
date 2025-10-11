@@ -1248,6 +1248,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                 <div className="mt-3">
                   <label className="inline-flex items-center gap-2">
                     <input
+                      id="deleteSeriesCheck"
                       type="checkbox"
                       checked={deleteSeriesOption}
                       onChange={(e) => setDeleteSeriesOption(e.target.checked)}
