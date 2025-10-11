@@ -114,3 +114,48 @@ Tell me if you want:
 - a CI script to inject the service account JSON into deployment secrets, or
 - a UI to manage per-teacher calendars.
 
+Next steps & checklist (recommended for production-ready background processing)
+
+- [ ] Install dependencies: run `pnpm install` (or your preferred package manager). The project now requires `bullmq` and `ioredis` for Redis-backed background jobs.
+- [ ] Provision Redis for queues. Set `REDIS_URL` (or `REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD`) in environment variables. For local development you can run Redis with `docker run --rm -p 6379:6379 redis:7`.
+- [ ] Ensure DATABASE_URL, FROM_EMAIL, and Google calendar env vars are configured (see above).
+- [ ] Start the app in development: `pnpm dev` (this runs client and server via Vite). In production build: `pnpm build && pnpm start`.
+- [ ] Start a dedicated worker process (optional): the server startup (node dist/server/node-build.mjs) will attempt to start the booking worker automatically; for stronger isolation run the worker in a separate process by invoking the compiled worker entrypoint or by starting `node dist/server/workers/bookingWorker.mjs` (after building).
+- [ ] Monitor queue and workers: use Redis CLI or a Bull/BullMQ UI (e.g., Arena or Bull Board) to inspect jobs, retries and failures.
+- [ ] Configure process manager for production (systemd, PM2, Docker containers, or Kubernetes) to run web and worker processes separately and ensure automatic restarts and log collection.
+
+Testing the schedule feature (manual and automated checks)
+
+1) Quick manual test using API endpoints (replace host/port and include auth if required):
+
+- Create a slot:
+  curl -X POST "http://localhost:3000/api/admin/slots" -H "Content-Type: application/json" -d '{"slot_date":"2025-10-15","slot_time":"10:00","duration_minutes":30}'
+
+- Create a booking for that slot:
+  curl -X POST "http://localhost:3000/api/admin/bookings" -H "Content-Type: application/json" -d '{"slot_id":"<SLOT_ID>","name":"Test User","email":"test@example.com"}'
+
+- Verify bookings for date:
+  curl "http://localhost:3000/api/admin/bookings?date=2025-10-15"
+
+2) Verify background processing (email/calendar/job enqueue)
+
+- Ensure Redis is running and REDIS_URL is set.
+- After creating a booking, check Redis / BullMQ UI for a job in the `bookingQueue` and confirm the worker processes it: look for logs "Booking worker started" and "Booking job completed" in server/worker logs.
+- Confirm calendar event created (use tmp/list-events.mjs or check Google Calendar directly) and that attendee received email (check SMTP logs or SendGrid dashboard).
+
+3) Integration script (repeatable)
+
+- The repo contains `tmp/integration-test.mjs` which runs a full recurring booking flow using Google Calendar; prerequisites: GOOGLE_CREDS_BASE64, GOOGLE_CALENDAR_ID, DATABASE_URL set. Run:
+  node tmp/integration-test.mjs
+
+Notes and known blockers
+
+- I attempted to install new dependencies automatically but `pnpm install` failed in the environment I have access to. Please run `pnpm install` locally or in CI to fetch `bullmq` and `ioredis`.
+- To let me run automated tests here I need:
+  - Access to a running Redis instance (set REDIS_URL)
+  - npm/pnpm install to succeed so new packages are present
+  - If you want me to run integration tests that touch Google Calendar, provide a valid `GOOGLE_CREDS_BASE64` secret or confirm you want me to use the existing service account env variable already set in this environment.
+
+If you want, I can now:
+- Run the schedule feature test here (I will attempt to install deps and run server + worker + a small API-based smoke test). Click to confirm and I will proceed, otherwise run `pnpm install` and tell me when it's done and I will run the tests for you.
+
