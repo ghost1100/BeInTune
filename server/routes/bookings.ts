@@ -446,6 +446,7 @@ router.post("/bookings", async (req, res) => {
             description: descParts.join("\n"),
             startDateTime: startIso,
             endDateTime: endDt,
+            recurrence: recurrence ? [String(recurrence)] : undefined,
           });
           console.log(
             "Calendar event created successfully for booking",
