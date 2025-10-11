@@ -101,6 +101,19 @@ router.get("/bookings", async (req, res) => {
          ORDER BY sl.slot_time ASC`,
         [date],
       );
+      try {
+        const count = q.rowCount || (q.rows && q.rows.length) || 0;
+        const maxCreated = q.rows && q.rows.length ? q.rows.reduce((acc: string, r: any) => (r.created_at && r.created_at > acc ? r.created_at : acc), "") : "";
+        const meta = JSON.stringify({ count, maxCreated });
+        const etag = 'W/"' + Buffer.from(meta).toString('base64') + '"';
+        const incoming = req.headers['if-none-match'];
+        if (incoming && String(incoming) === etag) {
+          res.status(304).end();
+          return;
+        }
+        res.setHeader('ETag', etag);
+        if (maxCreated) res.setHeader('Last-Modified', new Date(maxCreated).toUTCString());
+      } catch (e) {}
     } else {
       q = await query(
         `SELECT
