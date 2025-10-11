@@ -857,7 +857,6 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
       recurrence = undefined;
     }
 
-    const { toast } = useToast();
     try {
       const bk = await addBooking({
         date,
