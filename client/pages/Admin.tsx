@@ -956,7 +956,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                           className="px-3 py-1 rounded-md border"
                           disabled={isCancelling === booked.id}
                         >
-                          {isCancelling === booked.id ? "Cancelling..." : "Unbook"}
+                          {isCancelling === booked.id
+                            ? "Cancelling..."
+                            : "Unbook"}
                         </button>
                       ) : (
                         available && (

@@ -416,13 +416,18 @@ router.post("/bookings", async (req, res) => {
         let instrumentsText = "";
         try {
           if (info && info.student_instruments) {
-            if (Array.isArray(info.student_instruments)) instrumentsText = info.student_instruments.join(", ");
-            else if (typeof info.student_instruments === "string") instrumentsText = JSON.parse(info.student_instruments || "[]").join(", ");
+            if (Array.isArray(info.student_instruments))
+              instrumentsText = info.student_instruments.join(", ");
+            else if (typeof info.student_instruments === "string")
+              instrumentsText = JSON.parse(
+                info.student_instruments || "[]",
+              ).join(", ");
           }
         } catch (e) {
           instrumentsText = String(info.student_instruments || "");
         }
-        const contactPhone = info?.guest_phone || info?.student_phone || info?.user_phone || "";
+        const contactPhone =
+          info?.guest_phone || info?.student_phone || info?.user_phone || "";
         const who = info?.guest_name || info?.user_name || email || "guest";
         const descParts = [
           `Booking for ${who}`,
@@ -462,7 +467,7 @@ router.post("/bookings", async (req, res) => {
               );
             }
           } catch (e) {
-            console.error('Failed to persist calendar_event_id on booking', e);
+            console.error("Failed to persist calendar_event_id on booking", e);
           }
         } catch (err) {
           console.error("Failed to create calendar event:", err);
@@ -591,13 +596,18 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
       let instrumentsText = "";
       try {
         if (info && info.student_instruments) {
-          if (Array.isArray(info.student_instruments)) instrumentsText = info.student_instruments.join(", ");
-          else if (typeof info.student_instruments === "string") instrumentsText = JSON.parse(info.student_instruments || "[]").join(", ");
+          if (Array.isArray(info.student_instruments))
+            instrumentsText = info.student_instruments.join(", ");
+          else if (typeof info.student_instruments === "string")
+            instrumentsText = JSON.parse(info.student_instruments || "[]").join(
+              ", ",
+            );
         }
       } catch (e) {
         instrumentsText = String(info.student_instruments || "");
       }
-      const contactPhone = info?.guest_phone || info?.student_phone || info?.user_phone || "";
+      const contactPhone =
+        info?.guest_phone || info?.student_phone || info?.user_phone || "";
       const who = info?.guest_name || info?.user_name || "guest";
       const descParts = [
         `Booking for ${who}`,
@@ -671,25 +681,38 @@ router.delete("/bookings/:id", async (req, res) => {
 
     // delete calendar event if exists. Support deleting whole recurring series when recurrence_id present.
     try {
-      const deleteSeries = (req.body && (req.body as any).deleteSeries) !== false;
+      const deleteSeries =
+        (req.body && (req.body as any).deleteSeries) !== false;
       const { deleteCalendarEvent } = await import("../lib/calendar");
       if (info && info.recurrence_id && deleteSeries) {
         try {
           await deleteCalendarEvent(info.recurrence_id);
-          console.log('Deleted recurring calendar event for booking series', id, info.recurrence_id);
+          console.log(
+            "Deleted recurring calendar event for booking series",
+            id,
+            info.recurrence_id,
+          );
         } catch (e) {
-          console.warn('Failed to delete recurring calendar event for booking', id, e);
+          console.warn(
+            "Failed to delete recurring calendar event for booking",
+            id,
+            e,
+          );
         }
       } else if (info && info.calendar_event_id) {
         try {
           await deleteCalendarEvent(info.calendar_event_id);
-          console.log('Deleted calendar event for booking', id, info.calendar_event_id);
+          console.log(
+            "Deleted calendar event for booking",
+            id,
+            info.calendar_event_id,
+          );
         } catch (e) {
-          console.warn('Failed to delete calendar event for booking', id, e);
+          console.warn("Failed to delete calendar event for booking", id, e);
         }
       }
     } catch (e) {
-      console.warn('Error while attempting to delete calendar event', e);
+      console.warn("Error while attempting to delete calendar event", e);
     }
 
     // free the slot if exists
@@ -710,9 +733,15 @@ router.delete("/bookings/:id", async (req, res) => {
       }
     }
 
-    if (info && info.recurrence_id && ((req.body && (req.body as any).deleteSeries) !== false)) {
+    if (
+      info &&
+      info.recurrence_id &&
+      (req.body && (req.body as any).deleteSeries) !== false
+    ) {
       // delete all bookings in the series
-      await query("DELETE FROM bookings WHERE recurrence_id = $1", [info.recurrence_id]);
+      await query("DELETE FROM bookings WHERE recurrence_id = $1", [
+        info.recurrence_id,
+      ]);
     } else {
       await query("DELETE FROM bookings WHERE id = $1", [id]);
     }
