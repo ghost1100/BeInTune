@@ -189,7 +189,7 @@ router.post("/bookings/cancel-all", requireAdmin, async (req, res) => {
   if (!date) return res.status(400).json({ error: "Missing date" });
   try {
     const q = await query(
-      `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, s.user_id as student_user_id, u.email as student_email, u.name as student_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
+      `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, b.calendar_event_id, b.recurrence_id, s.user_id as student_user_id, u.email as student_email, u.name as student_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
          FROM bookings b
          LEFT JOIN slots sl ON b.slot_id = sl.id
          LEFT JOIN students s ON b.student_id = s.id
