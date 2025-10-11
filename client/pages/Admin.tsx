@@ -781,6 +781,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [bookingDetail, setBookingDetail] = useState<any | null>(null);
+  // Recurrence controls for creating recurring bookings
+  const [recurrenceEnabled, setRecurrenceEnabled] = useState(false);
+  const [recurrenceUntil, setRecurrenceUntil] = useState<string>("");
   const [cancellationBooking, setCancellationBooking] = useState<any | null>(
     null,
   );
@@ -817,10 +820,31 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
 
   const createBookingForStudent = async () => {
     if (!selectedSlot || !selectedStudentId) return;
+    // build recurrence RRULE string if requested
+    let recurrence: string | undefined = undefined;
+    try {
+      if (recurrenceEnabled && recurrenceUntil) {
+        // recurrence weekly until end date (inclusive)
+        const untilDate = new Date(`${recurrenceUntil}T23:59:59`);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        const y = untilDate.getUTCFullYear();
+        const m = pad(untilDate.getUTCMonth() + 1);
+        const d = pad(untilDate.getUTCDate());
+        const hh = pad(untilDate.getUTCHours());
+        const mm = pad(untilDate.getUTCMinutes());
+        const ss = pad(untilDate.getUTCSeconds());
+        recurrence = `RRULE:FREQ=WEEKLY;UNTIL=${y}${m}${d}T${hh}${mm}${ss}Z`;
+      }
+    } catch (e) {
+      console.error("Failed to build recurrence rule", e);
+      recurrence = undefined;
+    }
+
     const bk = await addBooking({
       date,
       time: selectedSlot,
       studentId: selectedStudentId,
+      ...(recurrence ? { recurrence } : {}),
     });
     if (!bk) {
       alert("Unable to create booking (slot unavailable)");
@@ -828,6 +852,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
     }
     setSelectedSlot(null);
     setSelectedStudentId(null);
+    setRecurrenceEnabled(false);
+    setRecurrenceUntil("");
     setShowStudentModal(false);
     setRefresh((r) => r + 1);
   };
@@ -1367,6 +1393,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
               setShowStudentModal(false);
               setSelectedSlot(null);
               setSelectedStudentId(null);
+              setRecurrenceEnabled(false);
+              setRecurrenceUntil("");
             }
           }}
         >
@@ -1380,6 +1408,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                   setShowStudentModal(false);
                   setSelectedSlot(null);
                   setSelectedStudentId(null);
+                  setRecurrenceEnabled(false);
+                  setRecurrenceUntil("");
                 }}
                 className="px-2 py-1 border rounded-md"
               >
@@ -1395,6 +1425,24 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 autoComplete="off"
               />
+              {/* Recurrence controls */}
+              <div className="mt-3 flex items-center gap-2">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={recurrenceEnabled}
+                    onChange={(e) => setRecurrenceEnabled(e.target.checked)}
+                  />
+                  <span className="text-sm">Repeat weekly until</span>
+                </label>
+                <input
+                  type="date"
+                  className="rounded-md border px-2 h-10"
+                  value={recurrenceUntil}
+                  onChange={(e) => setRecurrenceUntil(e.target.value)}
+                  disabled={!recurrenceEnabled}
+                />
+              </div>
               <div className="mt-3 max-h-64 overflow-auto space-y-2">
                 {filteredStudents.length === 0 && (
                   <div className="text-foreground/70">No students found.</div>
@@ -1442,6 +1490,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     setShowStudentModal(false);
                     setSelectedSlot(null);
                     setSelectedStudentId(null);
+                    setRecurrenceEnabled(false);
+                    setRecurrenceUntil("");
                   }}
                   className="px-4 py-2 rounded-md border"
                 >
