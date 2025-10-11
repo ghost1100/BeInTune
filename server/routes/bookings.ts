@@ -679,34 +679,55 @@ router.delete("/bookings/:id", async (req, res) => {
       }
     }
 
-    // delete calendar event if exists. Support deleting whole recurring series when recurrence_id present.
+    // delete calendar event if exists. Support deleting recurring series with scopes: single | future | all
     try {
-      const deleteSeries =
-        (req.body && (req.body as any).deleteSeries) !== false;
-      const { deleteCalendarEvent } = await import("../lib/calendar");
-      if (info && info.recurrence_id && deleteSeries) {
-        try {
-          await deleteCalendarEvent(info.recurrence_id);
-          console.log(
-            "Deleted recurring calendar event for booking series",
-            id,
-            info.recurrence_id,
-          );
-        } catch (e) {
-          console.warn(
-            "Failed to delete recurring calendar event for booking",
-            id,
-            e,
-          );
+      const bodyAny = (req.body || {}) as any;
+      let deleteScope: 'single' | 'future' | 'all' = 'single';
+      if (bodyAny.deleteScope) deleteScope = bodyAny.deleteScope;
+      else if ((bodyAny.deleteSeries) !== undefined) deleteScope = bodyAny.deleteSeries !== false ? 'all' : 'single';
+
+      const { deleteCalendarEvent, updateRecurringEventUntil, deleteRecurringInstance } = await import("../lib/calendar");
+
+      if (info && info.recurrence_id) {
+        if (deleteScope === 'all') {
+          try {
+            await deleteCalendarEvent(info.recurrence_id);
+            console.log("Deleted recurring calendar event for booking series", id, info.recurrence_id);
+          } catch (e) {
+            console.warn("Failed to delete recurring calendar event for booking", id, e);
+          }
+        } else if (deleteScope === 'future') {
+          try {
+            // compute UNTIL as the moment before the instance start
+            const parts = String(info.date).split('-').map(Number);
+            const tparts = String(info.time || '').split(':').map(Number);
+            const y = parts[0], m = parts[1] - 1, d = parts[2];
+            const hh = tparts[0] || 0, mm = tparts[1] || 0;
+            const instStart = new Date(y, m, d, hh, mm, 0);
+            const untilDate = new Date(instStart.getTime() - 1000); // one second before
+            await updateRecurringEventUntil(info.recurrence_id, untilDate.toISOString());
+            console.log("Truncated recurring event until before", info.date, info.time, info.recurrence_id);
+          } catch (e) {
+            console.warn("Failed to truncate recurring event for booking", id, e);
+          }
+        } else if (deleteScope === 'single') {
+          try {
+            // delete only the specific instance from calendar (if exists)
+            const parts = String(info.date).split('-').map(Number);
+            const tparts = String(info.time || '').split(':').map(Number);
+            const y = parts[0], m = parts[1] - 1, d = parts[2];
+            const hh = tparts[0] || 0, mm = tparts[1] || 0;
+            const instStart = new Date(y, m, d, hh, mm, 0);
+            await deleteRecurringInstance(info.recurrence_id, instStart.toISOString());
+            console.log("Deleted single occurrence from recurring event", id, info.recurrence_id);
+          } catch (e) {
+            console.warn("Failed to delete single recurring instance for booking", id, e);
+          }
         }
       } else if (info && info.calendar_event_id) {
         try {
           await deleteCalendarEvent(info.calendar_event_id);
-          console.log(
-            "Deleted calendar event for booking",
-            id,
-            info.calendar_event_id,
-          );
+          console.log("Deleted calendar event for booking", id, info.calendar_event_id);
         } catch (e) {
           console.warn("Failed to delete calendar event for booking", id, e);
         }
@@ -733,18 +754,29 @@ router.delete("/bookings/:id", async (req, res) => {
       }
     }
 
-    if (
-      info &&
-      info.recurrence_id &&
-      (req.body && (req.body as any).deleteSeries) !== false
-    ) {
-      // delete all bookings in the series
-      await query("DELETE FROM bookings WHERE recurrence_id = $1", [
-        info.recurrence_id,
-      ]);
-    } else {
-      await query("DELETE FROM bookings WHERE id = $1", [id]);
+    // remove DB bookings depending on scope
+    try {
+      const bodyAny = (req.body || {}) as any;
+      const deleteScope: 'single' | 'future' | 'all' = bodyAny.deleteScope || ((bodyAny.deleteSeries) !== undefined ? (bodyAny.deleteSeries !== false ? 'all' : 'single') : 'single');
+      if (info && info.recurrence_id) {
+        if (deleteScope === 'all') {
+          await query("DELETE FROM bookings WHERE recurrence_id = $1", [info.recurrence_id]);
+        } else if (deleteScope === 'future') {
+          // delete bookings in series from this date onward
+          await query("DELETE FROM bookings WHERE recurrence_id = $1 AND id IN (SELECT b.id FROM bookings b LEFT JOIN slots s ON b.slot_id = s.id WHERE b.recurrence_id = $1 AND s.slot_date >= $2)", [info.recurrence_id, info.date]);
+          // delete the single booking as well if still present
+          await query("DELETE FROM bookings WHERE id = $1", [id]);
+        } else {
+          await query("DELETE FROM bookings WHERE id = $1", [id]);
+        }
+      } else {
+        await query("DELETE FROM bookings WHERE id = $1", [id]);
+      }
+    } catch (e) {
+      console.error("Failed to remove booking rows:", e);
+      throw e;
     }
+
     res.json({ ok: true });
   } catch (err) {
     console.error("Failed to cancel booking:", err);
