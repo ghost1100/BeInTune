@@ -239,36 +239,70 @@ router.post("/bookings/cancel-all", requireAdmin, async (req, res) => {
 
     // Attempt to remove calendar events for the affected bookings (delete specific instances for recurring events)
     try {
-      const { deleteCalendarEvent, deleteRecurringInstance } = await import("../lib/calendar");
+      const { deleteCalendarEvent, deleteRecurringInstance } = await import(
+        "../lib/calendar"
+      );
       for (const r of rows) {
         try {
           if (r.recurrence_id) {
             try {
-              const parts = String(r.date).split('-').map(Number);
-              const tparts = String(r.time || '').split(':').map(Number);
-              const y = parts[0], m = parts[1] - 1, d = parts[2];
-              const hh = tparts[0] || 0, mm = tparts[1] || 0;
+              const parts = String(r.date).split("-").map(Number);
+              const tparts = String(r.time || "")
+                .split(":")
+                .map(Number);
+              const y = parts[0],
+                m = parts[1] - 1,
+                d = parts[2];
+              const hh = tparts[0] || 0,
+                mm = tparts[1] || 0;
               const instStart = new Date(y, m, d, hh, mm, 0);
-              await deleteRecurringInstance(r.recurrence_id, instStart.toISOString());
-              console.log("Cancelled recurring instance on calendar for booking", r.id, r.recurrence_id);
+              await deleteRecurringInstance(
+                r.recurrence_id,
+                instStart.toISOString(),
+              );
+              console.log(
+                "Cancelled recurring instance on calendar for booking",
+                r.id,
+                r.recurrence_id,
+              );
             } catch (inner) {
               try {
                 await deleteCalendarEvent(r.recurrence_id);
-                console.log("Deleted recurring calendar event for booking (fallback)", r.id, r.recurrence_id);
+                console.log(
+                  "Deleted recurring calendar event for booking (fallback)",
+                  r.id,
+                  r.recurrence_id,
+                );
               } catch (inn2) {
-                console.warn("Failed to delete recurring calendar event for booking", r.id, inn2);
+                console.warn(
+                  "Failed to delete recurring calendar event for booking",
+                  r.id,
+                  inn2,
+                );
               }
             }
           } else if (r.calendar_event_id) {
             try {
               await deleteCalendarEvent(r.calendar_event_id);
-              console.log("Deleted calendar event for booking", r.id, r.calendar_event_id);
+              console.log(
+                "Deleted calendar event for booking",
+                r.id,
+                r.calendar_event_id,
+              );
             } catch (inner) {
-              console.warn("Failed to delete calendar event for booking", r.id, inner);
+              console.warn(
+                "Failed to delete calendar event for booking",
+                r.id,
+                inner,
+              );
             }
           }
         } catch (e) {
-          console.warn("Failed to handle calendar deletion for booking", r.id, e);
+          console.warn(
+            "Failed to handle calendar deletion for booking",
+            r.id,
+            e,
+          );
         }
       }
     } catch (e) {
@@ -506,7 +540,7 @@ router.post("/bookings", async (req, res) => {
 
               // If a recurrence RRULE with COUNT is provided, create DB slots and bookings for each occurrence
               try {
-                if (recurrence && typeof recurrence === 'string') {
+                if (recurrence && typeof recurrence === "string") {
                   const rStr = String(recurrence);
                   const m = rStr.match(/COUNT=(\d+)/i);
                   const count = m ? parseInt(m[1], 10) : null;
@@ -514,22 +548,42 @@ router.post("/bookings", async (req, res) => {
                     // create remaining occurrences (we already have the first)
                     for (let i = 1; i < count; i++) {
                       try {
-                        const dt = new Date(date + 'T' + (time || '00:00') + ':00');
+                        const dt = new Date(
+                          date + "T" + (time || "00:00") + ":00",
+                        );
                         dt.setDate(dt.getDate() + i * 7); // weekly increment
-                        const pad = (n: number) => String(n).padStart(2, '0');
+                        const pad = (n: number) => String(n).padStart(2, "0");
                         const slotDate = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
-                        const slotTime = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`; // reuse computed time
+                        const slotTime = `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`; // reuse computed time
                         const insSlot = await query(
                           "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
-                          [slot.teacher_id || null, slotDate, slotTime, duration || 30],
+                          [
+                            slot.teacher_id || null,
+                            slotDate,
+                            slotTime,
+                            duration || 30,
+                          ],
                         );
                         const newSlotId = insSlot.rows[0].id;
                         await query(
                           "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
-                          [student_id || null, newSlotId, lesson_type || null, nameToStore, emailToStore, phoneToStore, ev.id, ev.id],
+                          [
+                            student_id || null,
+                            newSlotId,
+                            lesson_type || null,
+                            nameToStore,
+                            emailToStore,
+                            phoneToStore,
+                            ev.id,
+                            ev.id,
+                          ],
                         );
                       } catch (inner) {
-                        console.warn('Failed to create booking for recurring occurrence', i, inner);
+                        console.warn(
+                          "Failed to create booking for recurring occurrence",
+                          i,
+                          inner,
+                        );
                       }
                     }
                   } else {
@@ -543,50 +597,77 @@ router.post("/bookings", async (req, res) => {
                         const dmatch = untilRaw.match(/^(\d{8})T?(\d{6})?Z?$/);
                         if (dmatch) {
                           const datePart = dmatch[1];
-                          const timePart = dmatch[2] || '000000';
-                          const yyyy = datePart.slice(0,4);
-                          const mm = datePart.slice(4,6);
-                          const dd = datePart.slice(6,8);
-                          const hh = timePart.slice(0,2);
-                          const mi = timePart.slice(2,4);
-                          const ss = timePart.slice(4,6);
+                          const timePart = dmatch[2] || "000000";
+                          const yyyy = datePart.slice(0, 4);
+                          const mm = datePart.slice(4, 6);
+                          const dd = datePart.slice(6, 8);
+                          const hh = timePart.slice(0, 2);
+                          const mi = timePart.slice(2, 4);
+                          const ss = timePart.slice(4, 6);
                           untilIso = `${yyyy}-${mm}-${dd}T${hh}:${mi}:${ss}Z`;
                         }
                         const untilDate = new Date(untilIso);
                         // iterate weekly from next occurrence until untilDate (inclusive)
-                        let cur = new Date(date + 'T' + (time || '00:00') + ':00');
+                        let cur = new Date(
+                          date + "T" + (time || "00:00") + ":00",
+                        );
                         const oneWeek = 7 * 24 * 60 * 60 * 1000;
                         // advance to first instance after the original (we already created the first booking)
                         cur = new Date(cur.getTime() + oneWeek);
                         let occ = 1;
                         while (cur.getTime() <= untilDate.getTime()) {
                           try {
-                            const pad = (n: number) => String(n).padStart(2, '0');
+                            const pad = (n: number) =>
+                              String(n).padStart(2, "0");
                             const slotDate = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
-                            const slotTime = `${String(cur.getHours()).padStart(2,'0')}:${String(cur.getMinutes()).padStart(2,'0')}`;
+                            const slotTime = `${String(cur.getHours()).padStart(2, "0")}:${String(cur.getMinutes()).padStart(2, "0")}`;
                             const insSlot = await query(
                               "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
-                              [slot.teacher_id || null, slotDate, slotTime, duration || 30],
+                              [
+                                slot.teacher_id || null,
+                                slotDate,
+                                slotTime,
+                                duration || 30,
+                              ],
                             );
                             const newSlotId = insSlot.rows[0].id;
                             await query(
                               "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
-                              [student_id || null, newSlotId, lesson_type || null, nameToStore, emailToStore, phoneToStore, ev.id, ev.id],
+                              [
+                                student_id || null,
+                                newSlotId,
+                                lesson_type || null,
+                                nameToStore,
+                                emailToStore,
+                                phoneToStore,
+                                ev.id,
+                                ev.id,
+                              ],
                             );
                           } catch (inner) {
-                            console.warn('Failed to create booking for recurring occurrence until', cur, inner);
+                            console.warn(
+                              "Failed to create booking for recurring occurrence until",
+                              cur,
+                              inner,
+                            );
                           }
                           occ++;
                           cur = new Date(cur.getTime() + oneWeek);
                         }
                       } catch (inner) {
-                        console.warn('Failed to expand UNTIL-based recurring bookings:', inner);
+                        console.warn(
+                          "Failed to expand UNTIL-based recurring bookings:",
+                          inner,
+                        );
                       }
                     }
                   }
                 }
               } catch (inner) {
-                console.warn('Failed to expand recurring bookings into DB rows:', inner);
+                console.warn(
+                  "Failed to expand recurring bookings into DB rows:",
+                  inner,
+                );
               }
             }
           } catch (e) {
@@ -805,52 +886,102 @@ router.delete("/bookings/:id", async (req, res) => {
     // delete calendar event if exists. Support deleting recurring series with scopes: single | future | all
     try {
       const bodyAny = (req.body || {}) as any;
-      let deleteScope: 'single' | 'future' | 'all' = 'single';
+      let deleteScope: "single" | "future" | "all" = "single";
       if (bodyAny.deleteScope) deleteScope = bodyAny.deleteScope;
-      else if ((bodyAny.deleteSeries) !== undefined) deleteScope = bodyAny.deleteSeries !== false ? 'all' : 'single';
+      else if (bodyAny.deleteSeries !== undefined)
+        deleteScope = bodyAny.deleteSeries !== false ? "all" : "single";
 
-      const { deleteCalendarEvent, updateRecurringEventUntil, deleteRecurringInstance } = await import("../lib/calendar");
+      const {
+        deleteCalendarEvent,
+        updateRecurringEventUntil,
+        deleteRecurringInstance,
+      } = await import("../lib/calendar");
 
       if (info && info.recurrence_id) {
-        if (deleteScope === 'all') {
+        if (deleteScope === "all") {
           try {
             await deleteCalendarEvent(info.recurrence_id);
-            console.log("Deleted recurring calendar event for booking series", id, info.recurrence_id);
+            console.log(
+              "Deleted recurring calendar event for booking series",
+              id,
+              info.recurrence_id,
+            );
           } catch (e) {
-            console.warn("Failed to delete recurring calendar event for booking", id, e);
+            console.warn(
+              "Failed to delete recurring calendar event for booking",
+              id,
+              e,
+            );
           }
-        } else if (deleteScope === 'future') {
+        } else if (deleteScope === "future") {
           try {
             // compute UNTIL as the moment before the instance start
-            const parts = String(info.date).split('-').map(Number);
-            const tparts = String(info.time || '').split(':').map(Number);
-            const y = parts[0], m = parts[1] - 1, d = parts[2];
-            const hh = tparts[0] || 0, mm = tparts[1] || 0;
+            const parts = String(info.date).split("-").map(Number);
+            const tparts = String(info.time || "")
+              .split(":")
+              .map(Number);
+            const y = parts[0],
+              m = parts[1] - 1,
+              d = parts[2];
+            const hh = tparts[0] || 0,
+              mm = tparts[1] || 0;
             const instStart = new Date(y, m, d, hh, mm, 0);
             const untilDate = new Date(instStart.getTime() - 1000); // one second before
-            await updateRecurringEventUntil(info.recurrence_id, untilDate.toISOString());
-            console.log("Truncated recurring event until before", info.date, info.time, info.recurrence_id);
+            await updateRecurringEventUntil(
+              info.recurrence_id,
+              untilDate.toISOString(),
+            );
+            console.log(
+              "Truncated recurring event until before",
+              info.date,
+              info.time,
+              info.recurrence_id,
+            );
           } catch (e) {
-            console.warn("Failed to truncate recurring event for booking", id, e);
+            console.warn(
+              "Failed to truncate recurring event for booking",
+              id,
+              e,
+            );
           }
-        } else if (deleteScope === 'single') {
+        } else if (deleteScope === "single") {
           try {
             // delete only the specific instance from calendar (if exists)
-            const parts = String(info.date).split('-').map(Number);
-            const tparts = String(info.time || '').split(':').map(Number);
-            const y = parts[0], m = parts[1] - 1, d = parts[2];
-            const hh = tparts[0] || 0, mm = tparts[1] || 0;
+            const parts = String(info.date).split("-").map(Number);
+            const tparts = String(info.time || "")
+              .split(":")
+              .map(Number);
+            const y = parts[0],
+              m = parts[1] - 1,
+              d = parts[2];
+            const hh = tparts[0] || 0,
+              mm = tparts[1] || 0;
             const instStart = new Date(y, m, d, hh, mm, 0);
-            await deleteRecurringInstance(info.recurrence_id, instStart.toISOString());
-            console.log("Deleted single occurrence from recurring event", id, info.recurrence_id);
+            await deleteRecurringInstance(
+              info.recurrence_id,
+              instStart.toISOString(),
+            );
+            console.log(
+              "Deleted single occurrence from recurring event",
+              id,
+              info.recurrence_id,
+            );
           } catch (e) {
-            console.warn("Failed to delete single recurring instance for booking", id, e);
+            console.warn(
+              "Failed to delete single recurring instance for booking",
+              id,
+              e,
+            );
           }
         }
       } else if (info && info.calendar_event_id) {
         try {
           await deleteCalendarEvent(info.calendar_event_id);
-          console.log("Deleted calendar event for booking", id, info.calendar_event_id);
+          console.log(
+            "Deleted calendar event for booking",
+            id,
+            info.calendar_event_id,
+          );
         } catch (e) {
           console.warn("Failed to delete calendar event for booking", id, e);
         }
@@ -880,13 +1011,24 @@ router.delete("/bookings/:id", async (req, res) => {
     // remove DB bookings depending on scope
     try {
       const bodyAny = (req.body || {}) as any;
-      const deleteScope: 'single' | 'future' | 'all' = bodyAny.deleteScope || ((bodyAny.deleteSeries) !== undefined ? (bodyAny.deleteSeries !== false ? 'all' : 'single') : 'single');
+      const deleteScope: "single" | "future" | "all" =
+        bodyAny.deleteScope ||
+        (bodyAny.deleteSeries !== undefined
+          ? bodyAny.deleteSeries !== false
+            ? "all"
+            : "single"
+          : "single");
       if (info && info.recurrence_id) {
-        if (deleteScope === 'all') {
-          await query("DELETE FROM bookings WHERE recurrence_id = $1", [info.recurrence_id]);
-        } else if (deleteScope === 'future') {
+        if (deleteScope === "all") {
+          await query("DELETE FROM bookings WHERE recurrence_id = $1", [
+            info.recurrence_id,
+          ]);
+        } else if (deleteScope === "future") {
           // delete bookings in series from this date onward
-          await query("DELETE FROM bookings WHERE recurrence_id = $1 AND id IN (SELECT b.id FROM bookings b LEFT JOIN slots s ON b.slot_id = s.id WHERE b.recurrence_id = $1 AND s.slot_date >= $2)", [info.recurrence_id, info.date]);
+          await query(
+            "DELETE FROM bookings WHERE recurrence_id = $1 AND id IN (SELECT b.id FROM bookings b LEFT JOIN slots s ON b.slot_id = s.id WHERE b.recurrence_id = $1 AND s.slot_date >= $2)",
+            [info.recurrence_id, info.date],
+          );
           // delete the single booking as well if still present
           await query("DELETE FROM bookings WHERE id = $1", [id]);
         } else {
@@ -910,8 +1052,12 @@ router.delete("/bookings/:id", async (req, res) => {
 // Demo endpoint: create demo bookings on a date (admin only)
 router.post("/bookings/demo-add", requireAdmin, async (req, res) => {
   try {
-    const date = req.body && req.body.date ? String(req.body.date) : "2025-10-15";
-    const times = req.body && Array.isArray(req.body.times) && req.body.times.length ? req.body.times : ["10:00", "10:30"];
+    const date =
+      req.body && req.body.date ? String(req.body.date) : "2025-10-15";
+    const times =
+      req.body && Array.isArray(req.body.times) && req.body.times.length
+        ? req.body.times
+        : ["10:00", "10:30"];
     const created: any[] = [];
     for (const time of times) {
       // create slot
@@ -932,9 +1078,12 @@ router.post("/bookings/demo-add", requireAdmin, async (req, res) => {
         const { createCalendarEvent } = await import("../lib/calendar");
         // build ISO-local start/end
         const parts = String(date).split("-").map(Number);
-        const y = parts[0], m = parts[1] - 1, d = parts[2];
+        const y = parts[0],
+          m = parts[1] - 1,
+          d = parts[2];
         const tparts = String(time).split(":").map(Number);
-        const hh = tparts[0] || 0, mm = tparts[1] || 0;
+        const hh = tparts[0] || 0,
+          mm = tparts[1] || 0;
         const startLocal = `${date}T${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}:00`;
         const endDate = new Date(y, m, d, hh, mm, 0);
         endDate.setMinutes(endDate.getMinutes() + 30);
@@ -946,7 +1095,10 @@ router.post("/bookings/demo-add", requireAdmin, async (req, res) => {
           endDateTime: endLocal,
         });
         if (ev && ev.id) {
-          await query("UPDATE bookings SET calendar_event_id = $1 WHERE id = $2", [ev.id, id]);
+          await query(
+            "UPDATE bookings SET calendar_event_id = $1 WHERE id = $2",
+            [ev.id, id],
+          );
         }
       } catch (e) {
         console.error("Failed to create demo calendar event", e);
