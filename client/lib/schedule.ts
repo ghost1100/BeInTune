@@ -8,6 +8,7 @@ export type Booking = {
   date: string; // YYYY-MM-DD
   time: string; // HH:MM (24h)
   lessonType?: string;
+  recurrence?: string;
 };
 
 function normalizeTime(value: any): string {
