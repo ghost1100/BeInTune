@@ -28,23 +28,34 @@ async function processBooking(job: any) {
   const info = infoQ.rows[0];
   if (!info) throw new Error('Booking not found: ' + bookingId);
 
-  // Attempt to decrypt guest fields where possible
   try {
     const { decryptText } = await import('../lib/crypto');
     if (info.guest_name) {
-      try { const parsed = typeof info.guest_name === 'string' ? JSON.parse(info.guest_name) : info.guest_name; const dec = decryptText(parsed); if (dec) info.guest_name = dec; } catch (e) {}
+      try {
+        const parsed = typeof info.guest_name === 'string' ? JSON.parse(info.guest_name) : info.guest_name;
+        const dec = decryptText(parsed);
+        if (dec) info.guest_name = dec;
+      } catch (e) {}
     }
     if (info.guest_email) {
-      try { const parsed = typeof info.guest_email === 'string' ? JSON.parse(info.guest_email) : info.guest_email; const dec = decryptText(parsed); if (dec) info.guest_email = dec; } catch (e) {}
+      try {
+        const parsed = typeof info.guest_email === 'string' ? JSON.parse(info.guest_email) : info.guest_email;
+        const dec = decryptText(parsed);
+        if (dec) info.guest_email = dec;
+      } catch (e) {}
     }
     if (info.guest_phone) {
-      try { const parsed = typeof info.guest_phone === 'string' ? JSON.parse(info.guest_phone) : info.guest_phone; const dec = decryptText(parsed); if (dec) info.guest_phone = dec; } catch (e) {}
+      try {
+        const parsed = typeof info.guest_phone === 'string' ? JSON.parse(info.guest_phone) : info.guest_phone;
+        const dec = decryptText(parsed);
+        if (dec) info.guest_phone = dec;
+      } catch (e) {}
     }
   } catch (e) {
-    // ignore decrypt errors
+    // ignore
   }
 
-  // Send confirmation email (best-effort)
+  // Email
   try {
     const toEmail = info.user_email || info.guest_email || null;
     const toName = info.user_name || info.guest_name || '';
@@ -54,7 +65,6 @@ async function processBooking(job: any) {
       const html = `<p>Hello ${toName},</p><p>Your lesson has been booked for <strong>${info.date} at ${info.time}</strong>.</p><p><strong>Lesson:</strong> ${info.lesson_type || 'Lesson'}</p><p>See you then.</p>`;
       try {
         await sendMail({ to: toEmail, from: process.env.FROM_EMAIL || 'no-reply@example.com', subject, text: plain, html });
-        console.log('Booking confirmation sent to', toEmail);
       } catch (err) {
         console.error('Failed to send booking confirmation', err);
       }
@@ -63,7 +73,7 @@ async function processBooking(job: any) {
     console.error('Booking notification error (worker):', err);
   }
 
-  // Calendar + recurrence handling
+  // Calendar and recurrence
   try {
     const { createCalendarEvent, listInstances } = await import('../lib/calendar');
     const slotDateRaw = info.date;
@@ -91,7 +101,6 @@ async function processBooking(job: any) {
 
     const { startIso, endIso } = makeIso(slotDateRaw, slotTimeRaw, duration);
 
-    // Reuse existing calendar event when possible
     let ev: any = null;
     try {
       const existsQ = await query('SELECT calendar_event_id, recurrence_id FROM bookings WHERE slot_id = $1 AND (calendar_event_id IS NOT NULL OR recurrence_id IS NOT NULL) LIMIT 1', [info.slot_id]);
@@ -109,7 +118,6 @@ async function processBooking(job: any) {
       const recurrenceIdToStore = info.recurrence ? ev.id : null;
       try { await query('UPDATE bookings SET calendar_event_id = $1, recurrence_id = $2 WHERE id = $3', [ev.id, recurrenceIdToStore, bookingId]); } catch (e) { console.warn('Failed to persist calendar_event_id on booking', e); }
 
-      // Map calendar instance
       try {
         const startIsoInstance = `${slotDateRaw}T${slotTimeRaw}:00`;
         const endDate = new Date(startIsoInstance); endDate.setSeconds(endDate.getSeconds() + 1);
@@ -124,7 +132,7 @@ async function processBooking(job: any) {
         if (found && found.id) await query('UPDATE bookings SET calendar_instance_id = $1 WHERE id = $2', [found.id, bookingId]);
       } catch (e) { console.warn('Failed to map calendar instance to booking', e); }
 
-      // Expand recurrence occurrences into DB rows (COUNT/UNTIL or fallback weekly for 12 occurrences)
+      // Expand recurrence
       try {
         const recurrence = info.recurrence;
         if (recurrence && typeof recurrence === 'string') {
@@ -151,7 +159,6 @@ async function processBooking(job: any) {
                       const insBk = await query('INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id', [info.student_user_id || null, newSlotId, info.lesson_type || null, info.guest_name, info.guest_email, info.guest_phone, ev.id, ev.id]);
                       const newBkId = insBk && insBk.rows && insBk.rows[0] && insBk.rows[0].id;
                       if (newBkId) {
-                        // Map instance if possible
                         try {
                           const startIso = `${slotDate}T${slotTime}:00`;
                           const endDt = new Date(startIso); endDt.setSeconds(endDt.getSeconds() + 1);
