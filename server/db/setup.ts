@@ -158,6 +158,16 @@ export async function ensureDbSetup() {
       "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS recurrence_id text;",
     );
 
+    // Prevent multiple bookings for the same slot: ensure one booking per slot_id
+    try {
+      await query(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_bookings_slot_id_unique ON bookings(slot_id) WHERE slot_id IS NOT NULL;",
+      );
+    } catch (e) {
+      // ignore if index creation fails, but log for visibility
+      console.warn("Failed to create unique index for bookings.slot_id:", e);
+    }
+
     // Ensure admin user exists with username Darryle
     const adminIdentifier = process.env.ADMIN_EMAIL || "admin@intune.local";
     const adminUsername = process.env.ADMIN_USERNAME || "Darryle";
