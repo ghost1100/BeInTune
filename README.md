@@ -166,3 +166,41 @@ Next steps I can implement for you
 - Implement per-teacher calendar support and a calendar-connection flow in Admin.
 
 If you want me to update any of the above (add the Admin event list, wire CI secrets, or implement per-teacher calendars), tell me which and I’ll add it to the todo list and implement.
+
+Recurring bookings
+
+- Feature: Create recurring bookings that map to a single recurring Google Calendar event (via RRULE) and store the calendar event id in the booking record. The booking record now has two new DB columns (if using the built-in DB setup): calendar_event_id (string) and recurrence_id (string).
+- How it works:
+  - The bookings POST endpoint accepts an optional `recurrence` field (an RRULE string, e.g. "RRULE:FREQ=WEEKLY;COUNT=10" ). When present, the server will create a single recurring Google Calendar event (using the `recurrence` property) and save the returned event id into `bookings.calendar_event_id` and store the same id in `bookings.recurrence_id` for series identification.
+  - Deleting a booking with an associated `recurrence_id` will, by default, delete the entire recurring series unless you pass `deleteSeries=false` in the DELETE request body. The server will delete the calendar recurring event and any bookings with that recurrence_id.
+
+Delete calendar events on booking removal
+
+- When a booking is deleted (DELETE /api/admin/bookings/:id), the server attempts to delete the corresponding Google Calendar event. If the booking is part of a recurring series (`recurrence_id` present) and `deleteSeries` is not set to false in the request body, the whole recurring event is deleted from Google Calendar and all bookings for that series are removed.
+
+Notes on UI
+
+- I reverted the loading animation changes on the schedule UI per your request.
+- The Booking details modal now includes Name, Phone and Instrument information (when available) and those fields are included in the calendar event description.
+
+SEO and marketing
+
+- I added site SEO meta guidance earlier; for marketing text and keywords, ensure your public pages (Home, Lessons, Teachers, Pricing) include high-value keywords in headings, meta title and meta description. Suggested keywords to include organically where appropriate:
+  - music lessons
+  - music tuition
+  - Nat 5 music lessons
+  - guitar lessons
+  - drums lessons
+  - piano lessons
+  - music teacher
+  - tutor, tuition, tutorials, guide, instructor
+  - online music lessons
+- Consider adding structured data (JSON-LD) for LocalBusiness and Course offerings to improve search visibility and rich snippets.
+
+Next steps I can implement for you
+
+- UI: Add recurrence UI controls to the booking modal (repeat frequency, count/until) and wire them to the bookings API.
+- Admin: Add a page that lists recurring series and allows editing or bulk cancellation of a series.
+- CI: Add a deployment script to store service account JSON in provider secret manager and set GOOGLE_CREDS_BASE64 automatically during deploy.
+
+Tell me which follow-up you want next and I’ll add it to the todo list and implement it.
