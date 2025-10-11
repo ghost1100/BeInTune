@@ -157,6 +157,9 @@ export async function ensureDbSetup() {
     await query(
       "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS recurrence_id text;",
     );
+    await query(
+      "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS calendar_instance_id text;",
+    );
 
     // Prevent multiple bookings for the same slot: ensure one booking per slot_id
     try {
