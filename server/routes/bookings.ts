@@ -656,7 +656,6 @@ router.post("/bookings", async (req, res) => {
                   }
                 } catch (e) {}
 
-                // Recurrence expansion handled similarly as before (omitted for brevity in this async path)
               }
             } catch (e) {
               console.error("Failed to persist calendar event id on booking (async):", e);
