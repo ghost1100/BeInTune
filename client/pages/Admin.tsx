@@ -1236,6 +1236,18 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                   onChange={(e) => setCancellationReason(e.target.value)}
                 />
               </div>
+              {cancellationBooking && (cancellationBooking as any).recurrence_id && (
+                <div className="mt-3">
+                  <label className="inline-flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={deleteSeriesOption}
+                      onChange={(e) => setDeleteSeriesOption(e.target.checked)}
+                    />
+                    <span className="text-sm">Delete entire recurring series (remove series from calendar and all bookings)</span>
+                  </label>
+                </div>
+              )}
               <div className="flex gap-2 mt-3">
                 <button
                   className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground"
@@ -1246,6 +1258,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                       await removeBk(cancellationBooking.id, {
                         reason: cancellationReason || null,
                         notify: true,
+                        deleteSeries: deleteSeriesOption,
                       });
                       setCancellationBooking(null);
                       setCancellationReason("");
@@ -1269,6 +1282,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                       await removeBk(cancellationBooking.id, {
                         reason: null,
                         notify: true,
+                        deleteSeries: deleteSeriesOption,
                       });
                       setCancellationBooking(null);
                       setCancellationReason("");
