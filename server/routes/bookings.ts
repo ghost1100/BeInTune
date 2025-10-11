@@ -662,10 +662,11 @@ router.post("/bookings", async (req, res) => {
                           date + "T" + (time || "00:00") + ":00",
                         );
                         const oneWeek = 7 * 24 * 60 * 60 * 1000;
+                        const dateKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
                         // advance to first instance after the original (we already created the first booking)
                         cur = new Date(cur.getTime() + oneWeek);
                         let occ = 1;
-                        while (cur.getTime() <= untilDate.getTime()) {
+                        while (dateKey(cur) <= dateKey(untilDate)) {
                           try {
                             const pad = (n: number) =>
                               String(n).padStart(2, "0");
