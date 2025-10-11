@@ -1383,9 +1383,10 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                       setCancellationAll(false);
                       setCancellationReason("");
                       setRefresh((r) => r + 1);
-                    } catch (e) {
-                      console.error(e);
-                      alert("Failed to cancel bookings");
+                    } catch (e: any) {
+                      console.error("Cancel all error:", e);
+                      const msg = e?.message || (typeof e === 'string' ? e : 'Unknown error');
+                      alert(`Failed to cancel bookings: ${msg}`);
                     } finally {
                       setIsCancelling(null);
                     }
