@@ -669,11 +669,19 @@ router.delete("/bookings/:id", async (req, res) => {
       }
     }
 
-    // delete calendar event if exists
+    // delete calendar event if exists. Support deleting whole recurring series when recurrence_id present.
     try {
-      if (info && info.calendar_event_id) {
+      const deleteSeries = (req.body && (req.body as any).deleteSeries) !== false;
+      const { deleteCalendarEvent } = await import("../lib/calendar");
+      if (info && info.recurrence_id && deleteSeries) {
         try {
-          const { deleteCalendarEvent } = await import("../lib/calendar");
+          await deleteCalendarEvent(info.recurrence_id);
+          console.log('Deleted recurring calendar event for booking series', id, info.recurrence_id);
+        } catch (e) {
+          console.warn('Failed to delete recurring calendar event for booking', id, e);
+        }
+      } else if (info && info.calendar_event_id) {
+        try {
           await deleteCalendarEvent(info.calendar_event_id);
           console.log('Deleted calendar event for booking', id, info.calendar_event_id);
         } catch (e) {
@@ -702,7 +710,12 @@ router.delete("/bookings/:id", async (req, res) => {
       }
     }
 
-    await query("DELETE FROM bookings WHERE id = $1", [id]);
+    if (info && info.recurrence_id && ((req.body && (req.body as any).deleteSeries) !== false)) {
+      // delete all bookings in the series
+      await query("DELETE FROM bookings WHERE recurrence_id = $1", [info.recurrence_id]);
+    } else {
+      await query("DELETE FROM bookings WHERE id = $1", [id]);
+    }
     res.json({ ok: true });
   } catch (err) {
     console.error("Failed to cancel booking:", err);
