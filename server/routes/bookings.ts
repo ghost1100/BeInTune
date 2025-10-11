@@ -518,15 +518,38 @@ router.post("/bookings", async (req, res) => {
         });
         try {
           // Create event without attendees to avoid service account invitation restrictions
-          const ev = await createCalendarEvent({
-            summary: `Lesson: ${info?.lesson_type || lesson_type || "Lesson"}`,
-            description: descParts.join("\n"),
-            startDateTime: startIso,
-            endDateTime: endDt,
-            recurrence: recurrence ? [String(recurrence)] : undefined,
-          });
+          // Idempotency: try to reuse an existing calendar event for this slot (avoid duplicates)
+          let ev: any = null;
+          try {
+            const existsQ = await query(
+              "SELECT calendar_event_id, recurrence_id FROM bookings WHERE slot_id = $1 AND (calendar_event_id IS NOT NULL OR recurrence_id IS NOT NULL) LIMIT 1",
+              [slot.id],
+            );
+            if (existsQ && existsQ.rows && existsQ.rows[0] && (existsQ.rows[0].calendar_event_id || existsQ.rows[0].recurrence_id)) {
+              ev = { id: existsQ.rows[0].calendar_event_id || existsQ.rows[0].recurrence_id };
+              try {
+                await query("UPDATE bookings SET calendar_event_id = $1, recurrence_id = $2 WHERE id = $3", [ev.id, existsQ.rows[0].recurrence_id || null, ins.rows[0].id]);
+                console.log("Reused existing calendar event for slot", slot.id, ev.id);
+              } catch (e) {
+                console.warn("Failed to persist reused calendar id", e);
+              }
+            }
+          } catch (e) {
+            console.warn("Failed to check for existing calendar event", e);
+          }
+
+          if (!ev) {
+            ev = await createCalendarEvent({
+              summary: `Lesson: ${info?.lesson_type || lesson_type || "Lesson"}`,
+              description: descParts.join("\n"),
+              startDateTime: startIso,
+              endDateTime: endDt,
+              recurrence: recurrence ? [String(recurrence)] : undefined,
+            });
+          }
+
           console.log(
-            "Calendar event created successfully for booking",
+            "Calendar event created/reused for booking",
             ins.rows[0].id,
             { eventId: ev && ev.id },
           );
@@ -540,7 +563,7 @@ router.post("/bookings", async (req, res) => {
 
               // If a recurrence RRULE with COUNT is provided, create DB slots and bookings for each occurrence
               try {
-                if (recurrence && typeof recurrence === "string") {
+                if (recurrence && typeof recurrence === 'string') {
                   const rStr = String(recurrence);
                   const m = rStr.match(/COUNT=(\d+)/i);
                   const count = m ? parseInt(m[1], 10) : null;
