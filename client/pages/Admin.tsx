@@ -796,7 +796,15 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
     null,
   );
   const [cancellationReason, setCancellationReason] = useState<string>("");
+  const [cancellationScope, setCancellationScope] = useState<'single'|'future'|'all'>('single');
   const [cancellationAll, setCancellationAll] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!cancellationBooking) return;
+    try {
+      setCancellationScope((cancellationBooking as any).recurrence_id ? 'all' : 'single');
+    } catch (e) {}
+  }, [cancellationBooking]);
   const cancellationReasons = [
     "Teacher unavailable",
     "Illness / emergency",
@@ -1245,15 +1253,19 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                 />
               </div>
               {cancellationBooking && (cancellationBooking as any).recurrence_id && (
-                <div className="mt-3">
-                  <label className="inline-flex items-center gap-2">
-                    <input
-                      id="deleteSeriesCheck"
-                      type="checkbox"
-                      checked={deleteSeriesOption}
-                      onChange={(e) => setDeleteSeriesOption(e.target.checked)}
-                    />
-                    <span className="text-sm">Delete entire recurring series (remove series from calendar and all bookings)</span>
+                <div className="mt-3 space-y-2">
+                  <div className="text-sm mb-1">Which occurrences should be cancelled?</div>
+                  <label className="flex items-center gap-2">
+                    <input type="radio" name="cancelScope" value="single" checked={cancellationScope === 'single'} onChange={() => setCancellationScope('single')} />
+                    <span className="text-sm">Only this event</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="radio" name="cancelScope" value="future" checked={cancellationScope === 'future'} onChange={() => setCancellationScope('future')} />
+                    <span className="text-sm">This and upcoming events</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="radio" name="cancelScope" value="all" checked={cancellationScope === 'all'} onChange={() => setCancellationScope('all')} />
+                    <span className="text-sm">All events (entire series)</span>
                   </label>
                 </div>
               )}
@@ -1266,15 +1278,10 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     try {
                       {
                         // read checkbox value directly to avoid reference errors
-                        let deleteSeries = true;
-                        try {
-                          const el = document.getElementById('deleteSeriesCheck') as HTMLInputElement | null;
-                          if (el) deleteSeries = !!el.checked;
-                        } catch (e) {}
                         await removeBk(cancellationBooking.id, {
                           reason: cancellationReason || null,
                           notify: true,
-                          deleteSeries,
+                          deleteScope: cancellationScope,
                         });
                       }
                       setCancellationBooking(null);
@@ -1298,15 +1305,10 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     setIsCancelling(cancellationBooking.id);
                     try {
                       {
-                        let deleteSeries = true;
-                        try {
-                          const el = document.getElementById('deleteSeriesCheck') as HTMLInputElement | null;
-                          if (el) deleteSeries = !!el.checked;
-                        } catch (e) {}
                         await removeBk(cancellationBooking.id, {
                           reason: null,
                           notify: true,
-                          deleteSeries,
+                          deleteScope: cancellationScope,
                         });
                       }
                       setCancellationBooking(null);
