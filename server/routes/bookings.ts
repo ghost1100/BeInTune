@@ -272,7 +272,7 @@ router.post("/bookings/cancel-all", requireAdmin, async (req, res) => {
 
 // POST /api/admin/bookings - create booking
 router.post("/bookings", async (req, res) => {
-  const { student_id, slot_id, lesson_type, name, email, phone } =
+  const { student_id, slot_id, lesson_type, name, email, phone, recurrence } =
     req.body as any;
   if (!slot_id) return res.status(400).json({ error: "Missing slot_id" });
   const slotRes = await query("SELECT * FROM slots WHERE id = $1", [slot_id]);
