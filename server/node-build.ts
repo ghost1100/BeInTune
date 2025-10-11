@@ -4,6 +4,7 @@ import * as express from "express";
 import http from "http";
 import { WebSocketServer } from "ws";
 import jwt from "jsonwebtoken";
+import { startBookingWorker } from "./workers/bookingWorker";
 
 const app = createServer();
 const port = process.env.PORT || 3000;
@@ -135,6 +136,13 @@ server.listen(port, () => {
   console.log(`📱 Frontend: http://localhost:${port}`);
   console.log(`🔧 API: http://localhost:${port}/api`);
   console.log(`🔌 WebSocket: ws://localhost:${port}/ws`);
+
+  // Start background booking worker (best-effort)
+  try {
+    startBookingWorker();
+  } catch (err) {
+    console.error('Failed to start booking worker:', err);
+  }
 });
 
 // Graceful shutdown
