@@ -465,6 +465,39 @@ router.post("/bookings", async (req, res) => {
                 "UPDATE bookings SET calendar_event_id = $1, recurrence_id = $2 WHERE id = $3",
                 [ev.id, recurrenceIdToStore, ins.rows[0].id],
               );
+
+              // If a recurrence RRULE with COUNT is provided, create DB slots and bookings for each occurrence
+              try {
+                if (recurrence && typeof recurrence === 'string') {
+                  const m = String(recurrence).match(/COUNT=(\d+)/i);
+                  const count = m ? parseInt(m[1], 10) : null;
+                  if (count && count > 1) {
+                    // create remaining occurrences (we already have the first)
+                    for (let i = 1; i < count; i++) {
+                      try {
+                        const dt = new Date(date);
+                        dt.setDate(dt.getDate() + i * 7); // weekly increment
+                        const pad = (n: number) => String(n).padStart(2, '0');
+                        const slotDate = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+                        const slotTime = time; // reuse same time
+                        const insSlot = await query(
+                          "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
+                          [slot.teacher_id || null, slotDate, slotTime, duration || 30],
+                        );
+                        const newSlotId = insSlot.rows[0].id;
+                        await query(
+                          "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+                          [student_id || null, newSlotId, lesson_type || null, nameToStore, emailToStore, phoneToStore, ev.id, ev.id],
+                        );
+                      } catch (inner) {
+                        console.warn('Failed to create booking for recurring occurrence', i, inner);
+                      }
+                    }
+                  }
+                }
+              } catch (inner) {
+                console.warn('Failed to expand recurring bookings into DB rows:', inner);
+              }
             }
           } catch (e) {
             console.error("Failed to persist calendar_event_id on booking", e);
