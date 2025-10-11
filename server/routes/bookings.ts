@@ -656,6 +656,206 @@ router.post("/bookings", async (req, res) => {
                   }
                 } catch (e) {}
 
+                // If a recurrence RRULE with COUNT is provided, create DB slots and bookings for each occurrence
+                try {
+                  if (recurrence && typeof recurrence === "string") {
+                    const rStr = String(recurrence);
+                    const m = rStr.match(/COUNT=(\d+)/i);
+                    const count = m ? parseInt(m[1], 10) : null;
+                    if (count && count > 1) {
+                      for (let i = 1; i < count; i++) {
+                        try {
+                          const dt = new Date(date + "T" + (time || "00:00") + ":00");
+                          dt.setDate(dt.getDate() + i * 7);
+                          const pad = (n: number) => String(n).padStart(2, "0");
+                          const slotDate = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+                          const slotTime = `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`;
+                          let newSlotId: string | null = null;
+                          try {
+                            const existingSlot = await query(
+                              "SELECT id FROM slots WHERE slot_date = $1 AND slot_time = $2 LIMIT 1",
+                              [slotDate, slotTime],
+                            );
+                            if (existingSlot && existingSlot.rows && existingSlot.rows[0]) {
+                              newSlotId = existingSlot.rows[0].id;
+                            } else {
+                              const insSlot = await query(
+                                "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
+                                [slot.teacher_id || null, slotDate, slotTime, duration || 30],
+                              );
+                              newSlotId = insSlot.rows[0].id;
+                            }
+                          } catch (innerSlotErr) {
+                            console.warn("Failed to ensure slot for recurring occurrence", innerSlotErr);
+                          }
+                          if (newSlotId) {
+                            try {
+                              const existingBk = await query(
+                                "SELECT id FROM bookings WHERE slot_id = $1 AND recurrence_id = $2 LIMIT 1",
+                                [newSlotId, ev.id],
+                              );
+                              if (!(existingBk && existingBk.rows && existingBk.rows[0])) {
+                                const insBk = await query(
+                                  "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
+                                  [student_id || null, newSlotId, lesson_type || null, nameToStore, emailToStore, phoneToStore, ev.id, ev.id],
+                                );
+                                try {
+                                  const newBkId = insBk && insBk.rows && insBk.rows[0] && insBk.rows[0].id;
+                                  if (newBkId) await mapInstanceToBooking(ev.id, slotDate, slotTime, newBkId);
+                                } catch (mapErr) {
+                                  console.warn('Failed to map instance for new booking', mapErr);
+                                }
+                              }
+                            } catch (innerBkErr) {
+                              console.warn("Failed to insert booking for recurring occurrence", innerBkErr);
+                            }
+                          }
+                        } catch (inner) {
+                          console.warn("Failed to create booking for recurring occurrence", i, inner);
+                        }
+                      }
+                    } else {
+                      const um = rStr.match(/UNTIL=([0-9TZ:+-]+)/i);
+                      if (um) {
+                        try {
+                          const untilRaw = um[1];
+                          let untilIso = untilRaw;
+                          const dmatch = untilRaw.match(/^(\d{8})T?(\d{6})?Z?$/);
+                          if (dmatch) {
+                            const datePart = dmatch[1];
+                            const timePart = dmatch[2] || "000000";
+                            const yyyy = datePart.slice(0, 4);
+                            const mm = datePart.slice(4, 6);
+                            const dd = datePart.slice(6, 8);
+                            const hh = timePart.slice(0, 2);
+                            const mi = timePart.slice(2, 4);
+                            const ss = timePart.slice(4, 6);
+                            untilIso = `${yyyy}-${mm}-${dd}T${hh}:${mi}:${ss}Z`;
+                          }
+                          const untilDate = new Date(untilIso);
+                          let cur = new Date(date + "T" + (time || "00:00") + ":00");
+                          const oneWeek = 7 * 24 * 60 * 60 * 1000;
+                          const dateKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                          cur = new Date(cur.getTime() + oneWeek);
+                          while (dateKey(cur) <= dateKey(untilDate)) {
+                            try {
+                              const pad = (n: number) => String(n).padStart(2, "0");
+                              const slotDate = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
+                              const slotTime = `${String(cur.getHours()).padStart(2, "0")}:${String(cur.getMinutes()).padStart(2, "0")}`;
+                              let newSlotId: string | null = null;
+                              try {
+                                const existingSlot = await query(
+                                  "SELECT id FROM slots WHERE slot_date = $1 AND slot_time = $2 LIMIT 1",
+                                  [slotDate, slotTime],
+                                );
+                                if (existingSlot && existingSlot.rows && existingSlot.rows[0]) {
+                                  newSlotId = existingSlot.rows[0].id;
+                                } else {
+                                  const insSlot = await query(
+                                    "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
+                                    [slot.teacher_id || null, slotDate, slotTime, duration || 30],
+                                  );
+                                  newSlotId = insSlot.rows[0].id;
+                                }
+                              } catch (innerSlotErr) {
+                                console.warn("Failed to ensure slot for recurring occurrence", innerSlotErr);
+                              }
+                              if (newSlotId) {
+                                try {
+                                  const existingBk = await query(
+                                    "SELECT id FROM bookings WHERE slot_id = $1 AND recurrence_id = $2 LIMIT 1",
+                                    [newSlotId, ev.id],
+                                  );
+                                  if (!(existingBk && existingBk.rows && existingBk.rows[0])) {
+                                    const insBk = await query(
+                                      "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
+                                      [student_id || null, newSlotId, lesson_type || null, nameToStore, emailToStore, phoneToStore, ev.id, ev.id],
+                                    );
+                                    try {
+                                      const newBkId = insBk && insBk.rows && insBk.rows[0] && insBk.rows[0].id;
+                                      if (newBkId) await mapInstanceToBooking(ev.id, slotDate, slotTime, newBkId);
+                                    } catch (mapErr) {
+                                      console.warn('Failed to map instance for new booking', mapErr);
+                                    }
+                                  }
+                                } catch (innerBkErr) {
+                                  console.warn("Failed to insert booking for recurring occurrence", innerBkErr);
+                                }
+                              }
+                            } catch (inner) {
+                              console.warn("Failed to create booking for recurring occurrence until", cur, inner);
+                            }
+                            cur = new Date(cur.getTime() + oneWeek);
+                          }
+                        } catch (inner) {
+                          console.warn("Failed to expand UNTIL-based recurring bookings:", inner);
+                        }
+                      } else {
+                        try {
+                          const occurrences = 12;
+                          let cur = new Date(date + "T" + (time || "00:00") + ":00");
+                          const oneWeek = 7 * 24 * 60 * 60 * 1000;
+                          cur = new Date(cur.getTime() + oneWeek);
+                          for (let i = 1; i <= occurrences; i++) {
+                            try {
+                              const pad = (n: number) => String(n).padStart(2, "0");
+                              const slotDate = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
+                              const slotTime = `${String(cur.getHours()).padStart(2, "0")}:${String(cur.getMinutes()).padStart(2, "0")}`;
+                              let newSlotId: string | null = null;
+                              try {
+                                const existingSlot = await query(
+                                  "SELECT id FROM slots WHERE slot_date = $1 AND slot_time = $2 LIMIT 1",
+                                  [slotDate, slotTime],
+                                );
+                                if (existingSlot && existingSlot.rows && existingSlot.rows[0]) {
+                                  newSlotId = existingSlot.rows[0].id;
+                                } else {
+                                  const insSlot = await query(
+                                    "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
+                                    [slot.teacher_id || null, slotDate, slotTime, duration || 30],
+                                  );
+                                  newSlotId = insSlot.rows[0].id;
+                                }
+                              } catch (innerSlotErr) {
+                                console.warn("Failed to ensure slot for recurring occurrence (fallback)", innerSlotErr);
+                              }
+                              if (newSlotId) {
+                                try {
+                                  const existingBk = await query(
+                                    "SELECT id FROM bookings WHERE slot_id = $1 AND recurrence_id = $2 LIMIT 1",
+                                    [newSlotId, ev.id],
+                                  );
+                                  if (!(existingBk && existingBk.rows && existingBk.rows[0])) {
+                                    const insBk = await query(
+                                      "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
+                                      [student_id || null, newSlotId, lesson_type || null, nameToStore, emailToStore, phoneToStore, ev.id, ev.id],
+                                    );
+                                    try {
+                                      const newBkId = insBk && insBk.rows && insBk.rows[0] && insBk.rows[0].id;
+                                      if (newBkId) await mapInstanceToBooking(ev.id, slotDate, slotTime, newBkId);
+                                    } catch (mapErr) {
+                                      console.warn('Failed to map instance for new booking', mapErr);
+                                    }
+                                  }
+                                } catch (innerBkErr) {
+                                  console.warn("Failed to insert booking for recurring occurrence (fallback)", innerBkErr);
+                                }
+                              }
+                            } catch (inner) {
+                              console.warn("Failed to create booking for recurring fallback occurrence", inner);
+                            }
+                            cur = new Date(cur.getTime() + oneWeek);
+                          }
+                        } catch (inner) {
+                          console.warn("Failed to expand fallback recurring bookings:", inner);
+                        }
+                      }
+                    }
+                  }
+                } catch (inner) {
+                  console.warn("Failed to expand recurring bookings into DB rows:", inner);
+                }
+
               }
             } catch (e) {
               console.error("Failed to persist calendar event id on booking (async):", e);
