@@ -454,9 +454,10 @@ router.post("/bookings", async (req, res) => {
           );
           try {
             if (ev && ev.id) {
+              const recurrenceIdToStore = recurrence ? ev.id : null;
               await query(
-                "UPDATE bookings SET calendar_event_id = $1 WHERE id = $2",
-                [ev.id, ins.rows[0].id],
+                "UPDATE bookings SET calendar_event_id = $1, recurrence_id = $2 WHERE id = $3",
+                [ev.id, recurrenceIdToStore, ins.rows[0].id],
               );
             }
           } catch (e) {
