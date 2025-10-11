@@ -52,6 +52,7 @@ async function readAvail(date?: string): Promise<Record<string, string[]>> {
 
     if (list.length === 0) {
       map[d] = Array.from(defaults);
+      _availCache.set(d, { ts: Date.now(), data: map[d] });
       return map;
     }
 
