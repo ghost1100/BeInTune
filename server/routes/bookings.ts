@@ -1213,6 +1213,20 @@ router.delete("/bookings/:id", async (req, res) => {
         deleteRecurringInstance,
       } = await import("../lib/calendar");
 
+      // If caller requested single-instance deletion and we already know the specific calendar instance id,
+      // try deleting it directly first. This avoids deleting the master recurring event when deleting one occurrence.
+      try {
+        const bodyAnyLocal = (req.body || {}) as any;
+        if (bodyAnyLocal.deleteScope === 'single' && info && info.calendar_instance_id) {
+          try {
+            await deleteCalendarEvent(info.calendar_instance_id);
+            console.log('Deleted calendar instance by id (preflight)', info.calendar_instance_id);
+          } catch (e) {
+            console.warn('Preflight delete by instance id failed', info.calendar_instance_id, e);
+          }
+        }
+      } catch (e) {}
+
       if (info && info.recurrence_id) {
         if (deleteScope === "all") {
           try {
