@@ -578,29 +578,56 @@ router.post("/bookings", async (req, res) => {
                         const pad = (n: number) => String(n).padStart(2, "0");
                         const slotDate = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
                         const slotTime = `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`; // reuse computed time
-                        const insSlot = await query(
-                          "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
-                          [
-                            slot.teacher_id || null,
-                            slotDate,
-                            slotTime,
-                            duration || 30,
-                          ],
-                        );
-                        const newSlotId = insSlot.rows[0].id;
-                        await query(
-                          "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
-                          [
-                            student_id || null,
-                            newSlotId,
-                            lesson_type || null,
-                            nameToStore,
-                            emailToStore,
-                            phoneToStore,
-                            ev.id,
-                            ev.id,
-                          ],
-                        );
+                        // avoid duplicating slots/bookings if they already exist
+                        let newSlotId: string | null = null;
+                        try {
+                          const existingSlot = await query(
+                            "SELECT id FROM slots WHERE slot_date = $1 AND slot_time = $2 LIMIT 1",
+                            [slotDate, slotTime],
+                          );
+                          if (existingSlot && existingSlot.rows && existingSlot.rows[0]) {
+                            newSlotId = existingSlot.rows[0].id;
+                          } else {
+                            const insSlot = await query(
+                              "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
+                              [
+                                slot.teacher_id || null,
+                                slotDate,
+                                slotTime,
+                                duration || 30,
+                              ],
+                            );
+                            newSlotId = insSlot.rows[0].id;
+                          }
+                        } catch (innerSlotErr) {
+                          console.warn('Failed to ensure slot for recurring occurrence', innerSlotErr);
+                        }
+                        if (newSlotId) {
+                          // avoid duplicate booking for same recurrence/slot
+                          try {
+                            const existingBk = await query(
+                              "SELECT id FROM bookings WHERE slot_id = $1 AND recurrence_id = $2 LIMIT 1",
+                              [newSlotId, ev.id],
+                            );
+                            if (!(existingBk && existingBk.rows && existingBk.rows[0])) {
+                              await query(
+                                "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+                                [
+                                  student_id || null,
+                                  newSlotId,
+                                  lesson_type || null,
+                                  nameToStore,
+                                  emailToStore,
+                                  phoneToStore,
+                                  ev.id,
+                                  ev.id,
+                                ],
+                              );
+                            }
+                          } catch (innerBkErr) {
+                            console.warn('Failed to insert booking for recurring occurrence', innerBkErr);
+                          }
+                        }
                       } catch (inner) {
                         console.warn(
                           "Failed to create booking for recurring occurrence",
@@ -644,6 +671,16 @@ router.post("/bookings", async (req, res) => {
                               String(n).padStart(2, "0");
                             const slotDate = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
                             const slotTime = `${String(cur.getHours()).padStart(2, "0")}:${String(cur.getMinutes()).padStart(2, "0")}`;
+                            // avoid duplicating slots/bookings if they already exist
+                        let newSlotId: string | null = null;
+                        try {
+                          const existingSlot = await query(
+                            "SELECT id FROM slots WHERE slot_date = $1 AND slot_time = $2 LIMIT 1",
+                            [slotDate, slotTime],
+                          );
+                          if (existingSlot && existingSlot.rows && existingSlot.rows[0]) {
+                            newSlotId = existingSlot.rows[0].id;
+                          } else {
                             const insSlot = await query(
                               "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
                               [
@@ -653,20 +690,37 @@ router.post("/bookings", async (req, res) => {
                                 duration || 30,
                               ],
                             );
-                            const newSlotId = insSlot.rows[0].id;
-                            await query(
-                              "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
-                              [
-                                student_id || null,
-                                newSlotId,
-                                lesson_type || null,
-                                nameToStore,
-                                emailToStore,
-                                phoneToStore,
-                                ev.id,
-                                ev.id,
-                              ],
+                            newSlotId = insSlot.rows[0].id;
+                          }
+                        } catch (innerSlotErr) {
+                          console.warn('Failed to ensure slot for recurring occurrence', innerSlotErr);
+                        }
+                        if (newSlotId) {
+                          // avoid duplicate booking for same recurrence/slot
+                          try {
+                            const existingBk = await query(
+                              "SELECT id FROM bookings WHERE slot_id = $1 AND recurrence_id = $2 LIMIT 1",
+                              [newSlotId, ev.id],
                             );
+                            if (!(existingBk && existingBk.rows && existingBk.rows[0])) {
+                              await query(
+                                "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+                                [
+                                  student_id || null,
+                                  newSlotId,
+                                  lesson_type || null,
+                                  nameToStore,
+                                  emailToStore,
+                                  phoneToStore,
+                                  ev.id,
+                                  ev.id,
+                                ],
+                              );
+                            }
+                          } catch (innerBkErr) {
+                            console.warn('Failed to insert booking for recurring occurrence', innerBkErr);
+                          }
+                        }
                           } catch (inner) {
                             console.warn(
                               "Failed to create booking for recurring occurrence until",
