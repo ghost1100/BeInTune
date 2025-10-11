@@ -212,6 +212,10 @@ export async function addBooking(
       if ((booking as any).email) payload.email = (booking as any).email;
       if ((booking as any).phone) payload.phone = (booking as any).phone;
     }
+    // Include recurrence rule when provided (RRULE string)
+    if ((booking as any).recurrence) {
+      payload.recurrence = (booking as any).recurrence;
+    }
     const res = await api(`/api/admin/bookings`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
