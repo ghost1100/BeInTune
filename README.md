@@ -14,11 +14,11 @@ Key features
 Development commands
 
 - pnpm install
-- pnpm dev        # Start dev server (client + server)
-- pnpm build      # Production build (client + server)
-- pnpm start      # Start production server
-- pnpm test       # Run Vitest tests
-- pnpm typecheck  # TypeScript validation
+- pnpm dev # Start dev server (client + server)
+- pnpm build # Production build (client + server)
+- pnpm start # Start production server
+- pnpm test # Run Vitest tests
+- pnpm typecheck # TypeScript validation
 
 Environment variables
 
@@ -70,7 +70,7 @@ Prerequisites
 
 Run the integration test (creates a recurring event, inserts test slots+bookings, truncates the recurrence, deletes future bookings, and cleans up):
 
-  node tmp/integration-test.mjs
+node tmp/integration-test.mjs
 
 What the script prints
 
@@ -126,7 +126,7 @@ Next steps & checklist (recommended for production-ready background processing)
 
 Testing the schedule feature (manual and automated checks)
 
-1) Quick manual test using API endpoints (replace host/port and include auth if required):
+1. Quick manual test using API endpoints (replace host/port and include auth if required):
 
 - Create a slot:
   curl -X POST "http://localhost:3000/api/admin/slots" -H "Content-Type: application/json" -d '{"slot_date":"2025-10-15","slot_time":"10:00","duration_minutes":30}'
@@ -137,13 +137,13 @@ Testing the schedule feature (manual and automated checks)
 - Verify bookings for date:
   curl "http://localhost:3000/api/admin/bookings?date=2025-10-15"
 
-2) Verify background processing (email/calendar/job enqueue)
+2. Verify background processing (email/calendar/job enqueue)
 
 - Ensure Redis is running and REDIS_URL is set.
 - After creating a booking, check Redis / BullMQ UI for a job in the `bookingQueue` and confirm the worker processes it: look for logs "Booking worker started" and "Booking job completed" in server/worker logs.
 - Confirm calendar event created (use tmp/list-events.mjs or check Google Calendar directly) and that attendee received email (check SMTP logs or SendGrid dashboard).
 
-3) Integration script (repeatable)
+3. Integration script (repeatable)
 
 - The repo contains `tmp/integration-test.mjs` which runs a full recurring booking flow using Google Calendar; prerequisites: GOOGLE_CREDS_BASE64, GOOGLE_CALENDAR_ID, DATABASE_URL set. Run:
   node tmp/integration-test.mjs
@@ -157,5 +157,5 @@ Notes and known blockers
   - If you want me to run integration tests that touch Google Calendar, provide a valid `GOOGLE_CREDS_BASE64` secret or confirm you want me to use the existing service account env variable already set in this environment.
 
 If you want, I can now:
-- Run the schedule feature test here (I will attempt to install deps and run server + worker + a small API-based smoke test). Click to confirm and I will proceed, otherwise run `pnpm install` and tell me when it's done and I will run the tests for you.
 
+- Run the schedule feature test here (I will attempt to install deps and run server + worker + a small API-based smoke test). Click to confirm and I will proceed, otherwise run `pnpm install` and tell me when it's done and I will run the tests for you.

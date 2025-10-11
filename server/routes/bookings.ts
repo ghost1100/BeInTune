@@ -28,16 +28,24 @@ router.get("/slots", async (req, res) => {
   );
   try {
     const count = q.rowCount || (q.rows && q.rows.length) || 0;
-    const maxCreated = q.rows && q.rows.length ? q.rows.reduce((acc: string, r: any) => (r.created_at && r.created_at > acc ? r.created_at : acc), "") : "";
+    const maxCreated =
+      q.rows && q.rows.length
+        ? q.rows.reduce(
+            (acc: string, r: any) =>
+              r.created_at && r.created_at > acc ? r.created_at : acc,
+            "",
+          )
+        : "";
     const meta = JSON.stringify({ count, maxCreated });
-    const etag = 'W/"' + Buffer.from(meta).toString('base64') + '"';
-    const incoming = req.headers['if-none-match'];
+    const etag = 'W/"' + Buffer.from(meta).toString("base64") + '"';
+    const incoming = req.headers["if-none-match"];
     if (incoming && String(incoming) === etag) {
       res.status(304).end();
       return;
     }
-    res.setHeader('ETag', etag);
-    if (maxCreated) res.setHeader('Last-Modified', new Date(maxCreated).toUTCString());
+    res.setHeader("ETag", etag);
+    if (maxCreated)
+      res.setHeader("Last-Modified", new Date(maxCreated).toUTCString());
   } catch (e) {
     // ignore meta/header errors
   }
@@ -103,16 +111,24 @@ router.get("/bookings", async (req, res) => {
       );
       try {
         const count = q.rowCount || (q.rows && q.rows.length) || 0;
-        const maxCreated = q.rows && q.rows.length ? q.rows.reduce((acc: string, r: any) => (r.created_at && r.created_at > acc ? r.created_at : acc), "") : "";
+        const maxCreated =
+          q.rows && q.rows.length
+            ? q.rows.reduce(
+                (acc: string, r: any) =>
+                  r.created_at && r.created_at > acc ? r.created_at : acc,
+                "",
+              )
+            : "";
         const meta = JSON.stringify({ count, maxCreated });
-        const etag = 'W/"' + Buffer.from(meta).toString('base64') + '"';
-        const incoming = req.headers['if-none-match'];
+        const etag = 'W/"' + Buffer.from(meta).toString("base64") + '"';
+        const incoming = req.headers["if-none-match"];
         if (incoming && String(incoming) === etag) {
           res.status(304).end();
           return;
         }
-        res.setHeader('ETag', etag);
-        if (maxCreated) res.setHeader('Last-Modified', new Date(maxCreated).toUTCString());
+        res.setHeader("ETag", etag);
+        if (maxCreated)
+          res.setHeader("Last-Modified", new Date(maxCreated).toUTCString());
       } catch (e) {}
     } else {
       q = await query(
@@ -425,15 +441,19 @@ router.post("/bookings", async (req, res) => {
     ]);
 
     // respond early to client to avoid long blocking during calendar/email operations
-    res.json({ ok: true, bookingId: ins.rows[0].id, created_at: ins.rows[0].created_at });
+    res.json({
+      ok: true,
+      bookingId: ins.rows[0].id,
+      created_at: ins.rows[0].created_at,
+    });
 
     // run notifications and calendar operations asynchronously
     // enqueue background processing to Redis queue
     try {
-      const { addBookingJob } = await import('../lib/queue');
+      const { addBookingJob } = await import("../lib/queue");
       await addBookingJob({ bookingId: ins.rows[0].id });
     } catch (e) {
-      console.warn('Failed to enqueue booking job', e);
+      console.warn("Failed to enqueue booking job", e);
     }
 
     return;
@@ -650,12 +670,23 @@ router.delete("/bookings/:id", async (req, res) => {
       // try deleting it directly first. This avoids deleting the master recurring event when deleting one occurrence.
       try {
         const bodyAnyLocal = (req.body || {}) as any;
-        if (bodyAnyLocal.deleteScope === 'single' && info && info.calendar_instance_id) {
+        if (
+          bodyAnyLocal.deleteScope === "single" &&
+          info &&
+          info.calendar_instance_id
+        ) {
           try {
             await deleteCalendarEvent(info.calendar_instance_id);
-            console.log('Deleted calendar instance by id (preflight)', info.calendar_instance_id);
+            console.log(
+              "Deleted calendar instance by id (preflight)",
+              info.calendar_instance_id,
+            );
           } catch (e) {
-            console.warn('Preflight delete by instance id failed', info.calendar_instance_id, e);
+            console.warn(
+              "Preflight delete by instance id failed",
+              info.calendar_instance_id,
+              e,
+            );
           }
         }
       } catch (e) {}
@@ -934,43 +965,68 @@ router.post("/bookings/demo-add", requireAdmin, async (req, res) => {
 });
 
 // Admin-only helper: map Google calendar instance IDs to bookings missing calendar_instance_id
-router.post('/bookings/map-instances', requireAdmin, async (req, res) => {
+router.post("/bookings/map-instances", requireAdmin, async (req, res) => {
   try {
-    const { listInstances } = await import('../lib/calendar');
-    const rows = await query("SELECT b.id as booking_id, b.recurrence_id, s.slot_date, s.slot_time FROM bookings b LEFT JOIN slots s ON b.slot_id = s.id WHERE b.recurrence_id IS NOT NULL AND b.calendar_instance_id IS NULL");
+    const { listInstances } = await import("../lib/calendar");
+    const rows = await query(
+      "SELECT b.id as booking_id, b.recurrence_id, s.slot_date, s.slot_time FROM bookings b LEFT JOIN slots s ON b.slot_id = s.id WHERE b.recurrence_id IS NOT NULL AND b.calendar_instance_id IS NULL",
+    );
     const list = rows && rows.rows ? rows.rows : [];
     const results: any[] = [];
     for (const r of list) {
       try {
         const bookingId = r.booking_id;
         const eventId = r.recurrence_id;
-        const slotDate = r.slot_date && r.slot_date.toISOString ? r.slot_date.toISOString().slice(0,10) : (typeof r.slot_date === 'string' && r.slot_date.includes('T') ? r.slot_date.split('T')[0] : r.slot_date);
-        const slotTime = typeof r.slot_time === 'string' ? r.slot_time.split(':').slice(0,2).join(':') : r.slot_time;
+        const slotDate =
+          r.slot_date && r.slot_date.toISOString
+            ? r.slot_date.toISOString().slice(0, 10)
+            : typeof r.slot_date === "string" && r.slot_date.includes("T")
+              ? r.slot_date.split("T")[0]
+              : r.slot_date;
+        const slotTime =
+          typeof r.slot_time === "string"
+            ? r.slot_time.split(":").slice(0, 2).join(":")
+            : r.slot_time;
         const startIso = `${slotDate}T${slotTime}:00`;
         const end = new Date(startIso);
-        end.setSeconds(end.getSeconds()+1);
-        const instances = await listInstances(eventId, startIso, end.toISOString());
+        end.setSeconds(end.getSeconds() + 1);
+        const instances = await listInstances(
+          eventId,
+          startIso,
+          end.toISOString(),
+        );
         let found = null;
         for (const it of instances) {
           const s = it.start && (it.start.dateTime || it.start.date);
           if (!s) continue;
-          if (s.startsWith(startIso.slice(0,19))) { found = it; break; }
-          try { if (new Date(s).toISOString() === startIso) { found = it; break; } } catch(e){}
+          if (s.startsWith(startIso.slice(0, 19))) {
+            found = it;
+            break;
+          }
+          try {
+            if (new Date(s).toISOString() === startIso) {
+              found = it;
+              break;
+            }
+          } catch (e) {}
         }
         if (found && found.id) {
-          await query('UPDATE bookings SET calendar_instance_id = $1 WHERE id = $2', [found.id, bookingId]);
-          results.push({ bookingId, instance: found.id, status: 'mapped' });
+          await query(
+            "UPDATE bookings SET calendar_instance_id = $1 WHERE id = $2",
+            [found.id, bookingId],
+          );
+          results.push({ bookingId, instance: found.id, status: "mapped" });
         } else {
-          results.push({ bookingId, instance: null, status: 'not_found' });
+          results.push({ bookingId, instance: null, status: "not_found" });
         }
       } catch (err) {
-        console.warn('map-instances: failed for row', r, err);
+        console.warn("map-instances: failed for row", r, err);
         results.push({ row: r, error: String(err) });
       }
     }
     res.json({ ok: true, mapped: results.length, results });
   } catch (err) {
-    console.error('map-instances failed', err);
+    console.error("map-instances failed", err);
     res.status(500).json({ error: String(err) });
   }
 });

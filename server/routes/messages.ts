@@ -109,7 +109,11 @@ router.post("/messages", async (req, res) => {
         );
         try {
           const notif = notifRes && notifRes.rows && notifRes.rows[0];
-          req.app.locals.broadcast?.(notif.user_id || null, "notification:new", notif);
+          req.app.locals.broadcast?.(
+            notif.user_id || null,
+            "notification:new",
+            notif,
+          );
         } catch (e) {
           console.error("Failed to broadcast notification:new", e);
         }

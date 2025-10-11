@@ -105,7 +105,11 @@ router.post("/posts", async (req, res) => {
     }
 
     try {
-      req.app.locals.broadcast?.(null, "post:new", { id: postId, body, attachments });
+      req.app.locals.broadcast?.(null, "post:new", {
+        id: postId,
+        body,
+        attachments,
+      });
     } catch (e) {
       console.error("WS broadcast error:", e);
     }
@@ -131,7 +135,14 @@ router.post("/posts", async (req, res) => {
                 JSON.stringify({ postId, snippet: (body || "").slice(0, 200) }),
               ],
             );
-            try { if (notifRes && notifRes.rows && notifRes.rows[0]) req.app.locals.broadcast?.(notifRes.rows[0].user_id || null, 'notification:new', notifRes.rows[0]); } catch(e){}
+            try {
+              if (notifRes && notifRes.rows && notifRes.rows[0])
+                req.app.locals.broadcast?.(
+                  notifRes.rows[0].user_id || null,
+                  "notification:new",
+                  notifRes.rows[0],
+                );
+            } catch (e) {}
           }
         }
       }
@@ -190,7 +201,14 @@ router.post("/posts/:id/comments", async (req, res) => {
             JSON.stringify({ postId: id, snippet: (body || "").slice(0, 200) }),
           ],
         );
-        try { if (notifRes && notifRes.rows && notifRes.rows[0]) req.app.locals.broadcast?.(notifRes.rows[0].user_id || null, 'notification:new', notifRes.rows[0]); } catch(e) {}
+        try {
+          if (notifRes && notifRes.rows && notifRes.rows[0])
+            req.app.locals.broadcast?.(
+              notifRes.rows[0].user_id || null,
+              "notification:new",
+              notifRes.rows[0],
+            );
+        } catch (e) {}
       }
       // mentions
       const mentionRegex = /@([\w._-]+)/g;
@@ -216,7 +234,14 @@ router.post("/posts/:id/comments", async (req, res) => {
                 }),
               ],
             );
-            try { if (notifRes && notifRes.rows && notifRes.rows[0]) req.app.locals.broadcast?.(notifRes.rows[0].user_id || null, 'notification:new', notifRes.rows[0]); } catch(e) {}
+            try {
+              if (notifRes && notifRes.rows && notifRes.rows[0])
+                req.app.locals.broadcast?.(
+                  notifRes.rows[0].user_id || null,
+                  "notification:new",
+                  notifRes.rows[0],
+                );
+            } catch (e) {}
           }
         }
       }

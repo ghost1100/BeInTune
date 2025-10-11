@@ -39,33 +39,41 @@ export default function NotificationBell() {
       fetchNotifications();
       // schedule next only when page is visible and no WS
       timer = setInterval(() => {
-        if (document.visibilityState === 'visible' && !wsConnected) fetchNotifications();
+        if (document.visibilityState === "visible" && !wsConnected)
+          fetchNotifications();
       }, POLL_MS);
     };
 
     const connectWS = () => {
       try {
-        const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const proto = window.location.protocol === "https:" ? "wss" : "ws";
         const host = window.location.host;
-        const token = typeof window !== 'undefined' ? window.localStorage.getItem('inTuneToken') : null;
-        const url = `${proto}://${host}/ws${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+        const token =
+          typeof window !== "undefined"
+            ? window.localStorage.getItem("inTuneToken")
+            : null;
+        const url = `${proto}://${host}/ws${token ? `?token=${encodeURIComponent(token)}` : ""}`;
         ws = new WebSocket(url);
-        ws.addEventListener('open', () => {
+        ws.addEventListener("open", () => {
           wsConnected = true;
           // when WS connected, do an immediate fetch to ensure state
           fetchNotifications();
         });
-        ws.addEventListener('message', (ev) => {
+        ws.addEventListener("message", (ev) => {
           try {
             const data = JSON.parse(ev.data);
             if (!data || !data.type) return;
-            if (data.type === 'notification:new') {
+            if (data.type === "notification:new") {
               const payload = data.payload;
               // if this notification is for current user, add it
-              if (!user || (payload && payload.user_id && payload.user_id !== user.id)) return;
+              if (
+                !user ||
+                (payload && payload.user_id && payload.user_id !== user.id)
+              )
+                return;
               setNotifications((s) => [payload, ...(s || [])].slice(0, 50));
               setUnreadCount((c) => c + 1);
-            } else if (data.type && data.type.startsWith('message')) {
+            } else if (data.type && data.type.startsWith("message")) {
               // Depending on broadcast types, force refresh
               fetchNotifications();
             }
@@ -73,16 +81,18 @@ export default function NotificationBell() {
             // ignore
           }
         });
-        ws.addEventListener('close', () => {
+        ws.addEventListener("close", () => {
           wsConnected = false;
           // attempt reconnect after delay
           setTimeout(() => {
             if (mounted) connectWS();
           }, 5000);
         });
-        ws.addEventListener('error', () => {
+        ws.addEventListener("error", () => {
           wsConnected = false;
-          try { ws && ws.close(); } catch(e) {}
+          try {
+            ws && ws.close();
+          } catch (e) {}
         });
       } catch (e) {
         // fallback to polling
@@ -93,19 +103,24 @@ export default function NotificationBell() {
     connectWS();
 
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         // refresh immediately when tab becomes visible
         fetchNotifications();
       }
     };
 
-    document.addEventListener('visibilitychange', onVisibility);
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       mounted = false;
       if (timer) clearInterval(timer);
-      document.removeEventListener('visibilitychange', onVisibility);
-      try { if (ws) { ws.close(); ws = null; } } catch (e) {}
+      document.removeEventListener("visibilitychange", onVisibility);
+      try {
+        if (ws) {
+          ws.close();
+          ws = null;
+        }
+      } catch (e) {}
     };
   }, [user]);
 

@@ -119,7 +119,6 @@ export default function Admin() {
     })();
   }, [navigate]);
 
-
   const add = async (e: FormEvent) => {
     e.preventDefault();
     try {
@@ -794,13 +793,17 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
     null,
   );
   const [cancellationReason, setCancellationReason] = useState<string>("");
-  const [cancellationScope, setCancellationScope] = useState<'single'|'future'|'all'>('single');
+  const [cancellationScope, setCancellationScope] = useState<
+    "single" | "future" | "all"
+  >("single");
   const [cancellationAll, setCancellationAll] = useState<boolean>(false);
 
   useEffect(() => {
     if (!cancellationBooking) return;
     try {
-      setCancellationScope((cancellationBooking as any).recurrence_id ? 'all' : 'single');
+      setCancellationScope(
+        (cancellationBooking as any).recurrence_id ? "all" : "single",
+      );
     } catch (e) {}
   }, [cancellationBooking]);
   const cancellationReasons = [
@@ -863,7 +866,10 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
         ...(recurrence ? { recurrence } : {}),
       });
       if (!bk) {
-        toast({ title: "Unable to create booking", description: "Slot unavailable or conflict" });
+        toast({
+          title: "Unable to create booking",
+          description: "Slot unavailable or conflict",
+        });
         return;
       }
       setSelectedSlot(null);
@@ -873,9 +879,10 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
       setShowStudentModal(false);
       setRefresh((r) => r + 1);
     } catch (err: any) {
-      console.error('Create booking error:', err);
-      const msg = err?.message || (typeof err === 'string' ? err : 'Unknown error');
-      toast({ title: 'Booking failed', description: msg });
+      console.error("Create booking error:", err);
+      const msg =
+        err?.message || (typeof err === "string" ? err : "Unknown error");
+      toast({ title: "Booking failed", description: msg });
     }
   };
 
@@ -1257,23 +1264,46 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                   onChange={(e) => setCancellationReason(e.target.value)}
                 />
               </div>
-              {cancellationBooking && (cancellationBooking as any).recurrence_id && (
-                <div className="mt-3 space-y-2">
-                  <div className="text-sm mb-1">Which occurrences should be cancelled?</div>
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="cancelScope" value="single" checked={cancellationScope === 'single'} onChange={() => setCancellationScope('single')} />
-                    <span className="text-sm">Only this event</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="cancelScope" value="future" checked={cancellationScope === 'future'} onChange={() => setCancellationScope('future')} />
-                    <span className="text-sm">This and upcoming events</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="cancelScope" value="all" checked={cancellationScope === 'all'} onChange={() => setCancellationScope('all')} />
-                    <span className="text-sm">All events (entire series)</span>
-                  </label>
-                </div>
-              )}
+              {cancellationBooking &&
+                (cancellationBooking as any).recurrence_id && (
+                  <div className="mt-3 space-y-2">
+                    <div className="text-sm mb-1">
+                      Which occurrences should be cancelled?
+                    </div>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="cancelScope"
+                        value="single"
+                        checked={cancellationScope === "single"}
+                        onChange={() => setCancellationScope("single")}
+                      />
+                      <span className="text-sm">Only this event</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="cancelScope"
+                        value="future"
+                        checked={cancellationScope === "future"}
+                        onChange={() => setCancellationScope("future")}
+                      />
+                      <span className="text-sm">This and upcoming events</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="cancelScope"
+                        value="all"
+                        checked={cancellationScope === "all"}
+                        onChange={() => setCancellationScope("all")}
+                      />
+                      <span className="text-sm">
+                        All events (entire series)
+                      </span>
+                    </label>
+                  </div>
+                )}
               <div className="flex gap-2 mt-3">
                 <button
                   className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground"
@@ -1294,7 +1324,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                       setRefresh((r) => r + 1);
                     } catch (e: any) {
                       console.error("Cancel booking error:", e);
-                      const msg = e?.message || (typeof e === 'string' ? e : 'Unknown error');
+                      const msg =
+                        e?.message ||
+                        (typeof e === "string" ? e : "Unknown error");
                       alert(`Failed to cancel booking: ${msg}`);
                     } finally {
                       setIsCancelling(null);
@@ -1321,7 +1353,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                       setRefresh((r) => r + 1);
                     } catch (e: any) {
                       console.error("Cancel booking error:", e);
-                      const msg = e?.message || (typeof e === 'string' ? e : 'Unknown error');
+                      const msg =
+                        e?.message ||
+                        (typeof e === "string" ? e : "Unknown error");
                       alert(`Failed to cancel booking: ${msg}`);
                     } finally {
                       setIsCancelling(null);
@@ -1408,7 +1442,9 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                       setRefresh((r) => r + 1);
                     } catch (e: any) {
                       console.error("Cancel all error:", e);
-                      const msg = e?.message || (typeof e === 'string' ? e : 'Unknown error');
+                      const msg =
+                        e?.message ||
+                        (typeof e === "string" ? e : "Unknown error");
                       alert(`Failed to cancel bookings: ${msg}`);
                     } finally {
                       setIsCancelling(null);

@@ -24,10 +24,11 @@ wss.on("connection", (ws, req) => {
   try {
     // Extract token from query param `token` or Sec-WebSocket-Protocol header
     const url = req.url || "";
-    const params = new URLSearchParams((url.split("?")[1] || ""));
+    const params = new URLSearchParams(url.split("?")[1] || "");
     let token = params.get("token") || null;
 
-    const protoHeader = (req.headers && (req.headers["sec-websocket-protocol"] as string)) || "";
+    const protoHeader =
+      (req.headers && (req.headers["sec-websocket-protocol"] as string)) || "";
     if (!token && protoHeader) {
       const proto = protoHeader.split(",")[0].trim();
       if (proto.startsWith("Bearer ")) token = proto.split(" ")[1];
@@ -87,7 +88,9 @@ wss.on("connection", (ws, req) => {
     });
   } catch (err) {
     console.error("Error handling WebSocket connection:", err);
-    try { ws.close(1011, "Internal error"); } catch (e) {}
+    try {
+      ws.close(1011, "Internal error");
+    } catch (e) {}
   }
 });
 
@@ -141,7 +144,7 @@ server.listen(port, () => {
   try {
     startBookingWorker();
   } catch (err) {
-    console.error('Failed to start booking worker:', err);
+    console.error("Failed to start booking worker:", err);
   }
 });
 
