@@ -352,6 +352,19 @@ router.post("/bookings", async (req, res) => {
     return res.status(404).json({ error: "Slot not found" });
 
   try {
+    // prevent duplicate booking for same slot (best-effort pre-check)
+    try {
+      const existing = await query(
+        "SELECT id FROM bookings WHERE slot_id = $1 LIMIT 1",
+        [slot_id],
+      );
+      if (existing && existing.rows && existing.rows[0]) {
+        return res.status(409).json({ error: "Slot already booked" });
+      }
+    } catch (e) {
+      console.warn("Failed to check existing booking for slot before insert", e);
+    }
+
     // encrypt guest fields if encryption key present
     const { encryptText } = await import("../lib/crypto");
     const nameEnc = name ? encryptText(String(name)) : null;
