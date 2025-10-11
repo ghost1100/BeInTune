@@ -854,22 +854,29 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
       recurrence = undefined;
     }
 
-    const bk = await addBooking({
-      date,
-      time: selectedSlot,
-      studentId: selectedStudentId,
-      ...(recurrence ? { recurrence } : {}),
-    });
-    if (!bk) {
-      alert("Unable to create booking (slot unavailable)");
-      return;
+    const { toast } = await import("@/hooks/use-toast").then(m => m.useToast ? { toast: m.useToast().toast } : m.useToast());
+    try {
+      const bk = await addBooking({
+        date,
+        time: selectedSlot,
+        studentId: selectedStudentId,
+        ...(recurrence ? { recurrence } : {}),
+      });
+      if (!bk) {
+        toast({ title: "Unable to create booking", description: "Slot unavailable or conflict" });
+        return;
+      }
+      setSelectedSlot(null);
+      setSelectedStudentId(null);
+      setRecurrenceEnabled(false);
+      setRecurrenceUntil("");
+      setShowStudentModal(false);
+      setRefresh((r) => r + 1);
+    } catch (err: any) {
+      console.error('Create booking error:', err);
+      const msg = err?.message || (typeof err === 'string' ? err : 'Unknown error');
+      toast({ title: 'Booking failed', description: msg });
     }
-    setSelectedSlot(null);
-    setSelectedStudentId(null);
-    setRecurrenceEnabled(false);
-    setRecurrenceUntil("");
-    setShowStudentModal(false);
-    setRefresh((r) => r + 1);
   };
 
   return (
