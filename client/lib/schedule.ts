@@ -92,7 +92,7 @@ async function readBookings(date?: string): Promise<Booking[]> {
       : rows && Array.isArray((rows as any).rows)
         ? (rows as any).rows
         : [];
-    return list.map((r: any) => ({
+    const mapped = list.map((r: any) => ({
       ...r,
       time: normalizeTime(r.time || r.slot_time || r.slotTime),
       slot_id: r.slot_id || r.slotId || null,
@@ -101,6 +101,8 @@ async function readBookings(date?: string): Promise<Booking[]> {
       phone: r.phone || null,
       lessonType: r.lesson_type || r.lessonType || null,
     }));
+    if (date) _bookingsCache.set(date, { ts: Date.now(), data: mapped });
+    return mapped;
   } catch (e) {
     console.error("readBookings error", e);
     return [];
