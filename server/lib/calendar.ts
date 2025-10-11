@@ -319,6 +319,21 @@ export async function deleteRecurringInstance(
   }
 }
 
+export async function listInstances(eventId: string, timeMin?: string, timeMax?: string, calendarId?: string) {
+  try {
+    const auth = await initAuth();
+    const calendar = google.calendar({ version: "v3", auth });
+    const cid =
+      calendarId || process.env.GOOGLE_CALENDAR_ID || serviceAccount.client_email;
+    const res = await calendar.events.instances({ calendarId: cid, eventId, timeMin, timeMax });
+    const items: any[] = (res && (res as any).data && (res as any).data.items) || [];
+    return items;
+  } catch (err) {
+    console.error("listInstances error:", err);
+    throw err;
+  }
+}
+
 export async function deleteCalendarEvent(
   eventId: string,
   calendarId?: string,
