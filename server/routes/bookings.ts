@@ -705,19 +705,25 @@ router.post("/bookings", async (req, res) => {
                                 existingBk.rows[0]
                               )
                             ) {
-                              await query(
-                                "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
-                                [
-                                  student_id || null,
-                                  newSlotId,
-                                  lesson_type || null,
-                                  nameToStore,
-                                  emailToStore,
-                                  phoneToStore,
-                                  ev.id,
-                                  ev.id,
-                                ],
-                              );
+                              const insBk = await query(
+                                    "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
+                                    [
+                                      student_id || null,
+                                      newSlotId,
+                                      lesson_type || null,
+                                      nameToStore,
+                                      emailToStore,
+                                      phoneToStore,
+                                      ev.id,
+                                      ev.id,
+                                    ],
+                                  );
+                                  try {
+                                    const newBkId = insBk && insBk.rows && insBk.rows[0] && insBk.rows[0].id;
+                                    if (newBkId) await mapInstanceToBooking(ev.id, slotDate, slotTime, newBkId);
+                                  } catch (mapErr) {
+                                    console.warn('Failed to map instance for new booking', mapErr);
+                                  }
                             }
                           } catch (innerBkErr) {
                             console.warn(
@@ -816,8 +822,8 @@ router.post("/bookings", async (req, res) => {
                                     existingBk.rows[0]
                                   )
                                 ) {
-                                  await query(
-                                    "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+                                  const insBk = await query(
+                                    "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
                                     [
                                       student_id || null,
                                       newSlotId,
@@ -829,6 +835,12 @@ router.post("/bookings", async (req, res) => {
                                       ev.id,
                                     ],
                                   );
+                                  try {
+                                    const newBkId = insBk && insBk.rows && insBk.rows[0] && insBk.rows[0].id;
+                                    if (newBkId) await mapInstanceToBooking(ev.id, slotDate, slotTime, newBkId);
+                                  } catch (mapErr) {
+                                    console.warn('Failed to map instance for new booking', mapErr);
+                                  }
                                 }
                               } catch (innerBkErr) {
                                 console.warn(
@@ -911,8 +923,8 @@ router.post("/bookings", async (req, res) => {
                                     existingBk.rows[0]
                                   )
                                 ) {
-                                  await query(
-                                    "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+                                  const insBk = await query(
+                                    "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
                                     [
                                       student_id || null,
                                       newSlotId,
@@ -924,6 +936,12 @@ router.post("/bookings", async (req, res) => {
                                       ev.id,
                                     ],
                                   );
+                                  try {
+                                    const newBkId = insBk && insBk.rows && insBk.rows[0] && insBk.rows[0].id;
+                                    if (newBkId) await mapInstanceToBooking(ev.id, slotDate, slotTime, newBkId);
+                                  } catch (mapErr) {
+                                    console.warn('Failed to map instance for new booking', mapErr);
+                                  }
                                 }
                               } catch (innerBkErr) {
                                 console.warn(
