@@ -172,9 +172,12 @@ export async function ensureDbSetup() {
             ) t WHERE t.rn > 1
           )
         `);
-        console.log('Removed duplicate bookings for same slot_id');
+        console.log("Removed duplicate bookings for same slot_id");
       } catch (cleanupErr) {
-        console.warn('Failed to cleanup duplicate bookings before creating unique index:', cleanupErr);
+        console.warn(
+          "Failed to cleanup duplicate bookings before creating unique index:",
+          cleanupErr,
+        );
       }
 
       await query(

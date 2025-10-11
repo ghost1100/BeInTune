@@ -362,7 +362,10 @@ router.post("/bookings", async (req, res) => {
         return res.status(409).json({ error: "Slot already booked" });
       }
     } catch (e) {
-      console.warn("Failed to check existing booking for slot before insert", e);
+      console.warn(
+        "Failed to check existing booking for slot before insert",
+        e,
+      );
     }
 
     // encrypt guest fields if encryption key present
