@@ -1264,11 +1264,19 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     if (!cancellationBooking) return;
                     setIsCancelling(cancellationBooking.id);
                     try {
-                      await removeBk(cancellationBooking.id, {
-                        reason: cancellationReason || null,
-                        notify: true,
-                        deleteSeries: deleteSeriesOption,
-                      });
+                      {
+                        // read checkbox value directly to avoid reference errors
+                        let deleteSeries = true;
+                        try {
+                          const el = document.getElementById('deleteSeriesCheck') as HTMLInputElement | null;
+                          if (el) deleteSeries = !!el.checked;
+                        } catch (e) {}
+                        await removeBk(cancellationBooking.id, {
+                          reason: cancellationReason || null,
+                          notify: true,
+                          deleteSeries,
+                        });
+                      }
                       setCancellationBooking(null);
                       setCancellationReason("");
                       setRefresh((r) => r + 1);
