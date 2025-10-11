@@ -469,17 +469,18 @@ router.post("/bookings", async (req, res) => {
               // If a recurrence RRULE with COUNT is provided, create DB slots and bookings for each occurrence
               try {
                 if (recurrence && typeof recurrence === 'string') {
-                  const m = String(recurrence).match(/COUNT=(\d+)/i);
+                  const rStr = String(recurrence);
+                  const m = rStr.match(/COUNT=(\d+)/i);
                   const count = m ? parseInt(m[1], 10) : null;
                   if (count && count > 1) {
                     // create remaining occurrences (we already have the first)
                     for (let i = 1; i < count; i++) {
                       try {
-                        const dt = new Date(date);
+                        const dt = new Date(date + 'T' + (time || '00:00') + ':00');
                         dt.setDate(dt.getDate() + i * 7); // weekly increment
                         const pad = (n: number) => String(n).padStart(2, '0');
                         const slotDate = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
-                        const slotTime = time; // reuse same time
+                        const slotTime = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`; // reuse computed time
                         const insSlot = await query(
                           "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
                           [slot.teacher_id || null, slotDate, slotTime, duration || 30],
@@ -491,6 +492,57 @@ router.post("/bookings", async (req, res) => {
                         );
                       } catch (inner) {
                         console.warn('Failed to create booking for recurring occurrence', i, inner);
+                      }
+                    }
+                  } else {
+                    // try UNTIL=YYYYMMDDTHHMMSSZ or similar
+                    const um = rStr.match(/UNTIL=([0-9TZ:+-]+)/i);
+                    if (um) {
+                      try {
+                        const untilRaw = um[1];
+                        // Normalize to ISO string: YYYYMMDDTHHMMSSZ -> YYYY-MM-DDTHH:MM:SSZ
+                        let untilIso = untilRaw;
+                        const dmatch = untilRaw.match(/^(\d{8})T?(\d{6})?Z?$/);
+                        if (dmatch) {
+                          const datePart = dmatch[1];
+                          const timePart = dmatch[2] || '000000';
+                          const yyyy = datePart.slice(0,4);
+                          const mm = datePart.slice(4,6);
+                          const dd = datePart.slice(6,8);
+                          const hh = timePart.slice(0,2);
+                          const mi = timePart.slice(2,4);
+                          const ss = timePart.slice(4,6);
+                          untilIso = `${yyyy}-${mm}-${dd}T${hh}:${mi}:${ss}Z`;
+                        }
+                        const untilDate = new Date(untilIso);
+                        // iterate weekly from next occurrence until untilDate (inclusive)
+                        let cur = new Date(date + 'T' + (time || '00:00') + ':00');
+                        const oneWeek = 7 * 24 * 60 * 60 * 1000;
+                        // advance to first instance after the original (we already created the first booking)
+                        cur = new Date(cur.getTime() + oneWeek);
+                        let occ = 1;
+                        while (cur.getTime() <= untilDate.getTime()) {
+                          try {
+                            const pad = (n: number) => String(n).padStart(2, '0');
+                            const slotDate = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
+                            const slotTime = `${String(cur.getHours()).padStart(2,'0')}:${String(cur.getMinutes()).padStart(2,'0')}`;
+                            const insSlot = await query(
+                              "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
+                              [slot.teacher_id || null, slotDate, slotTime, duration || 30],
+                            );
+                            const newSlotId = insSlot.rows[0].id;
+                            await query(
+                              "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+                              [student_id || null, newSlotId, lesson_type || null, nameToStore, emailToStore, phoneToStore, ev.id, ev.id],
+                            );
+                          } catch (inner) {
+                            console.warn('Failed to create booking for recurring occurrence until', cur, inner);
+                          }
+                          occ++;
+                          cur = new Date(cur.getTime() + oneWeek);
+                        }
+                      } catch (inner) {
+                        console.warn('Failed to expand UNTIL-based recurring bookings:', inner);
                       }
                     }
                   }
