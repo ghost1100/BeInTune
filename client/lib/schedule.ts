@@ -237,10 +237,14 @@ export async function removeBooking(
     const opts: any = { method: "DELETE" };
     if (options) {
       opts.headers = { "Content-Type": "application/json" };
-      opts.body = JSON.stringify({
+      const body: any = {
         reason: options.reason || null,
         notify: options.notify !== false,
-      });
+      };
+      if (typeof (options as any).deleteSeries !== "undefined") {
+        body.deleteSeries = (options as any).deleteSeries;
+      }
+      opts.body = JSON.stringify(body);
     }
     await api(`/api/admin/bookings/${id}`, opts);
   } catch (e) {
