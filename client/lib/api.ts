@@ -83,6 +83,10 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
       );
     }
   }
+  if (res.status === 304) {
+    // Not modified — caller should handle null/empty responses by using cached data
+    return null;
+  }
   const contentType = res.headers.get("content-type") || "";
   const isJson = contentType.includes("application/json");
 
