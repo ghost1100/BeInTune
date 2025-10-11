@@ -88,15 +88,15 @@ router.post("/messages", async (req, res) => {
     if (enc.encrypted) msg.content = content;
     // broadcast to websocket clients
     try {
-      req.app.locals.broadcast?.("message:new", msg);
+      req.app.locals.broadcast?.(msg.recipient_id || null, "message:new", msg);
     } catch (e) {
       console.error("WS broadcast error:", e);
     }
     // create notification for recipient
     try {
       if (msg.recipient_id) {
-        await query(
-          "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
+        const notifRes = await query(
+          "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4) RETURNING id, user_id, actor_id, type, meta, created_at",
           [
             msg.recipient_id,
             msg.sender_id,
@@ -107,6 +107,16 @@ router.post("/messages", async (req, res) => {
             }),
           ],
         );
+        try {
+          const notif = notifRes && notifRes.rows && notifRes.rows[0];
+          req.app.locals.broadcast?.(
+            notif.user_id || null,
+            "notification:new",
+            notif,
+          );
+        } catch (e) {
+          console.error("Failed to broadcast notification:new", e);
+        }
       }
     } catch (err) {
       console.error("Failed to create notification for message:", err);

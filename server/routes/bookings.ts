@@ -2,6 +2,7 @@ import express from "express";
 import express from "express";
 import { query } from "../db";
 import { sendMail } from "../lib/mailer";
+import { requireAdmin } from "../middleware/auth";
 
 const router = express.Router();
 
@@ -25,6 +26,29 @@ router.get("/slots", async (req, res) => {
     "SELECT * FROM slots WHERE slot_date = $1 ORDER BY slot_time",
     [date],
   );
+  try {
+    const count = q.rowCount || (q.rows && q.rows.length) || 0;
+    const maxCreated =
+      q.rows && q.rows.length
+        ? q.rows.reduce(
+            (acc: string, r: any) =>
+              r.created_at && r.created_at > acc ? r.created_at : acc,
+            "",
+          )
+        : "";
+    const meta = JSON.stringify({ count, maxCreated });
+    const etag = 'W/"' + Buffer.from(meta).toString("base64") + '"';
+    const incoming = req.headers["if-none-match"];
+    if (incoming && String(incoming) === etag) {
+      res.status(304).end();
+      return;
+    }
+    res.setHeader("ETag", etag);
+    if (maxCreated)
+      res.setHeader("Last-Modified", new Date(maxCreated).toUTCString());
+  } catch (e) {
+    // ignore meta/header errors
+  }
   res.json(q.rows);
 });
 
@@ -85,6 +109,27 @@ router.get("/bookings", async (req, res) => {
          ORDER BY sl.slot_time ASC`,
         [date],
       );
+      try {
+        const count = q.rowCount || (q.rows && q.rows.length) || 0;
+        const maxCreated =
+          q.rows && q.rows.length
+            ? q.rows.reduce(
+                (acc: string, r: any) =>
+                  r.created_at && r.created_at > acc ? r.created_at : acc,
+                "",
+              )
+            : "";
+        const meta = JSON.stringify({ count, maxCreated });
+        const etag = 'W/"' + Buffer.from(meta).toString("base64") + '"';
+        const incoming = req.headers["if-none-match"];
+        if (incoming && String(incoming) === etag) {
+          res.status(304).end();
+          return;
+        }
+        res.setHeader("ETag", etag);
+        if (maxCreated)
+          res.setHeader("Last-Modified", new Date(maxCreated).toUTCString());
+      } catch (e) {}
     } else {
       q = await query(
         `SELECT
@@ -182,9 +227,168 @@ router.get("/bookings", async (req, res) => {
   }
 });
 
+// POST /api/admin/bookings/cancel-all - cancel all bookings on a date (admin only)
+router.post("/bookings/cancel-all", requireAdmin, async (req, res) => {
+  const { date, reason } = req.body || {};
+  if (!date) return res.status(400).json({ error: "Missing date" });
+  try {
+    const q = await query(
+      `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, b.calendar_event_id, b.recurrence_id, s.user_id as student_user_id, u.email as student_email, u.name as student_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
+         FROM bookings b
+         LEFT JOIN slots sl ON b.slot_id = sl.id
+         LEFT JOIN students s ON b.student_id = s.id
+         LEFT JOIN users u ON s.user_id = u.id
+         WHERE sl.slot_date = $1`,
+      [date],
+    );
+    const rows = q.rows || [];
+    if (!rows.length) return res.json({ ok: true, cancelled: 0 });
+
+    const byEmail: Record<string, any[]> = {};
+    const slotIdsToFree: string[] = [];
+    const bookingIds: string[] = [];
+    for (const r of rows) {
+      const email = r.student_email || r.guest_email || null;
+      if (email) {
+        byEmail[email] = byEmail[email] || [];
+        byEmail[email].push(r);
+      }
+      if (r.slot_id) slotIdsToFree.push(r.slot_id);
+      if (r.id) bookingIds.push(r.id);
+    }
+
+    for (const email of Object.keys(byEmail)) {
+      const list = byEmail[email];
+      const linesText = list
+        .map((it: any) => `- ${it.time} — ${it.lesson_type || "Lesson"}`)
+        .join("\n");
+      const linesHtml = `<ul>${list
+        .map((it: any) => `<li>${it.time} — ${it.lesson_type || "Lesson"}</li>`)
+        .join("")}</ul>`;
+      const subject = `All sessions on ${date} cancelled`;
+      const plain = `Hello,\n\nThe following session(s) scheduled for ${date} have been cancelled:\n\n${linesText}\n\nReason: ${reason || "Not specified"}\n\nWe apologise for the inconvenience.`;
+      const html = `<p>Hello,</p><p>The following session(s) scheduled for <strong>${date}</strong> have been cancelled:</p>${linesHtml}<p><strong>Reason:</strong> ${reason || "Not specified"}</p><p>We apologise for the inconvenience.</p>`;
+      try {
+        await sendMail({
+          to: email,
+          from: process.env.FROM_EMAIL || "no-reply@example.com",
+          subject,
+          text: plain,
+          html,
+        });
+      } catch (e) {
+        console.error("Failed to send cancellation summary to", email, e);
+      }
+    }
+
+    // Attempt to remove calendar events for the affected bookings (delete specific instances for recurring events)
+    try {
+      const { deleteCalendarEvent, deleteRecurringInstance } = await import(
+        "../lib/calendar"
+      );
+      for (const r of rows) {
+        try {
+          if (r.recurrence_id) {
+            try {
+              const parts = String(r.date).split("-").map(Number);
+              const tparts = String(r.time || "")
+                .split(":")
+                .map(Number);
+              const y = parts[0],
+                m = parts[1] - 1,
+                d = parts[2];
+              const hh = tparts[0] || 0,
+                mm = tparts[1] || 0;
+              const instStart = new Date(y, m, d, hh, mm, 0);
+              await deleteRecurringInstance(
+                r.recurrence_id,
+                instStart.toISOString(),
+              );
+              console.log(
+                "Cancelled recurring instance on calendar for booking",
+                r.id,
+                r.recurrence_id,
+              );
+            } catch (inner) {
+              try {
+                await deleteCalendarEvent(r.recurrence_id);
+                console.log(
+                  "Deleted recurring calendar event for booking (fallback)",
+                  r.id,
+                  r.recurrence_id,
+                );
+              } catch (inn2) {
+                console.warn(
+                  "Failed to delete recurring calendar event for booking",
+                  r.id,
+                  inn2,
+                );
+              }
+            }
+          } else if (r.calendar_event_id) {
+            try {
+              await deleteCalendarEvent(r.calendar_event_id);
+              console.log(
+                "Deleted calendar event for booking",
+                r.id,
+                r.calendar_event_id,
+              );
+            } catch (inner) {
+              console.warn(
+                "Failed to delete calendar event for booking",
+                r.id,
+                inner,
+              );
+            }
+          }
+        } catch (e) {
+          console.warn(
+            "Failed to handle calendar deletion for booking",
+            r.id,
+            e,
+          );
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load calendar module for bulk cancellation", e);
+    }
+
+    if (slotIdsToFree.length) {
+      const uniq = Array.from(new Set(slotIdsToFree));
+      for (const sid of uniq) {
+        try {
+          await query("UPDATE slots SET is_available = true WHERE id = $1", [
+            sid,
+          ]);
+        } catch (e) {
+          console.error("Failed to free slot", sid, e);
+        }
+      }
+    }
+
+    if (bookingIds.length) {
+      const uniqB = Array.from(new Set(bookingIds));
+      const placeholders = uniqB.map((_, i) => `$${i + 1}`).join(",");
+      try {
+        await query(
+          `DELETE FROM bookings WHERE id IN (${placeholders})`,
+          uniqB,
+        );
+      } catch (e) {
+        console.error("Failed to delete bookings in bulk", e);
+      }
+    }
+
+    return res.json({ ok: true, cancelled: rows.length });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Failed to cancel bookings" });
+  }
+});
+
 // POST /api/admin/bookings - create booking
 router.post("/bookings", async (req, res) => {
-  const { student_id, slot_id, lesson_type, name, email, phone } =
+  const { student_id, slot_id, lesson_type, name, email, phone, recurrence } =
     req.body as any;
   if (!slot_id) return res.status(400).json({ error: "Missing slot_id" });
   const slotRes = await query("SELECT * FROM slots WHERE id = $1", [slot_id]);
@@ -192,6 +396,22 @@ router.post("/bookings", async (req, res) => {
     return res.status(404).json({ error: "Slot not found" });
 
   try {
+    // prevent duplicate booking for same slot (best-effort pre-check)
+    try {
+      const existing = await query(
+        "SELECT id FROM bookings WHERE slot_id = $1 LIMIT 1",
+        [slot_id],
+      );
+      if (existing && existing.rows && existing.rows[0]) {
+        return res.status(409).json({ error: "Slot already booked" });
+      }
+    } catch (e) {
+      console.warn(
+        "Failed to check existing booking for slot before insert",
+        e,
+      );
+    }
+
     // encrypt guest fields if encryption key present
     const { encryptText } = await import("../lib/crypto");
     const nameEnc = name ? encryptText(String(name)) : null;
@@ -220,103 +440,23 @@ router.post("/bookings", async (req, res) => {
       slot_id,
     ]);
 
-    // Fetch booking details joined to users/students for notification
-    try {
-      const infoQ = await query(
-        `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, s.user_id as student_user_id, u.email as user_email, u.name as user_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
-         FROM bookings b
-         LEFT JOIN slots sl ON b.slot_id = sl.id
-         LEFT JOIN students s ON b.student_id = s.id
-         LEFT JOIN users u ON s.user_id = u.id
-         WHERE b.id = $1 LIMIT 1`,
-        [ins.rows[0].id],
-      );
-      const info = infoQ.rows[0];
-
-      // send confirmation email to booking recipient
-      try {
-        const toEmail = info?.user_email || info?.guest_email || null;
-        const toName = info?.user_name || info?.guest_name || "";
-        if (toEmail) {
-          const subject = `Lesson booked: ${info.date} ${info.time}`;
-          const plain = `Hello ${toName},\n\nYour lesson has been booked for ${info.date} at ${info.time}.\n\nDetails:\n- Lesson: ${info.lesson_type || "Lesson"}\n\nSee you then.`;
-          const html = `<p>Hello ${toName},</p><p>Your lesson has been booked for <strong>${info.date} at ${info.time}</strong>.</p><p><strong>Lesson:</strong> ${info.lesson_type || "Lesson"}</p><p>See you then.</p>`;
-          try {
-            const { sendMail } = await import("../lib/mailer");
-            console.log("Sending booking confirmation to", toEmail);
-            await sendMail({
-              to: toEmail,
-              from: process.env.FROM_EMAIL || "no-reply@example.com",
-              subject,
-              text: plain,
-              html,
-            });
-            console.log("Booking confirmation sent to", toEmail);
-          } catch (err) {
-            console.error("Failed to send booking confirmation", err);
-          }
-        } else {
-          console.warn(
-            "No recipient email available for booking",
-            ins.rows[0].id,
-          );
-        }
-      } catch (err) {
-        console.error("Booking notification error:", err);
-      }
-
-      // Create calendar event (if configured)
-      try {
-        const { createCalendarEvent } = await import("../lib/calendar");
-        const slot = slotRes.rows[0];
-        const date = slot.slot_date; // YYYY-MM-DD
-        const time = slot.slot_time; // HH:MM
-        const duration = slot.duration_minutes || 30;
-        const startIso = new Date(`${date}T${time}:00`).toISOString();
-        const endDt = new Date(
-          new Date(`${date}T${time}:00`).getTime() + duration * 60 * 1000,
-        ).toISOString();
-        const attendees: string[] = [];
-        if (info?.guest_email) attendees.push(info.guest_email);
-        if (info?.user_email && !attendees.includes(info.user_email))
-          attendees.push(info.user_email);
-        console.log("Booking created, preparing calendar event", {
-          bookingId: ins.rows[0].id,
-          slotId: slot.id,
-          date,
-          time,
-          startIso,
-          endDt,
-          attendees,
-        });
-        try {
-          const ev = await createCalendarEvent({
-            summary: `Lesson: ${info?.lesson_type || lesson_type || "Lesson"}`,
-            description: `Booking for ${info?.guest_name || info?.user_name || email || "guest"}`,
-            startDateTime: startIso,
-            endDateTime: endDt,
-            attendees,
-          });
-          console.log(
-            "Calendar event created successfully for booking",
-            ins.rows[0].id,
-            { eventId: ev && ev.id },
-          );
-        } catch (err) {
-          console.error("Failed to create calendar event:", err);
-        }
-      } catch (err) {
-        console.error("Calendar module load/create skipped or failed:", err);
-      }
-    } catch (err) {
-      console.error("Failed to load booking info for notification:", err);
-    }
-
+    // respond early to client to avoid long blocking during calendar/email operations
     res.json({
       ok: true,
       bookingId: ins.rows[0].id,
       created_at: ins.rows[0].created_at,
     });
+
+    // run notifications and calendar operations asynchronously
+    // enqueue background processing to Redis queue
+    try {
+      const { addBookingJob } = await import("../lib/queue");
+      await addBookingJob({ bookingId: ins.rows[0].id });
+    } catch (e) {
+      console.warn("Failed to enqueue booking job", e);
+    }
+
+    return;
   } catch (e) {
     console.error("Failed to create booking:", e);
     res.status(500).json({ error: "Failed to create booking" });
@@ -328,7 +468,7 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
   const { id } = req.params;
   try {
     const infoQ = await query(
-      `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, s.user_id as student_user_id, u.email as user_email, u.name as user_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
+      `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, s.user_id as student_user_id, u.email as user_email, u.name as user_name, s.instruments as student_instruments, u.phone as user_phone, s.phone as student_phone, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
        FROM bookings b
        LEFT JOIN slots sl ON b.slot_id = sl.id
        LEFT JOIN students s ON b.student_id = s.id
@@ -367,11 +507,53 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
 
     try {
       const { createCalendarEvent } = await import("../lib/calendar");
-      const startIso = new Date(`${info.date}T${info.time}:00`).toISOString();
-      const duration = 30;
-      const endIso = new Date(
-        new Date(startIso).getTime() + duration * 60 * 1000,
-      ).toISOString();
+      // Construct start/end ISO timestamps safely
+      const makeIso = (dStr: any, tStr: string, durMin: number) => {
+        try {
+          if (!dStr || !tStr) throw new Error("Missing date or time");
+          let y: number, m: number, day: number;
+          if (dStr instanceof Date) {
+            const dt = dStr as Date;
+            y = dt.getFullYear();
+            m = dt.getMonth() + 1;
+            day = dt.getDate();
+          } else if (typeof dStr === "string") {
+            if (dStr.includes("T")) {
+              const dt = new Date(dStr);
+              if (isNaN(dt.getTime())) throw new Error("Invalid date string");
+              y = dt.getFullYear();
+              m = dt.getMonth() + 1;
+              day = dt.getDate();
+            } else {
+              const parts = dStr.split("-").map(Number);
+              if (parts.length !== 3) throw new Error("Invalid date format");
+              [y, m, day] = parts;
+            }
+          } else {
+            throw new Error("Unsupported date type");
+          }
+          const tParts = String(tStr).split(":").map(Number);
+          if (tParts.length < 2) throw new Error("Invalid time format");
+          const hh = tParts[0] || 0;
+          const mm = tParts[1] || 0;
+          // Construct local date/time strings (no Z) so Google can apply the provided timezone correctly
+          const pad = (n: number) => String(n).padStart(2, "0");
+          const startLocal = `${y}-${pad(m)}-${pad(day)}T${pad(hh)}:${pad(mm)}:00`;
+          const endDate = new Date(y, (m || 1) - 1, day, hh, mm, 0, 0);
+          endDate.setMinutes(endDate.getMinutes() + (durMin || 30));
+          const endLocal = `${endDate.getFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}T${pad(endDate.getHours())}:${pad(endDate.getMinutes())}:00`;
+          return { startIso: startLocal, endIso: endLocal };
+        } catch (err) {
+          console.error(
+            "Failed to construct ISO timestamps for",
+            dStr,
+            tStr,
+            err,
+          );
+          throw err;
+        }
+      };
+      const { startIso, endIso } = makeIso(info.date, info.time, 30);
       const attendees: string[] = [];
       if (info.guest_email) attendees.push(info.guest_email);
       if (info.user_email && !attendees.includes(info.user_email))
@@ -382,12 +564,35 @@ router.post("/bookings/:id/resend-notification", async (req, res) => {
         endIso,
         attendees,
       });
+      // Resend: create event without attendees to avoid service account invitation restrictions
+      // build description with name, instruments, and phone
+      let instrumentsText = "";
+      try {
+        if (info && info.student_instruments) {
+          if (Array.isArray(info.student_instruments))
+            instrumentsText = info.student_instruments.join(", ");
+          else if (typeof info.student_instruments === "string")
+            instrumentsText = JSON.parse(info.student_instruments || "[]").join(
+              ", ",
+            );
+        }
+      } catch (e) {
+        instrumentsText = String(info.student_instruments || "");
+      }
+      const contactPhone =
+        info?.guest_phone || info?.student_phone || info?.user_phone || "";
+      const who = info?.guest_name || info?.user_name || "guest";
+      const descParts = [
+        `Booking for ${who}`,
+        instrumentsText ? `Instruments: ${instrumentsText}` : null,
+        contactPhone ? `Phone: ${contactPhone}` : null,
+      ].filter(Boolean);
+
       const ev = await createCalendarEvent({
         summary: `Lesson: ${info.lesson_type || "Lesson"}`,
-        description: `Booking for ${info.guest_name || info.user_name || "guest"}`,
+        description: descParts.join("\n"),
         startDateTime: startIso,
         endDateTime: endIso,
-        attendees,
       });
       console.log("Resend: Calendar event created for booking", id, {
         eventId: ev && ev.id,
@@ -411,7 +616,7 @@ router.delete("/bookings/:id", async (req, res) => {
   try {
     // load booking details for notification
     const infoQ = await query(
-      `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, s.user_id as student_user_id, u.email as user_email, u.name as user_name, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
+      `SELECT b.id, b.lesson_type, b.guest_name, b.guest_email, b.guest_phone, s.user_id as student_user_id, u.email as user_email, u.name as user_name, s.instruments as student_instruments, u.phone as user_phone, s.phone as student_phone, sl.id as slot_id, sl.slot_time as time, sl.slot_date as date
        FROM bookings b
        LEFT JOIN slots sl ON b.slot_id = sl.id
        LEFT JOIN students s ON b.student_id = s.id
@@ -447,6 +652,138 @@ router.delete("/bookings/:id", async (req, res) => {
       }
     }
 
+    // delete calendar event if exists. Support deleting recurring series with scopes: single | future | all
+    try {
+      const bodyAny = (req.body || {}) as any;
+      let deleteScope: "single" | "future" | "all" = "single";
+      if (bodyAny.deleteScope) deleteScope = bodyAny.deleteScope;
+      else if (bodyAny.deleteSeries !== undefined)
+        deleteScope = bodyAny.deleteSeries !== false ? "all" : "single";
+
+      const {
+        deleteCalendarEvent,
+        updateRecurringEventUntil,
+        deleteRecurringInstance,
+      } = await import("../lib/calendar");
+
+      // If caller requested single-instance deletion and we already know the specific calendar instance id,
+      // try deleting it directly first. This avoids deleting the master recurring event when deleting one occurrence.
+      try {
+        const bodyAnyLocal = (req.body || {}) as any;
+        if (
+          bodyAnyLocal.deleteScope === "single" &&
+          info &&
+          info.calendar_instance_id
+        ) {
+          try {
+            await deleteCalendarEvent(info.calendar_instance_id);
+            console.log(
+              "Deleted calendar instance by id (preflight)",
+              info.calendar_instance_id,
+            );
+          } catch (e) {
+            console.warn(
+              "Preflight delete by instance id failed",
+              info.calendar_instance_id,
+              e,
+            );
+          }
+        }
+      } catch (e) {}
+
+      if (info && info.recurrence_id) {
+        if (deleteScope === "all") {
+          try {
+            await deleteCalendarEvent(info.recurrence_id);
+            console.log(
+              "Deleted recurring calendar event for booking series",
+              id,
+              info.recurrence_id,
+            );
+          } catch (e) {
+            console.warn(
+              "Failed to delete recurring calendar event for booking",
+              id,
+              e,
+            );
+          }
+        } else if (deleteScope === "future") {
+          try {
+            // compute UNTIL as the moment before the instance start
+            const parts = String(info.date).split("-").map(Number);
+            const tparts = String(info.time || "")
+              .split(":")
+              .map(Number);
+            const y = parts[0],
+              m = parts[1] - 1,
+              d = parts[2];
+            const hh = tparts[0] || 0,
+              mm = tparts[1] || 0;
+            const instStart = new Date(y, m, d, hh, mm, 0);
+            const untilDate = new Date(instStart.getTime() - 1000); // one second before
+            await updateRecurringEventUntil(
+              info.recurrence_id,
+              untilDate.toISOString(),
+            );
+            console.log(
+              "Truncated recurring event until before",
+              info.date,
+              info.time,
+              info.recurrence_id,
+            );
+          } catch (e) {
+            console.warn(
+              "Failed to truncate recurring event for booking",
+              id,
+              e,
+            );
+          }
+        } else if (deleteScope === "single") {
+          try {
+            // delete only the specific instance from calendar (if exists)
+            const parts = String(info.date).split("-").map(Number);
+            const tparts = String(info.time || "")
+              .split(":")
+              .map(Number);
+            const y = parts[0],
+              m = parts[1] - 1,
+              d = parts[2];
+            const hh = tparts[0] || 0,
+              mm = tparts[1] || 0;
+            const instStart = new Date(y, m, d, hh, mm, 0);
+            await deleteRecurringInstance(
+              info.recurrence_id,
+              instStart.toISOString(),
+            );
+            console.log(
+              "Deleted single occurrence from recurring event",
+              id,
+              info.recurrence_id,
+            );
+          } catch (e) {
+            console.warn(
+              "Failed to delete single recurring instance for booking",
+              id,
+              e,
+            );
+          }
+        }
+      } else if (info && info.calendar_event_id) {
+        try {
+          await deleteCalendarEvent(info.calendar_event_id);
+          console.log(
+            "Deleted calendar event for booking",
+            id,
+            info.calendar_event_id,
+          );
+        } catch (e) {
+          console.warn("Failed to delete calendar event for booking", id, e);
+        }
+      }
+    } catch (e) {
+      console.warn("Error while attempting to delete calendar event", e);
+    }
+
     // free the slot if exists
     if (info && info.slot_id) {
       await query("UPDATE slots SET is_available = true WHERE id = $1", [
@@ -465,11 +802,232 @@ router.delete("/bookings/:id", async (req, res) => {
       }
     }
 
-    await query("DELETE FROM bookings WHERE id = $1", [id]);
+    // remove DB bookings depending on scope
+    try {
+      const bodyAny = (req.body || {}) as any;
+      const deleteScope: "single" | "future" | "all" =
+        bodyAny.deleteScope ||
+        (bodyAny.deleteSeries !== undefined
+          ? bodyAny.deleteSeries !== false
+            ? "all"
+            : "single"
+          : "single");
+      if (info && info.recurrence_id) {
+        if (deleteScope === "all") {
+          await query("DELETE FROM bookings WHERE recurrence_id = $1", [
+            info.recurrence_id,
+          ]);
+        } else if (deleteScope === "future") {
+          // delete bookings in series from this date onward
+          await query(
+            "DELETE FROM bookings WHERE recurrence_id = $1 AND id IN (SELECT b.id FROM bookings b LEFT JOIN slots s ON b.slot_id = s.id WHERE b.recurrence_id = $1 AND s.slot_date >= $2)",
+            [info.recurrence_id, info.date],
+          );
+          // delete the single booking as well if still present
+          await query("DELETE FROM bookings WHERE id = $1", [id]);
+        } else {
+          await query("DELETE FROM bookings WHERE id = $1", [id]);
+        }
+      } else {
+        await query("DELETE FROM bookings WHERE id = $1", [id]);
+      }
+    } catch (e) {
+      console.error("Failed to remove booking rows:", e);
+      throw e;
+    }
+
     res.json({ ok: true });
   } catch (err) {
     console.error("Failed to cancel booking:", err);
     res.status(500).json({ error: "Failed to cancel booking" });
+  }
+});
+
+// Demo endpoint: create demo bookings on a date (admin only)
+router.post("/bookings/demo-add", requireAdmin, async (req, res) => {
+  try {
+    const date =
+      req.body && req.body.date ? String(req.body.date) : "2025-10-15";
+    const times =
+      req.body && Array.isArray(req.body.times) && req.body.times.length
+        ? req.body.times
+        : ["10:00", "10:30"];
+    const created: any[] = [];
+    for (const time of times) {
+      // ensure slot exists (avoid duplicates)
+      let slotId: string | null = null;
+      try {
+        const slotQ = await query(
+          "SELECT id FROM slots WHERE slot_date = $1 AND slot_time = $2 LIMIT 1",
+          [date, time],
+        );
+        if (slotQ && slotQ.rows && slotQ.rows[0]) {
+          slotId = slotQ.rows[0].id;
+        }
+      } catch (e) {
+        console.warn("Failed to query existing slot", e);
+      }
+
+      if (!slotId) {
+        const insSlot = await query(
+          "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
+          [null, date, time, 30],
+        );
+        slotId = insSlot.rows[0].id;
+      }
+
+      // if booking already exists for slot, skip creating duplicate booking/event
+      try {
+        const existingBooking = await query(
+          "SELECT id, calendar_event_id FROM bookings WHERE slot_id = $1 LIMIT 1",
+          [slotId],
+        );
+        if (
+          existingBooking &&
+          existingBooking.rows &&
+          existingBooking.rows[0]
+        ) {
+          created.push({ id: existingBooking.rows[0].id, slotId });
+          continue;
+        }
+      } catch (e) {
+        console.warn("Failed to check existing booking for slot", e);
+      }
+
+      // create booking
+      const ins = await query(
+        "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id",
+        [null, slotId, "Demo", "Demo User", "demo@example.com", null],
+      );
+      const id = ins.rows[0].id;
+
+      // create calendar event for the booking (idempotent if booking exists)
+      try {
+        const { createCalendarEvent } = await import("../lib/calendar");
+        // build ISO-local start/end
+        const parts = String(date).split("-").map(Number);
+        const y = parts[0],
+          m = parts[1] - 1,
+          d = parts[2];
+        const tparts = String(time).split(":").map(Number);
+        const hh = tparts[0] || 0,
+          mm = tparts[1] || 0;
+        const startLocal = `${date}T${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}:00`;
+        const endDate = new Date(y, m, d, hh, mm, 0);
+        endDate.setMinutes(endDate.getMinutes() + 30);
+        const endLocal = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}T${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}:00`;
+
+        // double-check any existing calendar event for this slot (race-safe)
+        const existEv = await query(
+          "SELECT calendar_event_id, recurrence_id FROM bookings WHERE slot_id = $1 AND (calendar_event_id IS NOT NULL OR recurrence_id IS NOT NULL) LIMIT 1",
+          [slotId],
+        );
+        if (
+          existEv &&
+          existEv.rows &&
+          existEv.rows[0] &&
+          (existEv.rows[0].calendar_event_id || existEv.rows[0].recurrence_id)
+        ) {
+          await query(
+            "UPDATE bookings SET calendar_event_id = $1, recurrence_id = $2 WHERE id = $3",
+            [
+              existEv.rows[0].calendar_event_id ||
+                existEv.rows[0].recurrence_id,
+              existEv.rows[0].recurrence_id || null,
+              id,
+            ],
+          );
+        } else {
+          const ev = await createCalendarEvent({
+            summary: `Demo Lesson`,
+            description: `Demo booking on ${date} at ${time}`,
+            startDateTime: startLocal,
+            endDateTime: endLocal,
+          });
+          if (ev && ev.id) {
+            await query(
+              "UPDATE bookings SET calendar_event_id = $1 WHERE id = $2",
+              [ev.id, id],
+            );
+          }
+        }
+      } catch (e) {
+        console.error("Failed to create demo calendar event", e);
+      }
+
+      created.push({ id, slotId });
+    }
+    res.json({ ok: true, created });
+  } catch (e) {
+    console.error("Failed to create demo bookings:", e);
+    res.status(500).json({ error: "Failed to create demo bookings" });
+  }
+});
+
+// Admin-only helper: map Google calendar instance IDs to bookings missing calendar_instance_id
+router.post("/bookings/map-instances", requireAdmin, async (req, res) => {
+  try {
+    const { listInstances } = await import("../lib/calendar");
+    const rows = await query(
+      "SELECT b.id as booking_id, b.recurrence_id, s.slot_date, s.slot_time FROM bookings b LEFT JOIN slots s ON b.slot_id = s.id WHERE b.recurrence_id IS NOT NULL AND b.calendar_instance_id IS NULL",
+    );
+    const list = rows && rows.rows ? rows.rows : [];
+    const results: any[] = [];
+    for (const r of list) {
+      try {
+        const bookingId = r.booking_id;
+        const eventId = r.recurrence_id;
+        const slotDate =
+          r.slot_date && r.slot_date.toISOString
+            ? r.slot_date.toISOString().slice(0, 10)
+            : typeof r.slot_date === "string" && r.slot_date.includes("T")
+              ? r.slot_date.split("T")[0]
+              : r.slot_date;
+        const slotTime =
+          typeof r.slot_time === "string"
+            ? r.slot_time.split(":").slice(0, 2).join(":")
+            : r.slot_time;
+        const startIso = `${slotDate}T${slotTime}:00`;
+        const end = new Date(startIso);
+        end.setSeconds(end.getSeconds() + 1);
+        const instances = await listInstances(
+          eventId,
+          startIso,
+          end.toISOString(),
+        );
+        let found = null;
+        for (const it of instances) {
+          const s = it.start && (it.start.dateTime || it.start.date);
+          if (!s) continue;
+          if (s.startsWith(startIso.slice(0, 19))) {
+            found = it;
+            break;
+          }
+          try {
+            if (new Date(s).toISOString() === startIso) {
+              found = it;
+              break;
+            }
+          } catch (e) {}
+        }
+        if (found && found.id) {
+          await query(
+            "UPDATE bookings SET calendar_instance_id = $1 WHERE id = $2",
+            [found.id, bookingId],
+          );
+          results.push({ bookingId, instance: found.id, status: "mapped" });
+        } else {
+          results.push({ bookingId, instance: null, status: "not_found" });
+        }
+      } catch (err) {
+        console.warn("map-instances: failed for row", r, err);
+        results.push({ row: r, error: String(err) });
+      }
+    }
+    res.json({ ok: true, mapped: results.length, results });
+  } catch (err) {
+    console.error("map-instances failed", err);
+    res.status(500).json({ error: String(err) });
   }
 });
 

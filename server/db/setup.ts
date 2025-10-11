@@ -150,6 +150,46 @@ export async function ensureDbSetup() {
     await query(
       "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_phone text;",
     );
+    // Store calendar event ID for cleanup
+    await query(
+      "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS calendar_event_id text;",
+    );
+    await query(
+      "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS recurrence_id text;",
+    );
+    await query(
+      "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS calendar_instance_id text;",
+    );
+
+    // Prevent multiple bookings for the same slot: ensure one booking per slot_id
+    try {
+      // Clean up any existing duplicate bookings for the same slot_id by keeping the earliest created record
+      try {
+        await query(`
+          DELETE FROM bookings
+          WHERE id IN (
+            SELECT id FROM (
+              SELECT id, ROW_NUMBER() OVER (PARTITION BY slot_id ORDER BY created_at ASC, id ASC) AS rn
+              FROM bookings
+              WHERE slot_id IS NOT NULL
+            ) t WHERE t.rn > 1
+          )
+        `);
+        console.log("Removed duplicate bookings for same slot_id");
+      } catch (cleanupErr) {
+        console.warn(
+          "Failed to cleanup duplicate bookings before creating unique index:",
+          cleanupErr,
+        );
+      }
+
+      await query(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_bookings_slot_id_unique ON bookings(slot_id) WHERE slot_id IS NOT NULL;",
+      );
+    } catch (e) {
+      // ignore if index creation fails, but log for visibility
+      console.warn("Failed to create unique index for bookings.slot_id:", e);
+    }
 
     // Ensure admin user exists with username Darryle
     const adminIdentifier = process.env.ADMIN_EMAIL || "admin@intune.local";

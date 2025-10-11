@@ -27,8 +27,14 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
     input.startsWith("/api/") &&
     typeof window !== "undefined"
   ) {
+    const apiBase =
+      (import.meta && import.meta.env && import.meta.env.VITE_API_BASE) ||
+      (window as any).__API_BASE__ ||
+      null;
     const candidates = [
-      // try original relative path first (works with reverse proxies / dev proxies)
+      // if explicit API base is set (Vite env), try it first
+      ...(apiBase ? [`${apiBase.replace(/\/$/, "")}${input}`] : []),
+      // try original relative path (works with reverse proxies / dev proxies)
       input,
       // then absolute origin
       `${window.location.origin}${input}`,
@@ -76,6 +82,10 @@ export async function apiFetch(input: RequestInfo, init?: RequestInit) {
         `Network request failed for ${typeof input === "string" ? input : "request"}: ${err?.message || err}`,
       );
     }
+  }
+  if (res.status === 304) {
+    // Not modified — caller should handle null/empty responses by using cached data
+    return null;
   }
   const contentType = res.headers.get("content-type") || "";
   const isJson = contentType.includes("application/json");

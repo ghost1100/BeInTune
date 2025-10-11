@@ -17,6 +17,7 @@ import {
   getBookings,
   addBooking,
   removeBooking,
+  cancelAllBookingsForDate,
   isSlotBooked,
   getSlotsWithMeta,
 } from "@/lib/schedule";
@@ -108,8 +109,13 @@ export default function Admin() {
     const auth = localStorage.getItem("inTuneAdmin");
     if (!auth) navigate("/admin/login");
     (async () => {
-      const ts = await loadTeachersFromDb();
-      setTeachers(ts);
+      try {
+        const ts = await loadTeachersFromDb();
+        setTeachers(ts);
+      } catch (e) {
+        console.error("Failed to load teachers:", e);
+        setTeachers([]);
+      }
     })();
   }, [navigate]);
 
@@ -780,10 +786,26 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [bookingDetail, setBookingDetail] = useState<any | null>(null);
+  // Recurrence controls for creating recurring bookings
+  const [recurrenceEnabled, setRecurrenceEnabled] = useState(false);
+  const [recurrenceUntil, setRecurrenceUntil] = useState<string>("");
   const [cancellationBooking, setCancellationBooking] = useState<any | null>(
     null,
   );
   const [cancellationReason, setCancellationReason] = useState<string>("");
+  const [cancellationScope, setCancellationScope] = useState<
+    "single" | "future" | "all"
+  >("single");
+  const [cancellationAll, setCancellationAll] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!cancellationBooking) return;
+    try {
+      setCancellationScope(
+        (cancellationBooking as any).recurrence_id ? "all" : "single",
+      );
+    } catch (e) {}
+  }, [cancellationBooking]);
   const cancellationReasons = [
     "Teacher unavailable",
     "Illness / emergency",
@@ -815,19 +837,52 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
 
   const createBookingForStudent = async () => {
     if (!selectedSlot || !selectedStudentId) return;
-    const bk = await addBooking({
-      date,
-      time: selectedSlot,
-      studentId: selectedStudentId,
-    });
-    if (!bk) {
-      alert("Unable to create booking (slot unavailable)");
-      return;
+    // build recurrence RRULE string if requested
+    let recurrence: string | undefined = undefined;
+    try {
+      if (recurrenceEnabled && recurrenceUntil) {
+        // recurrence weekly until end date (inclusive)
+        const untilDate = new Date(`${recurrenceUntil}T23:59:59`);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        const y = untilDate.getUTCFullYear();
+        const m = pad(untilDate.getUTCMonth() + 1);
+        const d = pad(untilDate.getUTCDate());
+        const hh = pad(untilDate.getUTCHours());
+        const mm = pad(untilDate.getUTCMinutes());
+        const ss = pad(untilDate.getUTCSeconds());
+        recurrence = `RRULE:FREQ=WEEKLY;UNTIL=${y}${m}${d}T${hh}${mm}${ss}Z`;
+      }
+    } catch (e) {
+      console.error("Failed to build recurrence rule", e);
+      recurrence = undefined;
     }
-    setSelectedSlot(null);
-    setSelectedStudentId(null);
-    setShowStudentModal(false);
-    setRefresh((r) => r + 1);
+
+    try {
+      const bk = await addBooking({
+        date,
+        time: selectedSlot,
+        studentId: selectedStudentId,
+        ...(recurrence ? { recurrence } : {}),
+      });
+      if (!bk) {
+        toast({
+          title: "Unable to create booking",
+          description: "Slot unavailable or conflict",
+        });
+        return;
+      }
+      setSelectedSlot(null);
+      setSelectedStudentId(null);
+      setRecurrenceEnabled(false);
+      setRecurrenceUntil("");
+      setShowStudentModal(false);
+      setRefresh((r) => r + 1);
+    } catch (err: any) {
+      console.error("Create booking error:", err);
+      const msg =
+        err?.message || (typeof err === "string" ? err : "Unknown error");
+      toast({ title: "Booking failed", description: msg });
+    }
   };
 
   return (
@@ -849,6 +904,18 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
           className="px-3 py-2 rounded-md border"
         >
           Refresh
+        </button>
+        <button
+          onClick={() => {
+            // open cancel-all modal
+            setCancellationBooking(null);
+            setCancellationReason("");
+            setCancellationAll(true);
+          }}
+          className="px-3 py-2 rounded-md border bg-destructive text-destructive-foreground"
+          title="Cancel all sessions on selected date"
+        >
+          Cancel all sessions today
         </button>
       </div>
 
@@ -1196,6 +1263,46 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                   onChange={(e) => setCancellationReason(e.target.value)}
                 />
               </div>
+              {cancellationBooking &&
+                (cancellationBooking as any).recurrence_id && (
+                  <div className="mt-3 space-y-2">
+                    <div className="text-sm mb-1">
+                      Which occurrences should be cancelled?
+                    </div>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="cancelScope"
+                        value="single"
+                        checked={cancellationScope === "single"}
+                        onChange={() => setCancellationScope("single")}
+                      />
+                      <span className="text-sm">Only this event</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="cancelScope"
+                        value="future"
+                        checked={cancellationScope === "future"}
+                        onChange={() => setCancellationScope("future")}
+                      />
+                      <span className="text-sm">This and upcoming events</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="cancelScope"
+                        value="all"
+                        checked={cancellationScope === "all"}
+                        onChange={() => setCancellationScope("all")}
+                      />
+                      <span className="text-sm">
+                        All events (entire series)
+                      </span>
+                    </label>
+                  </div>
+                )}
               <div className="flex gap-2 mt-3">
                 <button
                   className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground"
@@ -1203,16 +1310,23 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     if (!cancellationBooking) return;
                     setIsCancelling(cancellationBooking.id);
                     try {
-                      await removeBk(cancellationBooking.id, {
-                        reason: cancellationReason || null,
-                        notify: true,
-                      });
+                      {
+                        // read checkbox value directly to avoid reference errors
+                        await removeBk(cancellationBooking.id, {
+                          reason: cancellationReason || null,
+                          notify: true,
+                          deleteScope: cancellationScope,
+                        });
+                      }
                       setCancellationBooking(null);
                       setCancellationReason("");
                       setRefresh((r) => r + 1);
-                    } catch (e) {
-                      console.error(e);
-                      alert("Failed to cancel booking");
+                    } catch (e: any) {
+                      console.error("Cancel booking error:", e);
+                      const msg =
+                        e?.message ||
+                        (typeof e === "string" ? e : "Unknown error");
+                      alert(`Failed to cancel booking: ${msg}`);
                     } finally {
                       setIsCancelling(null);
                     }
@@ -1226,16 +1340,22 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     if (!cancellationBooking) return;
                     setIsCancelling(cancellationBooking.id);
                     try {
-                      await removeBk(cancellationBooking.id, {
-                        reason: null,
-                        notify: true,
-                      });
+                      {
+                        await removeBk(cancellationBooking.id, {
+                          reason: null,
+                          notify: true,
+                          deleteScope: cancellationScope,
+                        });
+                      }
                       setCancellationBooking(null);
                       setCancellationReason("");
                       setRefresh((r) => r + 1);
-                    } catch (e) {
-                      console.error(e);
-                      alert("Failed to cancel booking");
+                    } catch (e: any) {
+                      console.error("Cancel booking error:", e);
+                      const msg =
+                        e?.message ||
+                        (typeof e === "string" ? e : "Unknown error");
+                      alert(`Failed to cancel booking: ${msg}`);
                     } finally {
                       setIsCancelling(null);
                     }
@@ -1258,6 +1378,95 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
         </div>
       )}
 
+      {/* Cancel all modal */}
+      {cancellationAll && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-40"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setCancellationAll(false);
+              setCancellationReason("");
+            }
+          }}
+        >
+          <div className="bg-card rounded-md p-4 w-full max-w-lg">
+            <div className="flex justify-between items-center">
+              <h4 className="font-semibold">Cancel ALL bookings on {date}</h4>
+              <button
+                onClick={() => {
+                  setCancellationAll(false);
+                  setCancellationReason("");
+                }}
+                className="px-2 py-1 border rounded-md"
+              >
+                Close
+              </button>
+            </div>
+            <div className="mt-3">
+              <div className="text-sm mb-2">
+                Choose a reason (this will be included in the summary email)
+              </div>
+              <div className="space-y-2">
+                {cancellationReasons.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setCancellationReason(r)}
+                    className={`w-full text-left p-2 rounded-md border ${cancellationReason === r ? "bg-primary/10 border-primary" : ""}`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3">
+                <textarea
+                  className="w-full border rounded-md p-2"
+                  placeholder="Or write a custom reason"
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button
+                  className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground"
+                  onClick={async () => {
+                    setIsCancelling("all");
+                    try {
+                      await cancelAllBookingsForDate(
+                        date,
+                        cancellationReason || null,
+                      );
+                      setCancellationAll(false);
+                      setCancellationReason("");
+                      setRefresh((r) => r + 1);
+                    } catch (e: any) {
+                      console.error("Cancel all error:", e);
+                      const msg =
+                        e?.message ||
+                        (typeof e === "string" ? e : "Unknown error");
+                      alert(`Failed to cancel bookings: ${msg}`);
+                    } finally {
+                      setIsCancelling(null);
+                    }
+                  }}
+                >
+                  Send broadcast cancellation & remove bookings
+                </button>
+                <button
+                  className="px-4 py-2 rounded-md border"
+                  onClick={() => {
+                    setCancellationAll(false);
+                    setCancellationReason("");
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Student selection modal */}
       {showStudentModal && selectedSlot && (
         <div
@@ -1267,6 +1476,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
               setShowStudentModal(false);
               setSelectedSlot(null);
               setSelectedStudentId(null);
+              setRecurrenceEnabled(false);
+              setRecurrenceUntil("");
             }
           }}
         >
@@ -1280,6 +1491,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                   setShowStudentModal(false);
                   setSelectedSlot(null);
                   setSelectedStudentId(null);
+                  setRecurrenceEnabled(false);
+                  setRecurrenceUntil("");
                 }}
                 className="px-2 py-1 border rounded-md"
               >
@@ -1295,6 +1508,24 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 autoComplete="off"
               />
+              {/* Recurrence controls */}
+              <div className="mt-3 flex items-center gap-2">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={recurrenceEnabled}
+                    onChange={(e) => setRecurrenceEnabled(e.target.checked)}
+                  />
+                  <span className="text-sm">Repeat weekly until</span>
+                </label>
+                <input
+                  type="date"
+                  className="rounded-md border px-2 h-10"
+                  value={recurrenceUntil}
+                  onChange={(e) => setRecurrenceUntil(e.target.value)}
+                  disabled={!recurrenceEnabled}
+                />
+              </div>
               <div className="mt-3 max-h-64 overflow-auto space-y-2">
                 {filteredStudents.length === 0 && (
                   <div className="text-foreground/70">No students found.</div>
@@ -1342,6 +1573,8 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                     setShowStudentModal(false);
                     setSelectedSlot(null);
                     setSelectedStudentId(null);
+                    setRecurrenceEnabled(false);
+                    setRecurrenceUntil("");
                   }}
                   className="px-4 py-2 rounded-md border"
                 >

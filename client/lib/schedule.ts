@@ -8,6 +8,7 @@ export type Booking = {
   date: string; // YYYY-MM-DD
   time: string; // HH:MM (24h)
   lessonType?: string;
+  recurrence?: string;
 };
 
 function normalizeTime(value: any): string {
@@ -26,9 +27,17 @@ function normalizeTime(value: any): string {
 const AV_KEY = "inTuneAvailability";
 const BK_KEY = "inTuneBookings";
 
+const _availCache: Map<string, { ts: number; data: string[] }> = new Map();
+const _bookingsCache: Map<string, { ts: number; data: any[] }> = new Map();
+const CACHE_TTL = 5000; // ms
+
 async function readAvail(date?: string): Promise<Record<string, string[]>> {
   try {
     const d = date || new Date().toISOString().slice(0, 10);
+    const cached = _availCache.get(d);
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      return { [d]: cached.data };
+    }
     const api = (await import("@/lib/api")).apiFetch;
     const rows = await api(`/api/admin/slots?date=${d}`);
     const map: Record<string, string[]> = {};
@@ -43,6 +52,7 @@ async function readAvail(date?: string): Promise<Record<string, string[]>> {
 
     if (list.length === 0) {
       map[d] = Array.from(defaults);
+      _availCache.set(d, { ts: Date.now(), data: map[d] });
       return map;
     }
 
@@ -82,7 +92,7 @@ async function readBookings(date?: string): Promise<Booking[]> {
       : rows && Array.isArray((rows as any).rows)
         ? (rows as any).rows
         : [];
-    return list.map((r: any) => ({
+    const mapped = list.map((r: any) => ({
       ...r,
       time: normalizeTime(r.time || r.slot_time || r.slotTime),
       slot_id: r.slot_id || r.slotId || null,
@@ -91,6 +101,8 @@ async function readBookings(date?: string): Promise<Booking[]> {
       phone: r.phone || null,
       lessonType: r.lesson_type || r.lessonType || null,
     }));
+    if (date) _bookingsCache.set(date, { ts: Date.now(), data: mapped });
+    return mapped;
   } catch (e) {
     console.error("readBookings error", e);
     return [];
@@ -114,11 +126,18 @@ export function getSlotsForDay(date: string, from = 8, to = 17): string[] {
 }
 
 export async function getAvailability(date: string): Promise<string[]> {
+  const cached = _availCache.get(date);
+  if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data;
   const a = await readAvail(date);
   return a[date] || [];
 }
 
 export async function getSlotsWithMeta(date: string) {
+  const cached = _availCache.get(date);
+  if (cached && Date.now() - cached.ts < CACHE_TTL) {
+    // reconstruct minimal meta from cached availability
+    return cached.data.map((t) => ({ slot_date: date, slot_time: t }));
+  }
   const api = (await import("@/lib/api")).apiFetch;
   const rows = await api(`/api/admin/slots?date=${date}`);
   return Array.isArray(rows)
@@ -212,6 +231,10 @@ export async function addBooking(
       if ((booking as any).email) payload.email = (booking as any).email;
       if ((booking as any).phone) payload.phone = (booking as any).phone;
     }
+    // Include recurrence rule when provided (RRULE string)
+    if ((booking as any).recurrence) {
+      payload.recurrence = (booking as any).recurrence;
+    }
     const res = await api(`/api/admin/bookings`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -233,12 +256,34 @@ export async function removeBooking(
     const opts: any = { method: "DELETE" };
     if (options) {
       opts.headers = { "Content-Type": "application/json" };
-      opts.body = JSON.stringify({
+      const body: any = {
         reason: options.reason || null,
         notify: options.notify !== false,
-      });
+      };
+      if (typeof (options as any).deleteSeries !== "undefined") {
+        body.deleteSeries = (options as any).deleteSeries;
+      }
+      if (typeof (options as any).deleteScope !== "undefined") {
+        body.deleteScope = (options as any).deleteScope;
+      }
+      opts.body = JSON.stringify(body);
     }
     await api(`/api/admin/bookings/${id}`, opts);
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
+}
+
+export async function cancelAllBookingsForDate(date: string, reason?: string) {
+  try {
+    const api = (await import("@/lib/api")).apiFetch;
+    const res = await api(`/api/admin/bookings/cancel-all`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, reason }),
+    });
+    return res;
   } catch (e) {
     console.error(e);
     throw e;

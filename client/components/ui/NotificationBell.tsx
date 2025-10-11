@@ -27,9 +27,101 @@ export default function NotificationBell() {
   }
 
   useEffect(() => {
-    fetchNotifications();
-    const id = setInterval(fetchNotifications, 15000);
-    return () => clearInterval(id);
+    let mounted = true;
+    let timer: any = null;
+    const POLL_MS = 30000; // poll every 30s to reduce load
+    let ws: WebSocket | null = null;
+    let wsConnected = false;
+
+    const startPolling = () => {
+      if (!mounted) return;
+      // initial fetch
+      fetchNotifications();
+      // schedule next only when page is visible and no WS
+      timer = setInterval(() => {
+        if (document.visibilityState === "visible" && !wsConnected)
+          fetchNotifications();
+      }, POLL_MS);
+    };
+
+    const connectWS = () => {
+      try {
+        const proto = window.location.protocol === "https:" ? "wss" : "ws";
+        const host = window.location.host;
+        const token =
+          typeof window !== "undefined"
+            ? window.localStorage.getItem("inTuneToken")
+            : null;
+        const url = `${proto}://${host}/ws${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+        ws = new WebSocket(url);
+        ws.addEventListener("open", () => {
+          wsConnected = true;
+          // when WS connected, do an immediate fetch to ensure state
+          fetchNotifications();
+        });
+        ws.addEventListener("message", (ev) => {
+          try {
+            const data = JSON.parse(ev.data);
+            if (!data || !data.type) return;
+            if (data.type === "notification:new") {
+              const payload = data.payload;
+              // if this notification is for current user, add it
+              if (
+                !user ||
+                (payload && payload.user_id && payload.user_id !== user.id)
+              )
+                return;
+              setNotifications((s) => [payload, ...(s || [])].slice(0, 50));
+              setUnreadCount((c) => c + 1);
+            } else if (data.type && data.type.startsWith("message")) {
+              // Depending on broadcast types, force refresh
+              fetchNotifications();
+            }
+          } catch (e) {
+            // ignore
+          }
+        });
+        ws.addEventListener("close", () => {
+          wsConnected = false;
+          // attempt reconnect after delay
+          setTimeout(() => {
+            if (mounted) connectWS();
+          }, 5000);
+        });
+        ws.addEventListener("error", () => {
+          wsConnected = false;
+          try {
+            ws && ws.close();
+          } catch (e) {}
+        });
+      } catch (e) {
+        // fallback to polling
+      }
+    };
+
+    startPolling();
+    connectWS();
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        // refresh immediately when tab becomes visible
+        fetchNotifications();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      mounted = false;
+      if (timer) clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibility);
+      try {
+        if (ws) {
+          ws.close();
+          ws = null;
+        }
+      } catch (e) {}
+    };
   }, [user]);
 
   useEffect(() => {
