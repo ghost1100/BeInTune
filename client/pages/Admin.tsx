@@ -757,28 +757,16 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
   }, [date, refresh]);
 
   const toggle = async (time: string) => {
-    try {
-      setIsLoading(true);
-      await toggleAvailability(date, time);
-      setRefresh((r) => r + 1);
-    } finally {
-      setIsLoading(false);
-    }
+    await toggleAvailability(date, time);
+    setRefresh((r) => r + 1);
   };
 
   const removeBk = async (
     id: string,
     options?: { reason?: string | null; notify?: boolean },
   ) => {
-    try {
-      setIsCancelling(id);
-      setIsLoading(true);
-      await removeBooking(id, options);
-      setRefresh((r) => r + 1);
-    } finally {
-      setIsCancelling(null);
-      setIsLoading(false);
-    }
+    await removeBooking(id, options);
+    setRefresh((r) => r + 1);
   };
 
   const [bookingsState, setBookingsState] = useState<any[]>([]);
@@ -790,7 +778,6 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
     null,
   );
   const [isCancelling, setIsCancelling] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [bookingDetail, setBookingDetail] = useState<any | null>(null);
@@ -830,24 +817,19 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
 
   const createBookingForStudent = async () => {
     if (!selectedSlot || !selectedStudentId) return;
-    try {
-      setIsLoading(true);
-      const bk = await addBooking({
-        date,
-        time: selectedSlot,
-        studentId: selectedStudentId,
-      });
-      if (!bk) {
-        alert("Unable to create booking (slot unavailable)");
-        return;
-      }
-      setSelectedSlot(null);
-      setSelectedStudentId(null);
-      setShowStudentModal(false);
-      setRefresh((r) => r + 1);
-    } finally {
-      setIsLoading(false);
+    const bk = await addBooking({
+      date,
+      time: selectedSlot,
+      studentId: selectedStudentId,
+    });
+    if (!bk) {
+      alert("Unable to create booking (slot unavailable)");
+      return;
     }
+    setSelectedSlot(null);
+    setSelectedStudentId(null);
+    setShowStudentModal(false);
+    setRefresh((r) => r + 1);
   };
 
   return (
@@ -868,7 +850,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
           }}
           className="px-3 py-2 rounded-md border"
         >
-          {isLoading ? <span className="inline-flex items-center gap-2"><svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(0,0,0,0.1)" strokeWidth="4" /><path d="M22 12a10 10 0 00-10-10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" /></svg> Loading</span> : 'Refresh'}
+          Refresh
         </button>
         <button
           onClick={() => {
@@ -974,11 +956,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                           className="px-3 py-1 rounded-md border"
                           disabled={isCancelling === booked.id}
                         >
-                          {isCancelling === booked.id ? (
-                            <><span className="inline-flex mr-2"><svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(0,0,0,0.1)" strokeWidth="4" /><path d="M22 12a10 10 0 00-10-10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" /></svg></span> Cancelling...</>
-                          ) : (
-                            "Unbook"
-                          )}
+                          {isCancelling === booked.id ? "Cancelling..." : "Unbook"}
                         </button>
                       ) : (
                         available && (
@@ -990,11 +968,7 @@ function ScheduleManager({ visual }: { visual?: boolean } = {}) {
                             }}
                             className="px-3 py-1 rounded-md border"
                           >
-                            {isLoading ? (
-                              <span className="inline-flex items-center gap-2"><svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(0,0,0,0.1)" strokeWidth="4" /><path d="M22 12a10 10 0 00-10-10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" /></svg> Loading</span>
-                            ) : (
-                              'Add'
-                            )}
+                            Add
                           </button>
                         )
                       )}
