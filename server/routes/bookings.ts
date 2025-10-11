@@ -643,6 +643,18 @@ router.post("/bookings", async (req, res) => {
                 }
               }
 
+              // Map the calendar instance for the original booking (if possible)
+              try {
+                const originalBookingId = ins.rows[0].id;
+                if (originalBookingId) {
+                  try {
+                    await mapInstanceToBooking(ev.id, date, time, originalBookingId);
+                  } catch (e) {
+                    console.warn('Failed to map instance for original booking', e);
+                  }
+                }
+              } catch (e) {}
+
               // If a recurrence RRULE with COUNT is provided, create DB slots and bookings for each occurrence
               try {
                 if (recurrence && typeof recurrence === "string") {
