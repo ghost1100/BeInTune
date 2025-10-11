@@ -122,8 +122,8 @@ router.post("/posts", async (req, res) => {
         if (u.rows[0]) {
           const uid = u.rows[0].id;
           if (uid !== authorId) {
-            await query(
-              "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
+            const notifRes = await query(
+              "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4) RETURNING id, user_id, actor_id, type, meta, created_at",
               [
                 uid,
                 authorId,
@@ -131,6 +131,7 @@ router.post("/posts", async (req, res) => {
                 JSON.stringify({ postId, snippet: (body || "").slice(0, 200) }),
               ],
             );
+            try { if (notifRes && notifRes.rows && notifRes.rows[0]) req.app.locals.broadcast?.('notification:new', notifRes.rows[0]); } catch(e){}
           }
         }
       }
