@@ -432,12 +432,18 @@ router.post("/bookings", async (req, res) => {
         const rawSlotDate = slot.slot_date;
         let date;
         if (rawSlotDate instanceof Date) {
-          date = rawSlotDate.toISOString().slice(0,10);
+          date = rawSlotDate.toISOString().slice(0, 10);
         } else {
-          date = typeof rawSlotDate === 'string' && rawSlotDate.includes('T') ? rawSlotDate.split('T')[0] : rawSlotDate;
+          date =
+            typeof rawSlotDate === "string" && rawSlotDate.includes("T")
+              ? rawSlotDate.split("T")[0]
+              : rawSlotDate;
         }
         const rawSlotTime = slot.slot_time;
-        const time = typeof rawSlotTime === 'string' ? rawSlotTime.split(':').slice(0,2).join(':') : rawSlotTime; // normalized HH:MM
+        const time =
+          typeof rawSlotTime === "string"
+            ? rawSlotTime.split(":").slice(0, 2).join(":")
+            : rawSlotTime; // normalized HH:MM
         const duration = slot.duration_minutes || 30;
         // Construct start/end ISO timestamps more robustly to avoid Invalid Date errors
         const makeIso = (dStr: any, tStr: string, durMin: number) => {
@@ -532,11 +538,32 @@ router.post("/bookings", async (req, res) => {
               "SELECT calendar_event_id, recurrence_id FROM bookings WHERE slot_id = $1 AND (calendar_event_id IS NOT NULL OR recurrence_id IS NOT NULL) LIMIT 1",
               [slot.id],
             );
-            if (existsQ && existsQ.rows && existsQ.rows[0] && (existsQ.rows[0].calendar_event_id || existsQ.rows[0].recurrence_id)) {
-              ev = { id: existsQ.rows[0].calendar_event_id || existsQ.rows[0].recurrence_id };
+            if (
+              existsQ &&
+              existsQ.rows &&
+              existsQ.rows[0] &&
+              (existsQ.rows[0].calendar_event_id ||
+                existsQ.rows[0].recurrence_id)
+            ) {
+              ev = {
+                id:
+                  existsQ.rows[0].calendar_event_id ||
+                  existsQ.rows[0].recurrence_id,
+              };
               try {
-                await query("UPDATE bookings SET calendar_event_id = $1, recurrence_id = $2 WHERE id = $3", [ev.id, existsQ.rows[0].recurrence_id || null, ins.rows[0].id]);
-                console.log("Reused existing calendar event for slot", slot.id, ev.id);
+                await query(
+                  "UPDATE bookings SET calendar_event_id = $1, recurrence_id = $2 WHERE id = $3",
+                  [
+                    ev.id,
+                    existsQ.rows[0].recurrence_id || null,
+                    ins.rows[0].id,
+                  ],
+                );
+                console.log(
+                  "Reused existing calendar event for slot",
+                  slot.id,
+                  ev.id,
+                );
               } catch (e) {
                 console.warn("Failed to persist reused calendar id", e);
               }
@@ -570,7 +597,7 @@ router.post("/bookings", async (req, res) => {
 
               // If a recurrence RRULE with COUNT is provided, create DB slots and bookings for each occurrence
               try {
-                if (recurrence && typeof recurrence === 'string') {
+                if (recurrence && typeof recurrence === "string") {
                   const rStr = String(recurrence);
                   const m = rStr.match(/COUNT=(\d+)/i);
                   const count = m ? parseInt(m[1], 10) : null;
@@ -592,7 +619,11 @@ router.post("/bookings", async (req, res) => {
                             "SELECT id FROM slots WHERE slot_date = $1 AND slot_time = $2 LIMIT 1",
                             [slotDate, slotTime],
                           );
-                          if (existingSlot && existingSlot.rows && existingSlot.rows[0]) {
+                          if (
+                            existingSlot &&
+                            existingSlot.rows &&
+                            existingSlot.rows[0]
+                          ) {
                             newSlotId = existingSlot.rows[0].id;
                           } else {
                             const insSlot = await query(
@@ -607,7 +638,10 @@ router.post("/bookings", async (req, res) => {
                             newSlotId = insSlot.rows[0].id;
                           }
                         } catch (innerSlotErr) {
-                          console.warn('Failed to ensure slot for recurring occurrence', innerSlotErr);
+                          console.warn(
+                            "Failed to ensure slot for recurring occurrence",
+                            innerSlotErr,
+                          );
                         }
                         if (newSlotId) {
                           // avoid duplicate booking for same recurrence/slot
@@ -616,7 +650,13 @@ router.post("/bookings", async (req, res) => {
                               "SELECT id FROM bookings WHERE slot_id = $1 AND recurrence_id = $2 LIMIT 1",
                               [newSlotId, ev.id],
                             );
-                            if (!(existingBk && existingBk.rows && existingBk.rows[0])) {
+                            if (
+                              !(
+                                existingBk &&
+                                existingBk.rows &&
+                                existingBk.rows[0]
+                              )
+                            ) {
                               await query(
                                 "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
                                 [
@@ -632,7 +672,10 @@ router.post("/bookings", async (req, res) => {
                               );
                             }
                           } catch (innerBkErr) {
-                            console.warn('Failed to insert booking for recurring occurrence', innerBkErr);
+                            console.warn(
+                              "Failed to insert booking for recurring occurrence",
+                              innerBkErr,
+                            );
                           }
                         }
                       } catch (inner) {
@@ -669,7 +712,8 @@ router.post("/bookings", async (req, res) => {
                           date + "T" + (time || "00:00") + ":00",
                         );
                         const oneWeek = 7 * 24 * 60 * 60 * 1000;
-                        const dateKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                        const dateKey = (d: Date) =>
+                          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
                         // advance to first instance after the original (we already created the first booking)
                         cur = new Date(cur.getTime() + oneWeek);
                         let occ = 1;
@@ -680,55 +724,71 @@ router.post("/bookings", async (req, res) => {
                             const slotDate = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
                             const slotTime = `${String(cur.getHours()).padStart(2, "0")}:${String(cur.getMinutes()).padStart(2, "0")}`;
                             // avoid duplicating slots/bookings if they already exist
-                        let newSlotId: string | null = null;
-                        try {
-                          const existingSlot = await query(
-                            "SELECT id FROM slots WHERE slot_date = $1 AND slot_time = $2 LIMIT 1",
-                            [slotDate, slotTime],
-                          );
-                          if (existingSlot && existingSlot.rows && existingSlot.rows[0]) {
-                            newSlotId = existingSlot.rows[0].id;
-                          } else {
-                            const insSlot = await query(
-                              "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
-                              [
-                                slot.teacher_id || null,
-                                slotDate,
-                                slotTime,
-                                duration || 30,
-                              ],
-                            );
-                            newSlotId = insSlot.rows[0].id;
-                          }
-                        } catch (innerSlotErr) {
-                          console.warn('Failed to ensure slot for recurring occurrence', innerSlotErr);
-                        }
-                        if (newSlotId) {
-                          // avoid duplicate booking for same recurrence/slot
-                          try {
-                            const existingBk = await query(
-                              "SELECT id FROM bookings WHERE slot_id = $1 AND recurrence_id = $2 LIMIT 1",
-                              [newSlotId, ev.id],
-                            );
-                            if (!(existingBk && existingBk.rows && existingBk.rows[0])) {
-                              await query(
-                                "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
-                                [
-                                  student_id || null,
-                                  newSlotId,
-                                  lesson_type || null,
-                                  nameToStore,
-                                  emailToStore,
-                                  phoneToStore,
-                                  ev.id,
-                                  ev.id,
-                                ],
+                            let newSlotId: string | null = null;
+                            try {
+                              const existingSlot = await query(
+                                "SELECT id FROM slots WHERE slot_date = $1 AND slot_time = $2 LIMIT 1",
+                                [slotDate, slotTime],
+                              );
+                              if (
+                                existingSlot &&
+                                existingSlot.rows &&
+                                existingSlot.rows[0]
+                              ) {
+                                newSlotId = existingSlot.rows[0].id;
+                              } else {
+                                const insSlot = await query(
+                                  "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
+                                  [
+                                    slot.teacher_id || null,
+                                    slotDate,
+                                    slotTime,
+                                    duration || 30,
+                                  ],
+                                );
+                                newSlotId = insSlot.rows[0].id;
+                              }
+                            } catch (innerSlotErr) {
+                              console.warn(
+                                "Failed to ensure slot for recurring occurrence",
+                                innerSlotErr,
                               );
                             }
-                          } catch (innerBkErr) {
-                            console.warn('Failed to insert booking for recurring occurrence', innerBkErr);
-                          }
-                        }
+                            if (newSlotId) {
+                              // avoid duplicate booking for same recurrence/slot
+                              try {
+                                const existingBk = await query(
+                                  "SELECT id FROM bookings WHERE slot_id = $1 AND recurrence_id = $2 LIMIT 1",
+                                  [newSlotId, ev.id],
+                                );
+                                if (
+                                  !(
+                                    existingBk &&
+                                    existingBk.rows &&
+                                    existingBk.rows[0]
+                                  )
+                                ) {
+                                  await query(
+                                    "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+                                    [
+                                      student_id || null,
+                                      newSlotId,
+                                      lesson_type || null,
+                                      nameToStore,
+                                      emailToStore,
+                                      phoneToStore,
+                                      ev.id,
+                                      ev.id,
+                                    ],
+                                  );
+                                }
+                              } catch (innerBkErr) {
+                                console.warn(
+                                  "Failed to insert booking for recurring occurrence",
+                                  innerBkErr,
+                                );
+                              }
+                            }
                           } catch (inner) {
                             console.warn(
                               "Failed to create booking for recurring occurrence until",
@@ -749,12 +809,15 @@ router.post("/bookings", async (req, res) => {
                       // No UNTIL/COUNT provided: expand a reasonable default (next 12 weekly occurrences)
                       try {
                         const occurrences = 12;
-                        let cur = new Date(date + "T" + (time || "00:00") + ":00");
+                        let cur = new Date(
+                          date + "T" + (time || "00:00") + ":00",
+                        );
                         const oneWeek = 7 * 24 * 60 * 60 * 1000;
                         cur = new Date(cur.getTime() + oneWeek);
                         for (let i = 1; i <= occurrences; i++) {
                           try {
-                            const pad = (n: number) => String(n).padStart(2, "0");
+                            const pad = (n: number) =>
+                              String(n).padStart(2, "0");
                             const slotDate = `${cur.getFullYear()}-${pad(cur.getMonth() + 1)}-${pad(cur.getDate())}`;
                             const slotTime = `${String(cur.getHours()).padStart(2, "0")}:${String(cur.getMinutes()).padStart(2, "0")}`;
                             let newSlotId: string | null = null;
@@ -763,7 +826,11 @@ router.post("/bookings", async (req, res) => {
                                 "SELECT id FROM slots WHERE slot_date = $1 AND slot_time = $2 LIMIT 1",
                                 [slotDate, slotTime],
                               );
-                              if (existingSlot && existingSlot.rows && existingSlot.rows[0]) {
+                              if (
+                                existingSlot &&
+                                existingSlot.rows &&
+                                existingSlot.rows[0]
+                              ) {
                                 newSlotId = existingSlot.rows[0].id;
                               } else {
                                 const insSlot = await query(
@@ -778,7 +845,10 @@ router.post("/bookings", async (req, res) => {
                                 newSlotId = insSlot.rows[0].id;
                               }
                             } catch (innerSlotErr) {
-                              console.warn('Failed to ensure slot for recurring occurrence (fallback)', innerSlotErr);
+                              console.warn(
+                                "Failed to ensure slot for recurring occurrence (fallback)",
+                                innerSlotErr,
+                              );
                             }
                             if (newSlotId) {
                               try {
@@ -786,7 +856,13 @@ router.post("/bookings", async (req, res) => {
                                   "SELECT id FROM bookings WHERE slot_id = $1 AND recurrence_id = $2 LIMIT 1",
                                   [newSlotId, ev.id],
                                 );
-                                if (!(existingBk && existingBk.rows && existingBk.rows[0])) {
+                                if (
+                                  !(
+                                    existingBk &&
+                                    existingBk.rows &&
+                                    existingBk.rows[0]
+                                  )
+                                ) {
                                   await query(
                                     "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone, calendar_event_id, recurrence_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
                                     [
@@ -802,16 +878,25 @@ router.post("/bookings", async (req, res) => {
                                   );
                                 }
                               } catch (innerBkErr) {
-                                console.warn('Failed to insert booking for recurring occurrence (fallback)', innerBkErr);
+                                console.warn(
+                                  "Failed to insert booking for recurring occurrence (fallback)",
+                                  innerBkErr,
+                                );
                               }
                             }
                           } catch (inner) {
-                            console.warn('Failed to create booking for recurring fallback occurrence', inner);
+                            console.warn(
+                              "Failed to create booking for recurring fallback occurrence",
+                              inner,
+                            );
                           }
                           cur = new Date(cur.getTime() + oneWeek);
                         }
                       } catch (inner) {
-                        console.warn('Failed to expand fallback recurring bookings:', inner);
+                        console.warn(
+                          "Failed to expand fallback recurring bookings:",
+                          inner,
+                        );
                       }
                     }
                   }
@@ -1241,7 +1326,11 @@ router.post("/bookings/demo-add", requireAdmin, async (req, res) => {
           "SELECT id, calendar_event_id FROM bookings WHERE slot_id = $1 LIMIT 1",
           [slotId],
         );
-        if (existingBooking && existingBooking.rows && existingBooking.rows[0]) {
+        if (
+          existingBooking &&
+          existingBooking.rows &&
+          existingBooking.rows[0]
+        ) {
           created.push({ id: existingBooking.rows[0].id, slotId });
           continue;
         }
@@ -1277,8 +1366,21 @@ router.post("/bookings/demo-add", requireAdmin, async (req, res) => {
           "SELECT calendar_event_id, recurrence_id FROM bookings WHERE slot_id = $1 AND (calendar_event_id IS NOT NULL OR recurrence_id IS NOT NULL) LIMIT 1",
           [slotId],
         );
-        if (existEv && existEv.rows && existEv.rows[0] && (existEv.rows[0].calendar_event_id || existEv.rows[0].recurrence_id)) {
-          await query("UPDATE bookings SET calendar_event_id = $1, recurrence_id = $2 WHERE id = $3", [existEv.rows[0].calendar_event_id || existEv.rows[0].recurrence_id, existEv.rows[0].recurrence_id || null, id]);
+        if (
+          existEv &&
+          existEv.rows &&
+          existEv.rows[0] &&
+          (existEv.rows[0].calendar_event_id || existEv.rows[0].recurrence_id)
+        ) {
+          await query(
+            "UPDATE bookings SET calendar_event_id = $1, recurrence_id = $2 WHERE id = $3",
+            [
+              existEv.rows[0].calendar_event_id ||
+                existEv.rows[0].recurrence_id,
+              existEv.rows[0].recurrence_id || null,
+              id,
+            ],
+          );
         } else {
           const ev = await createCalendarEvent({
             summary: `Demo Lesson`,

@@ -194,7 +194,11 @@ export async function createCalendarEvent(opts: {
   }
 }
 
-export async function updateRecurringEventUntil(eventId: string, untilIso: string, calendarId?: string) {
+export async function updateRecurringEventUntil(
+  eventId: string,
+  untilIso: string,
+  calendarId?: string,
+) {
   try {
     const auth = await initAuth();
     const calendar = google.calendar({ version: "v3", auth });
@@ -202,11 +206,16 @@ export async function updateRecurringEventUntil(eventId: string, untilIso: strin
       calendarId ||
       process.env.GOOGLE_CALENDAR_ID ||
       serviceAccount.client_email;
-    console.log("Updating recurring event UNTIL", { eventId, untilIso, calendarId: cid });
+    console.log("Updating recurring event UNTIL", {
+      eventId,
+      untilIso,
+      calendarId: cid,
+    });
     // fetch existing event
     const getRes = await calendar.events.get({ calendarId: cid, eventId });
     const existing: any = getRes && (getRes as any).data;
-    const recurrences: string[] = existing && existing.recurrence ? existing.recurrence : [];
+    const recurrences: string[] =
+      existing && existing.recurrence ? existing.recurrence : [];
     if (!recurrences.length) {
       throw new Error("Event has no recurrence rules to update");
     }
@@ -225,7 +234,9 @@ export async function updateRecurringEventUntil(eventId: string, untilIso: strin
       eventId,
       requestBody: { recurrence: newRecurrences },
     });
-    console.log("Recurring event patched", { status: (patchRes as any).status });
+    console.log("Recurring event patched", {
+      status: (patchRes as any).status,
+    });
     return true;
   } catch (err) {
     console.error("updateRecurringEventUntil error:", err);
@@ -233,7 +244,11 @@ export async function updateRecurringEventUntil(eventId: string, untilIso: strin
   }
 }
 
-export async function deleteRecurringInstance(eventId: string, instanceStartIso: string, calendarId?: string) {
+export async function deleteRecurringInstance(
+  eventId: string,
+  instanceStartIso: string,
+  calendarId?: string,
+) {
   try {
     const auth = await initAuth();
     const calendar = google.calendar({ version: "v3", auth });
@@ -241,15 +256,25 @@ export async function deleteRecurringInstance(eventId: string, instanceStartIso:
       calendarId ||
       process.env.GOOGLE_CALENDAR_ID ||
       serviceAccount.client_email;
-    console.log("Deleting recurring instance", { eventId, instanceStartIso, calendarId: cid });
+    console.log("Deleting recurring instance", {
+      eventId,
+      instanceStartIso,
+      calendarId: cid,
+    });
     // list instances around the provided start
     const timeMin = instanceStartIso;
     // small window to ensure match
     const endDate = new Date(instanceStartIso);
     endDate.setSeconds(endDate.getSeconds() + 1);
     const timeMax = endDate.toISOString();
-    const res = await calendar.events.instances({ calendarId: cid, eventId, timeMin, timeMax });
-    const items: any[] = (res && (res as any).data && (res as any).data.items) || [];
+    const res = await calendar.events.instances({
+      calendarId: cid,
+      eventId,
+      timeMin,
+      timeMax,
+    });
+    const items: any[] =
+      (res && (res as any).data && (res as any).data.items) || [];
     let found: any = null;
     for (const it of items) {
       const s = it.start && (it.start.dateTime || it.start.date);
@@ -271,10 +296,18 @@ export async function deleteRecurringInstance(eventId: string, instanceStartIso:
     if (!found) {
       // try to find closest by matching date portion
       const targetDate = instanceStartIso.slice(0, 10);
-      found = items.find((it) => (it.start && (it.start.dateTime || it.start.date) || "").startsWith(targetDate));
+      found = items.find((it) =>
+        ((it.start && (it.start.dateTime || it.start.date)) || "").startsWith(
+          targetDate,
+        ),
+      );
     }
     if (!found) {
-      console.warn("No instance found to delete for", eventId, instanceStartIso);
+      console.warn(
+        "No instance found to delete for",
+        eventId,
+        instanceStartIso,
+      );
       return false;
     }
     await calendar.events.delete({ calendarId: cid, eventId: found.id });
