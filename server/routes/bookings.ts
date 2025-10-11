@@ -353,7 +353,7 @@ router.post("/bookings", async (req, res) => {
         console.error("Booking notification error:", err);
       }
 
-      // Create calendar event (if configured)
+      // Create calendar event (if configured). Supports optional recurrence (RRULE string in req.body.recurrence)
       try {
         const { createCalendarEvent } = await import("../lib/calendar");
         const slot = slotRes.rows[0];
