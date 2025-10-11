@@ -119,8 +119,6 @@ export default function Admin() {
     })();
   }, [navigate]);
 
-  // default option for whether to delete entire recurring series when cancelling
-  const [deleteSeriesOption, setDeleteSeriesOption] = useState<boolean>(true);
 
   const add = async (e: FormEvent) => {
     e.preventDefault();
