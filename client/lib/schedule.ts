@@ -245,6 +245,9 @@ export async function removeBooking(
       if (typeof (options as any).deleteSeries !== "undefined") {
         body.deleteSeries = (options as any).deleteSeries;
       }
+      if (typeof (options as any).deleteScope !== "undefined") {
+        body.deleteScope = (options as any).deleteScope;
+      }
       opts.body = JSON.stringify(body);
     }
     await api(`/api/admin/bookings/${id}`, opts);
