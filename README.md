@@ -1,4 +1,4 @@
-In Tune Music Tuition — Project README
+
 
 Overview
 
@@ -28,7 +28,7 @@ New integrations and configuration
 
 Email (SMTP / Gmail)
 
-This project now supports sending mail through SMTP (nodemailer) with an optional SendGrid fallback. A helper lives at server/lib/mailer.ts which will use SMTP when SMTP\_\* environment variables are provided.
+This project now supports sending mail through SMTP (nodemailer) with an optional SendGrid fallback. A helper lives at server/lib/mailer.ts which will use SMTP when SMTP_* environment variables are provided.
 
 Required environment variables for Gmail SMTP:
 
@@ -165,7 +165,7 @@ Next steps I can implement for you
 - Add a deployment / CI script that injects the service account JSON into the runtime securely (using provider secret managers).
 - Implement per-teacher calendar support and a calendar-connection flow in Admin.
 
-If you want me to update any of the above (add the Admin event list, wire CI secrets, or implement per-teacher calendars), tell me which and I’ll add it to the todo list and implement.
+If you want me to update any of the above (add the Admin event list, wire CI secrets, or implement per-teacher calendars), tell me which and I’ll add it to the todo list and implement it.
 
 Recurring bookings
 
@@ -195,7 +195,6 @@ SEO and marketing
   - music teacher
   - tutor, tuition, tutorials, guide, instructor
   - online music lessons
-- Consider adding structured data (JSON-LD) for LocalBusiness and Course offerings to improve search visibility and rich snippets.
 
 Next steps I can implement for you
 
