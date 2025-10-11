@@ -126,11 +126,18 @@ export function getSlotsForDay(date: string, from = 8, to = 17): string[] {
 }
 
 export async function getAvailability(date: string): Promise<string[]> {
+  const cached = _availCache.get(date);
+  if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data;
   const a = await readAvail(date);
   return a[date] || [];
 }
 
 export async function getSlotsWithMeta(date: string) {
+  const cached = _availCache.get(date);
+  if (cached && Date.now() - cached.ts < CACHE_TTL) {
+    // reconstruct minimal meta from cached availability
+    return cached.data.map((t) => ({ slot_date: date, slot_time: t }));
+  }
   const api = (await import("@/lib/api")).apiFetch;
   const rows = await api(`/api/admin/slots?date=${date}`);
   return Array.isArray(rows)
