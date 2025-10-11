@@ -907,4 +907,58 @@ router.delete("/bookings/:id", async (req, res) => {
   }
 });
 
+// Demo endpoint: create demo bookings on a date (admin only)
+router.post("/bookings/demo-add", requireAdmin, async (req, res) => {
+  try {
+    const date = req.body && req.body.date ? String(req.body.date) : "2025-10-15";
+    const times = req.body && Array.isArray(req.body.times) && req.body.times.length ? req.body.times : ["10:00", "10:30"];
+    const created: any[] = [];
+    for (const time of times) {
+      // create slot
+      const insSlot = await query(
+        "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
+        [null, date, time, 30],
+      );
+      const slotId = insSlot.rows[0].id;
+      // create booking
+      const ins = await query(
+        "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id",
+        [null, slotId, "Demo", "Demo User", "demo@example.com", null],
+      );
+      const id = ins.rows[0].id;
+
+      // create calendar event for the booking
+      try {
+        const { createCalendarEvent } = await import("../lib/calendar");
+        // build ISO-local start/end
+        const parts = String(date).split("-").map(Number);
+        const y = parts[0], m = parts[1] - 1, d = parts[2];
+        const tparts = String(time).split(":").map(Number);
+        const hh = tparts[0] || 0, mm = tparts[1] || 0;
+        const startLocal = `${date}T${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}:00`;
+        const endDate = new Date(y, m, d, hh, mm, 0);
+        endDate.setMinutes(endDate.getMinutes() + 30);
+        const endLocal = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}T${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}:00`;
+        const ev = await createCalendarEvent({
+          summary: `Demo Lesson`,
+          description: `Demo booking on ${date} at ${time}`,
+          startDateTime: startLocal,
+          endDateTime: endLocal,
+        });
+        if (ev && ev.id) {
+          await query("UPDATE bookings SET calendar_event_id = $1 WHERE id = $2", [ev.id, id]);
+        }
+      } catch (e) {
+        console.error("Failed to create demo calendar event", e);
+      }
+
+      created.push({ id, slotId });
+    }
+    res.json({ ok: true, created });
+  } catch (e) {
+    console.error("Failed to create demo bookings:", e);
+    res.status(500).json({ error: "Failed to create demo bookings" });
+  }
+});
+
 export default router;
