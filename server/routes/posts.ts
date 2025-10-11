@@ -181,8 +181,8 @@ router.post("/posts/:id/comments", async (req, res) => {
       ]);
       const postAuthor = postRes.rows[0] && postRes.rows[0].author_id;
       if (postAuthor && postAuthor !== authorId) {
-        await query(
-          "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
+        const notifRes = await query(
+          "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4) RETURNING id, user_id, actor_id, type, meta, created_at",
           [
             postAuthor,
             authorId,
@@ -190,6 +190,7 @@ router.post("/posts/:id/comments", async (req, res) => {
             JSON.stringify({ postId: id, snippet: (body || "").slice(0, 200) }),
           ],
         );
+        try { if (notifRes && notifRes.rows && notifRes.rows[0]) req.app.locals.broadcast?.('notification:new', notifRes.rows[0]); } catch(e) {}
       }
       // mentions
       const mentionRegex = /@([\w._-]+)/g;
