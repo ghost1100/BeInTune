@@ -88,7 +88,7 @@ router.post("/messages", async (req, res) => {
     if (enc.encrypted) msg.content = content;
     // broadcast to websocket clients
     try {
-      req.app.locals.broadcast?.("message:new", msg);
+      req.app.locals.broadcast?.(msg.recipient_id || null, "message:new", msg);
     } catch (e) {
       console.error("WS broadcast error:", e);
     }
@@ -109,7 +109,7 @@ router.post("/messages", async (req, res) => {
         );
         try {
           const notif = notifRes && notifRes.rows && notifRes.rows[0];
-          req.app.locals.broadcast?.("notification:new", notif);
+          req.app.locals.broadcast?.(notif.user_id || null, "notification:new", notif);
         } catch (e) {
           console.error("Failed to broadcast notification:new", e);
         }
