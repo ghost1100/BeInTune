@@ -163,6 +163,10 @@ export async function createCalendarEvent(opts: {
       start: { dateTime: opts.startDateTime, timeZone: timezone },
       end: { dateTime: opts.endDateTime, timeZone: timezone },
     };
+    // support recurrence (array of RRULE strings) for recurring events
+    if ((opts as any).recurrence) {
+      event.recurrence = (opts as any).recurrence;
+    }
     if (opts.attendees && opts.attendees.length) {
       event.attendees = opts.attendees.map((email) => ({ email }));
     }
