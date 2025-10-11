@@ -611,6 +611,38 @@ router.post("/bookings", async (req, res) => {
                 [ev.id, recurrenceIdToStore, ins.rows[0].id],
               );
 
+              // helper to map google recurring instances to DB booking rows
+              const { listInstances } = await import("../lib/calendar");
+              async function mapInstanceToBooking(eventId: string, slotDate: string, slotTime: string, bookingId: string) {
+                try {
+                  const startIso = `${slotDate}T${slotTime}:00`;
+                  const endDate = new Date(startIso);
+                  endDate.setSeconds(endDate.getSeconds() + 1);
+                  const instances = await listInstances(eventId, startIso, endDate.toISOString());
+                  let found = null;
+                  for (const it of instances) {
+                    const s = it.start && (it.start.dateTime || it.start.date);
+                    if (!s) continue;
+                    if (s.startsWith(startIso.slice(0, 19))) {
+                      found = it;
+                      break;
+                    }
+                    try {
+                      const si = new Date(s).toISOString();
+                      if (si === startIso) {
+                        found = it;
+                        break;
+                      }
+                    } catch (e) {}
+                  }
+                  if (found && found.id) {
+                    await query("UPDATE bookings SET calendar_instance_id = $1 WHERE id = $2", [found.id, bookingId]);
+                  }
+                } catch (e) {
+                  console.warn("Failed to map calendar instance to booking", e);
+                }
+              }
+
               // If a recurrence RRULE with COUNT is provided, create DB slots and bookings for each occurrence
               try {
                 if (recurrence && typeof recurrence === "string") {
