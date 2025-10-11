@@ -36,7 +36,8 @@ export default function ChatsPanel({ className }: { className?: string }) {
     loadMessages();
     loadRooms();
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${proto}://${window.location.host}/ws`);
+    const token = typeof window !== 'undefined' ? window.localStorage.getItem('inTuneToken') : null;
+    const ws = new WebSocket(`${proto}://${window.location.host}/ws${token ? `?token=${encodeURIComponent(token)}` : ''}`);
     ws.addEventListener("message", (event) => {
       try {
         const message = JSON.parse(event.data);
