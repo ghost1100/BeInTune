@@ -430,7 +430,12 @@ router.post("/bookings", async (req, res) => {
         const { createCalendarEvent } = await import("../lib/calendar");
         const slot = slotRes.rows[0];
         const rawSlotDate = slot.slot_date;
-        const date = typeof rawSlotDate === 'string' && rawSlotDate.includes('T') ? rawSlotDate.split('T')[0] : rawSlotDate; // normalized YYYY-MM-DD
+        let date;
+        if (rawSlotDate instanceof Date) {
+          date = rawSlotDate.toISOString().slice(0,10);
+        } else {
+          date = typeof rawSlotDate === 'string' && rawSlotDate.includes('T') ? rawSlotDate.split('T')[0] : rawSlotDate;
+        }
         const rawSlotTime = slot.slot_time;
         const time = typeof rawSlotTime === 'string' ? rawSlotTime.split(':').slice(0,2).join(':') : rawSlotTime; // normalized HH:MM
         const duration = slot.duration_minutes || 30;
