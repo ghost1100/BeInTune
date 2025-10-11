@@ -1083,12 +1083,42 @@ router.post("/bookings/demo-add", requireAdmin, async (req, res) => {
         : ["10:00", "10:30"];
     const created: any[] = [];
     for (const time of times) {
-      // create slot
-      const insSlot = await query(
-        "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
-        [null, date, time, 30],
-      );
-      const slotId = insSlot.rows[0].id;
+      // ensure slot exists (avoid duplicates)
+      let slotId: string | null = null;
+      try {
+        const slotQ = await query(
+          "SELECT id FROM slots WHERE slot_date = $1 AND slot_time = $2 LIMIT 1",
+          [date, time],
+        );
+        if (slotQ && slotQ.rows && slotQ.rows[0]) {
+          slotId = slotQ.rows[0].id;
+        }
+      } catch (e) {
+        console.warn("Failed to query existing slot", e);
+      }
+
+      if (!slotId) {
+        const insSlot = await query(
+          "INSERT INTO slots(teacher_id, slot_date, slot_time, duration_minutes, is_available) VALUES ($1,$2,$3,$4,true) RETURNING id",
+          [null, date, time, 30],
+        );
+        slotId = insSlot.rows[0].id;
+      }
+
+      // if booking already exists for slot, skip creating duplicate booking/event
+      try {
+        const existingBooking = await query(
+          "SELECT id, calendar_event_id FROM bookings WHERE slot_id = $1 LIMIT 1",
+          [slotId],
+        );
+        if (existingBooking && existingBooking.rows && existingBooking.rows[0]) {
+          created.push({ id: existingBooking.rows[0].id, slotId });
+          continue;
+        }
+      } catch (e) {
+        console.warn("Failed to check existing booking for slot", e);
+      }
+
       // create booking
       const ins = await query(
         "INSERT INTO bookings(student_id, slot_id, lesson_type, guest_name, guest_email, guest_phone) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id",
@@ -1096,7 +1126,7 @@ router.post("/bookings/demo-add", requireAdmin, async (req, res) => {
       );
       const id = ins.rows[0].id;
 
-      // create calendar event for the booking
+      // create calendar event for the booking (idempotent if booking exists)
       try {
         const { createCalendarEvent } = await import("../lib/calendar");
         // build ISO-local start/end
@@ -1111,17 +1141,27 @@ router.post("/bookings/demo-add", requireAdmin, async (req, res) => {
         const endDate = new Date(y, m, d, hh, mm, 0);
         endDate.setMinutes(endDate.getMinutes() + 30);
         const endLocal = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}T${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}:00`;
-        const ev = await createCalendarEvent({
-          summary: `Demo Lesson`,
-          description: `Demo booking on ${date} at ${time}`,
-          startDateTime: startLocal,
-          endDateTime: endLocal,
-        });
-        if (ev && ev.id) {
-          await query(
-            "UPDATE bookings SET calendar_event_id = $1 WHERE id = $2",
-            [ev.id, id],
-          );
+
+        // double-check any existing calendar event for this slot (race-safe)
+        const existEv = await query(
+          "SELECT calendar_event_id, recurrence_id FROM bookings WHERE slot_id = $1 AND (calendar_event_id IS NOT NULL OR recurrence_id IS NOT NULL) LIMIT 1",
+          [slotId],
+        );
+        if (existEv && existEv.rows && existEv.rows[0] && (existEv.rows[0].calendar_event_id || existEv.rows[0].recurrence_id)) {
+          await query("UPDATE bookings SET calendar_event_id = $1, recurrence_id = $2 WHERE id = $3", [existEv.rows[0].calendar_event_id || existEv.rows[0].recurrence_id, existEv.rows[0].recurrence_id || null, id]);
+        } else {
+          const ev = await createCalendarEvent({
+            summary: `Demo Lesson`,
+            description: `Demo booking on ${date} at ${time}`,
+            startDateTime: startLocal,
+            endDateTime: endLocal,
+          });
+          if (ev && ev.id) {
+            await query(
+              "UPDATE bookings SET calendar_event_id = $1 WHERE id = $2",
+              [ev.id, id],
+            );
+          }
         }
       } catch (e) {
         console.error("Failed to create demo calendar event", e);
