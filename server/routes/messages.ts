@@ -95,8 +95,8 @@ router.post("/messages", async (req, res) => {
     // create notification for recipient
     try {
       if (msg.recipient_id) {
-        await query(
-          "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4)",
+        const notifRes = await query(
+          "INSERT INTO notifications(user_id, actor_id, type, meta) VALUES ($1,$2,$3,$4) RETURNING id, user_id, actor_id, type, meta, created_at",
           [
             msg.recipient_id,
             msg.sender_id,
@@ -107,6 +107,12 @@ router.post("/messages", async (req, res) => {
             }),
           ],
         );
+        try {
+          const notif = notifRes && notifRes.rows && notifRes.rows[0];
+          req.app.locals.broadcast?.("notification:new", notif);
+        } catch (e) {
+          console.error("Failed to broadcast notification:new", e);
+        }
       }
     } catch (err) {
       console.error("Failed to create notification for message:", err);
