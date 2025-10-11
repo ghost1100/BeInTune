@@ -237,6 +237,44 @@ router.post("/bookings/cancel-all", requireAdmin, async (req, res) => {
       }
     }
 
+    // Attempt to remove calendar events for the affected bookings (delete specific instances for recurring events)
+    try {
+      const { deleteCalendarEvent, deleteRecurringInstance } = await import("../lib/calendar");
+      for (const r of rows) {
+        try {
+          if (r.recurrence_id) {
+            try {
+              const parts = String(r.date).split('-').map(Number);
+              const tparts = String(r.time || '').split(':').map(Number);
+              const y = parts[0], m = parts[1] - 1, d = parts[2];
+              const hh = tparts[0] || 0, mm = tparts[1] || 0;
+              const instStart = new Date(y, m, d, hh, mm, 0);
+              await deleteRecurringInstance(r.recurrence_id, instStart.toISOString());
+              console.log("Cancelled recurring instance on calendar for booking", r.id, r.recurrence_id);
+            } catch (inner) {
+              try {
+                await deleteCalendarEvent(r.recurrence_id);
+                console.log("Deleted recurring calendar event for booking (fallback)", r.id, r.recurrence_id);
+              } catch (inn2) {
+                console.warn("Failed to delete recurring calendar event for booking", r.id, inn2);
+              }
+            }
+          } else if (r.calendar_event_id) {
+            try {
+              await deleteCalendarEvent(r.calendar_event_id);
+              console.log("Deleted calendar event for booking", r.id, r.calendar_event_id);
+            } catch (inner) {
+              console.warn("Failed to delete calendar event for booking", r.id, inner);
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to handle calendar deletion for booking", r.id, e);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load calendar module for bulk cancellation", e);
+    }
+
     if (slotIdsToFree.length) {
       const uniq = Array.from(new Set(slotIdsToFree));
       for (const sid of uniq) {
